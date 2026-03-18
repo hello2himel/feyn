@@ -19,4 +19,3 @@ Thumbs.db
 
 # Admin panel local data (stays on your machine)
 # (stored in browser localStorage, nothing to gitignore there)
-data/main.py
