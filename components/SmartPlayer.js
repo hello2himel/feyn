@@ -102,15 +102,18 @@ export default function SmartPlayer({ videoId, title, onEligible, alreadyWatched
         playerRef.current = new window.YT.Player(containerRef.current, {
           videoId,
           playerVars: {
-            controls:         0,   // hide YouTube controls
-            disablekb:        1,   // disable keyboard shortcuts (we handle them)
-            rel:              0,   // no related videos
-            modestbranding:   1,
-            iv_load_policy:   3,   // no annotations
-            fs:               0,   // disable YouTube fullscreen button (we have our own)
-            playsinline:      1,
-            cc_load_policy:   0,
-            origin:           typeof window !== 'undefined' ? window.location.origin : '',
+            controls:        0,   // no control bar
+            disablekb:       1,   // no keyboard (we handle it)
+            rel:             0,   // no related videos at end
+            modestbranding:  1,   // minimal YouTube branding
+            iv_load_policy:  3,   // no annotations
+            fs:              0,   // no fullscreen button (we have ours)
+            playsinline:     1,   // no fullscreen on mobile tap
+            cc_load_policy:  0,   // no captions by default
+            showinfo:        0,   // no video title/uploader (legacy but keep)
+            autohide:        1,   // hide title bar
+            color:          'white',
+            origin: typeof window !== 'undefined' ? window.location.origin : '',
           },
           events: {
             onReady: (e) => {
@@ -223,11 +226,25 @@ export default function SmartPlayer({ videoId, title, onEligible, alreadyWatched
         role="region"
         aria-label={`Video player: ${title || 'Lesson'}`}
       >
-        {/* YouTube iframe container */}
+        {/* YouTube iframe container
+            Oversized to clip ALL YouTube UI:
+            - top: -60px hides the video title / info bar at the top
+            - height: calc(100% + 120px) adds 60px top + 60px bottom,
+              hiding the YouTube controls bar at the bottom
+            - left/width: tiny horizontal overdraw hides the logo watermark
+            - overflow: hidden on the parent clips all overflow
+            - pointerEvents: none so our overlay handles all interaction */}
         {!isPlaceholder && !apiError && (
           <div
             ref={containerRef}
-            style={{ position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', pointerEvents: 'none' }}
+            style={{
+              position: 'absolute',
+              top: '-60px',
+              left: '-2px',
+              width: 'calc(100% + 4px)',
+              height: 'calc(100% + 120px)',
+              pointerEvents: 'none',
+            }}
           />
         )}
 
