@@ -2,9 +2,9 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import data from '../data/courses'
-import { getCoachesFor, getTotalLessons, classifySubjects, getClasses, getInterests } from '../data/courseHelpers'
+import { getCoachesFor, getTotalLessons, classifySubjects, getClasses, getInterests, getProgram, getSubject, getTopic, getLessonNav } from '../data/courseHelpers'
 import { Nav, Footer, DonateStrip, YTThumb, ProgressBar, useAuth } from '../components/Layout'
-import { getEnrolled, getSubjectProgress, getFeedOrder, saveFeedOrder } from '../lib/userStore'
+import { getEnrolled, getSubjectProgress, getFeedOrder, saveFeedOrder, getLastActivity } from '../lib/userStore'
 
 // ── Site-wide metrics (computed from courses.js) ──────────────────────
 function getSiteMetrics() {
@@ -28,7 +28,109 @@ function getSiteMetrics() {
   }
 }
 
-// ── Feed card ─────────────────────────────────────────────────────────
+// ── Continue where you left off ───────────────────────────────────────
+// Resolves last activity → next unwatched lesson in sequence
+function resolveNextLesson(activity) {
+  if (!activity) return null
+  const { programId, subjectId, topicId, lessonId } = activity
+
+  const program = getProgram(programId)
+  const subject = getSubject(programId, subjectId)
+  const topic   = getTopic(programId, subjectId, topicId)
+  if (!program || !subject || !topic) return null
+
+  // Try next lesson in same topic first
+  const { next } = getLessonNav(programId, subjectId, topicId, lessonId)
+  if (next) {
+    return { program, subject, topic, lesson: next, programId, subjectId, topicId, lessonId: next.id }
+  }
+
+  // Next topic in same subject
+  const topicIdx = subject.topics.findIndex(t => t.id === topicId)
+  for (let ti = topicIdx + 1; ti < subject.topics.length; ti++) {
+    const nextTopic = subject.topics[ti]
+    if (nextTopic.lessons.length > 0) {
+      return { program, subject, topic: nextTopic, lesson: nextTopic.lessons[0], programId, subjectId, topicId: nextTopic.id, lessonId: nextTopic.lessons[0].id }
+    }
+  }
+
+  // All done — return the last watched lesson itself (course complete)
+  const currentLesson = topic.lessons.find(l => l.id === lessonId)
+  return currentLesson
+    ? { program, subject, topic, lesson: currentLesson, programId, subjectId, topicId, lessonId, completed: true }
+    : null
+}
+
+function ContinueCard({ activity }) {
+  const resolved = resolveNextLesson(activity)
+  if (!resolved) return null
+
+  const { program, subject, topic, lesson, programId, subjectId, topicId, lessonId, completed } = resolved
+  const href = `/${programId}/${subjectId}/${topicId}/${lessonId}`
+  const pct  = getSubjectProgress(programId, subjectId, subject)
+  const hasThumb = lesson.videoId && lesson.videoId !== 'YOUTUBE_ID_HERE'
+
+  return (
+    <Link href={href} className="continue-card">
+      {/* Thumbnail */}
+      <div className="continue-card__thumb">
+        {hasThumb ? (
+          <>
+            <img
+              src={`https://i.ytimg.com/vi/${lesson.videoId}/mqdefault.jpg`}
+              alt={lesson.title}
+            />
+            <div className="continue-card__play-overlay">
+              <div className="continue-card__play-btn">
+                <i className="ri-play-fill" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="continue-card__thumb-placeholder">
+            <i className="ri-play-circle-line" />
+          </div>
+        )}
+        {/* Course progress bar along bottom of thumb */}
+        <div className="continue-card__thumb-bar">
+          <div className="continue-card__thumb-fill" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="continue-card__body">
+        <p className="continue-card__eyebrow">
+          {completed
+            ? <><i className="ri-checkbox-circle-fill" /> Course complete</>
+            : <><i className="ri-play-circle-line" /> Continue watching</>
+          }
+        </p>
+        <h3 className="continue-card__title">{lesson.title}</h3>
+        <p className="continue-card__breadcrumb">
+          <span>{program.name}</span>
+          <i className="ri-arrow-right-s-line" />
+          <span>{subject.name}</span>
+          <i className="ri-arrow-right-s-line" />
+          <span>{topic.name}</span>
+        </p>
+        <div className="continue-card__meta">
+          {lesson.duration && <span><i className="ri-time-line" /> {lesson.duration}</span>}
+          <span>
+            <i className="ri-bar-chart-line" />
+            {pct}% of {subject.name} complete
+          </span>
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <div className="continue-card__arrow">
+        <i className="ri-arrow-right-line" />
+      </div>
+    </Link>
+  )
+}
+
+
 function FeedCard({ program, subject, enrolled, pct, mounted }) {
   const coaches  = getCoachesFor(subject.coachIds || [])
   const firstVid = subject.topics[0]?.lessons[0]?.videoId
@@ -100,6 +202,7 @@ export default function Home() {
   const [enrolledMap, setEnrolledMap]     = useState({})
   const [progressMap, setProgressMap]     = useState({})
   const [settingsOpen, setSettingsOpen]   = useState(false)
+  const [lastActivity, setLastActivity]   = useState(null)
   const metrics = getSiteMetrics()
 
   const buildFeed = useCallback(() => {
@@ -142,7 +245,7 @@ export default function Home() {
     }
   }, [signedIn])
 
-  useEffect(() => { if (mounted) buildFeed() }, [mounted, buildFeed])
+  useEffect(() => { if (mounted) { buildFeed(); setLastActivity(getLastActivity()) } }, [mounted, buildFeed])
   useEffect(() => {
     if (typeof window === 'undefined') return
     const handler = () => buildFeed()
@@ -172,25 +275,28 @@ export default function Home() {
       <main>
 
         {/* ══════════════════════════════════════════
-            LANDING HERO — shown to all visitors
+            LANDING — shown to guests only
             ══════════════════════════════════════════ */}
         {(!mounted || !signedIn) && (
           <div className="landing-hero">
+
+            {/* ── HERO ── */}
             <div className="landing-hero__inner container">
               <div className="landing-hero__content">
                 <div className="landing-hero__eyebrow">
                   <span className="landing-hero__badge">
-                    <i className="ri-sparkling-2-line" /> Free · Open · No signup required
+                    <i className="ri-sparkling-2-line" /> A STΛRGZR project · Free · Open · No signup required
                   </span>
                 </div>
                 <h1 className="landing-hero__title">
-                  Learn anything<br />
-                  <span className="landing-hero__accent">from first principles.</span>
+                  Learn the way<br />
+                  <span className="landing-hero__accent">Feynman would.</span>
                 </h1>
                 <p className="landing-hero__sub">
-                  Feyn is a video-first learning platform inspired by <strong>Feynman Files</strong> and
-                  Richard Feynman's teaching philosophy — start from intuition, build up carefully,
-                  never skip a step.
+                  Feyn is the educational video platform of <strong>STΛRGZR</strong> — a network for
+                  students who refuse to be confined by traditional education. Every lesson starts
+                  from intuition, builds from first principles, and doesn't move on until the idea
+                  is truly understood.
                 </p>
                 <p className="landing-hero__quote">
                   <i className="ri-double-quotes-l" />
@@ -201,11 +307,14 @@ export default function Home() {
                 <div className="landing-hero__actions">
                   {mounted && !signedIn && (
                     <button className="btn btn--accent landing-btn" onClick={() => setShowAuth(true)}>
-                      <i className="ri-user-add-line" /> Create free account
+                      <i className="ri-user-add-line" /> Join free
                     </button>
                   )}
                   <a href="#courses" className="btn btn--ghost landing-btn">
                     <i className="ri-play-circle-line" /> Browse courses
+                  </a>
+                  <a href="https://stargzr.netlify.app" className="btn btn--ghost landing-btn" target="_blank" rel="noopener noreferrer">
+                    <i className="ri-external-link-line" /> About STΛRGZR
                   </a>
                 </div>
               </div>
@@ -231,17 +340,63 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Feature strip */}
+            {/* ── WHAT IS FEYN ── */}
+            <div className="landing-about">
+              <div className="container">
+                <div className="landing-about__grid">
+                  <div className="landing-about__text">
+                    <p className="landing-about__eyebrow"><i className="ri-information-line" /> What is Feyn?</p>
+                    <h2 className="landing-about__title">Peer-to-peer learning,<br />done properly.</h2>
+                    <p className="landing-about__body">
+                      Born inside STΛRGZR — a community of students and dreamers who believe education
+                      should be a journey of exploration, not memorisation — <strong>Feyn</strong> is
+                      the video wing of that movement.
+                    </p>
+                    <p className="landing-about__body">
+                      The name honours <strong>Feynman Files</strong>: the original series where complex
+                      concepts were explained simply by peers who understood the struggle of learning.
+                      Feyn carries that spirit forward as a full learning platform — structured,
+                      curriculum-aligned, and genuinely curiosity-first.
+                    </p>
+                    <p className="landing-about__body">
+                      We cover the full HSC, SSC and JSC curriculum. We also cover music, programming,
+                      art, and languages — because curiosity doesn't stop at the exam syllabus.
+                    </p>
+                    <a href="https://stargzr.netlify.app" className="landing-about__link" target="_blank" rel="noopener noreferrer">
+                      Learn about STΛRGZR <i className="ri-arrow-right-line" />
+                    </a>
+                  </div>
+                  <div className="landing-about__pillars">
+                    {[
+                      { icon: 'ri-brain-line',            title: 'Curiosity first',     body: 'Genuine curiosity is the foundation of all real learning. We never skip the "why".' },
+                      { icon: 'ri-route-line',            title: 'First principles',     body: 'Every concept starts from intuition and builds up carefully. No unexplained jumps.' },
+                      { icon: 'ri-group-line',            title: 'Peer teaching',        body: 'You learn best from someone who recently understood the same thing you\'re struggling with.' },
+                      { icon: 'ri-lock-unlock-line',      title: 'Radically free',       body: 'No paywalls, no ads, no tracking. Knowledge flows freely here.' },
+                    ].map(p => (
+                      <div key={p.title} className="landing-pillar">
+                        <i className={p.icon} />
+                        <div>
+                          <p className="landing-pillar__title">{p.title}</p>
+                          <p className="landing-pillar__body">{p.body}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── FEATURE STRIP ── */}
             <div className="landing-features">
               <div className="container">
                 <div className="landing-features__grid">
                   {[
-                    { icon: 'ri-flashlight-line',        title: 'First principles', desc: 'Every concept built from intuition up. No unexplained jumps.' },
-                    { icon: 'ri-play-circle-line',        title: 'Video-first',      desc: 'Short, focused lessons. One concept per video, 5–15 minutes.' },
-                    { icon: 'ri-graduation-cap-line',     title: 'HSC / SSC / JSC',  desc: 'Full curriculum coverage for Bangladeshi academic classes.' },
-                    { icon: 'ri-compass-discover-line',   title: 'Beyond the classroom', desc: 'Music, programming, art, languages — explore freely.' },
-                    { icon: 'ri-medal-line',              title: 'Certificates',     desc: 'Complete a course, earn a downloadable certificate.' },
-                    { icon: 'ri-lock-unlock-line',        title: '100% free',        desc: 'All content is free. No paywalls, no ads, no tracking.' },
+                    { icon: 'ri-play-circle-line',       title: 'Video-first',              desc: 'Short, focused lessons. One concept per video, 5–15 minutes each.' },
+                    { icon: 'ri-graduation-cap-line',    title: 'HSC · SSC · JSC · Primary', desc: 'Full Bangladeshi curriculum coverage — every subject, every grade.' },
+                    { icon: 'ri-compass-discover-line',  title: 'Beyond the classroom',     desc: 'Music, tech, art, languages — explore anything you\'re curious about.' },
+                    { icon: 'ri-medal-line',             title: 'Certificates',             desc: 'Complete a full course, earn a downloadable PDF certificate.' },
+                    { icon: 'ri-bar-chart-line',         title: 'Track progress',           desc: 'Watch history, completion tracking, and a personalised feed — free with an account.' },
+                    { icon: 'ri-user-star-line',         title: 'Expert instructors',       desc: 'Taught by real educators and STΛRGZR community members.' },
                   ].map(f => (
                     <div key={f.title} className="feature-pill">
                       <i className={f.icon} />
@@ -254,6 +409,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
           </div>
         )}
 
@@ -262,7 +418,7 @@ export default function Home() {
             ══════════════════════════════════════════ */}
         {mounted && signedIn && (
           <div className="container">
-            <section className="home-hero">
+            <section className="home-hero home-hero--signedin">
               <div className="home-hero__left">
                 <p className="home-hero__eyebrow"><i className="ri-sparkling-line" /> Welcome back</p>
                 <h1 className="home-hero__title">Hi, {user?.name} <span className="home-hero__wave">👋</span></h1>
@@ -278,19 +434,21 @@ export default function Home() {
                   </Link>
                 </div>
               </div>
-              {/* Metrics for signed-in too */}
-              <div className="home-metrics-mini">
-                {[
-                  { icon: 'ri-book-open-line',    val: metrics.courses,  label: 'Courses' },
-                  { icon: 'ri-play-circle-line',  val: metrics.lessons,  label: 'Lessons' },
-                  { icon: 'ri-user-star-line',    val: metrics.coaches,  label: 'Instructors' },
-                ].map(m => (
-                  <div key={m.label} className="metrics-mini-item">
-                    <i className={m.icon} />
-                    <span className="metrics-mini-val">{m.val}</span>
-                    <span className="metrics-mini-label">{m.label}</span>
-                  </div>
-                ))}
+
+              {/* Continue card — or start prompt */}
+              <div className="home-hero__continue">
+                {lastActivity
+                  ? <ContinueCard activity={lastActivity} />
+                  : (
+                    <div className="continue-card-empty">
+                      <i className="ri-play-circle-line" />
+                      <p>Start your first lesson to track progress here.</p>
+                      <a href="#courses" className="btn btn--accent btn--sm">
+                        <i className="ri-compass-discover-line" /> Browse courses
+                      </a>
+                    </div>
+                  )
+                }
               </div>
             </section>
           </div>
