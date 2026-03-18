@@ -201,7 +201,7 @@ export default function ProfilePage() {
               <div className="certs-list">
                 {certs.map(cert => (
                   <div className="cert-card" key={cert.id}>
-                    <div className="cert-card__icon">🎓</div>
+                    <div className="cert-card__icon"><i className="ri-award-fill" style={{ fontSize: '1.4rem', color: 'var(--accent)' }} /></div>
                     <div className="cert-card__info">
                       <p className="cert-card__title">{cert.subjectName}</p>
                       <p className="cert-card__meta">{cert.programName} · {new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>

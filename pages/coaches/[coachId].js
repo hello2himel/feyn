@@ -53,7 +53,7 @@ export default function CoachPage({ coach, subjects }) {
             {subjects.map(({ program, subject }) => (
               <div className="coach-subject-block" key={`${program.id}/${subject.id}`}>
                 <div className="coach-subject-block__header">
-                  <span className="coach-subject-block__icon">{subject.icon}</span>
+                  <i className={subject.icon || 'ri-book-open-line'} style={{ fontSize: '1.4rem', color: 'var(--accent)' }} />
                   <div>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.63rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>{program.name}</p>
                     <Link href={`/${program.id}/${subject.id}`} className="coach-subject-block__name">{subject.name}</Link>
