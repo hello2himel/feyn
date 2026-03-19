@@ -5,7 +5,7 @@ import { Nav, Footer, ProgressBar, useAuth } from '../components/Layout'
 import {
   getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll,
-  getSubjectProgress, getCerts,
+  getSubjectProgress, getCerts, isGlobalAccount,
 } from '../lib/userStore'
 import { downloadCertificate } from '../lib/certificate'
 import data, { coaches } from '../data/courses'
@@ -59,7 +59,7 @@ export default function ProfilePage() {
         break
       }
     }
-    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl })
+    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl, isGlobal: isGlobalAccount() })
     setCertLoading(null)
   }
 

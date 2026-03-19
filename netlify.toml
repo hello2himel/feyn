@@ -23,6 +23,7 @@
   from = "/verify/:certId"
   to   = "/verify/?id=:certId"
   status = 301
+  force  = false
 
 [[redirects]]
   from = "/*"
