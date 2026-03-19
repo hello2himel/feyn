@@ -232,11 +232,14 @@ export default function Home() {
     const next = [...feedSections]
     ;[next[idx], next[idx+dir]] = [next[idx+dir], next[idx]]
     setFeedSections(next)
-    saveFeedOrder(next.filter(s => !['explore','program'].includes(s.type)).flatMap(s =>
-      s.items.map(({ program, subject }) => ({ type: s.type, programId: program.id, subjectId: subject.id }))
+    // Save all sections (not just enrolled) so order persists before enrollments exist.
+    saveFeedOrder(next.flatMap(s =>
+      s.items.map(({ program, subject }) => ({
+        type: (s.type === 'explore' || s.type === 'program') ? 'genre' : s.type,
+        programId: program.id, subjectId: subject.id,
+      }))
     ))
   }
-
   const classes   = getClasses()
   const interests = getInterests()
 

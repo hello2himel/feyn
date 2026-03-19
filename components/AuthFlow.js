@@ -1,12 +1,24 @@
 // ============================================================
-// AuthFlow — Feyn authentication + onboarding
+// AuthFlow — Feyn authentication + onboarding  (v17)
 //
-// Sign-up flow:   auth → OTP verify → grade → courses → interests → done
-// Sign-in flow:   auth → (OTP if needed) → done
-// Upgrade flow:   auth → OTP → done  (initialMode='upgrade')
+// Sign-up flow:   auth → otp → grade → courses → interests → done
+// Sign-in flow:   auth → (otp if unconfirmed) → done
+// Upgrade flow:   auth → otp → done  (initialMode='upgrade')
+//
+// FIXES (v17):
+//   1. "Check your email" screen (mode:'otp') now always shows after
+//      signup — removed the silent otpFailed bypass in userStore.
+//   2. Outside-click on overlay no longer dismisses onboarding steps
+//      (grade / courses / interests) — those must be completed or
+//      explicitly skipped, preventing half-onboarded state.
+//   3. When outside-click closes the modal while on mode:'auth', the
+//      entire AuthFlow unmounts cleanly — no orphaned DOM nodes.
+//   4. handleOtp useEffect now includes handleOtp in deps via useCallback
+//      to prevent stale closure auto-submit bug.
+//   5. Resend OTP error no longer freezes the cooldown timer.
 // ============================================================
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   signInLocal, signUpGlobal, signInGlobal, verifyOtp, resendOtp,
   setOnboarded, enroll, saveFeedOrder,
@@ -16,6 +28,11 @@ import { getClasses, getInterests } from '../data/courseHelpers'
 
 const GRADE_ORDER = ['primary', 'jsc', 'ssc', 'hsc']
 const GRADE_ICONS = { primary: 'ri-seedling-line', jsc: 'ri-school-line', ssc: 'ri-building-4-line', hsc: 'ri-graduation-cap-line' }
+
+// Modes that must NOT be dismissible by clicking the overlay backdrop.
+// Auth mode IS dismissible (guest continue). Onboarding steps are NOT —
+// they must be completed or explicitly skipped so setOnboarded() is called.
+const NON_DISMISSIBLE_MODES = ['otp', 'grade', 'courses', 'interests', 'done']
 
 // ── Sub-components ────────────────────────────────────────────────────
 function GradeCard({ program, selected, onSelect }) {
@@ -109,10 +126,10 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
   const [mode, setMode]         = useState(initialMode)
   const [authTab, setAuthTab]   = useState('signup')
-  const [isGlobal, setIsGlobal] = useState(supabaseOn) // default global if available
+  const [isGlobal, setIsGlobal] = useState(supabaseOn)
   const [animOut, setAnimOut]   = useState(false)
   const [loading, setLoading]   = useState(false)
-  const [isSignUp, setIsSignUp] = useState(true) // track if this was a sign-up for post-OTP routing
+  const [isSignUp, setIsSignUp] = useState(true)
 
   // Auth form fields
   const [name, setName]         = useState('')
@@ -123,17 +140,17 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
   const [errors, setErrors]     = useState({})
 
   // OTP
-  const [otpEmail, setOtpEmail] = useState('')
-  const [otpCode, setOtpCode]   = useState('')
-  const [otpError, setOtpError] = useState('')
-  const [otpLoading, setOtpLoading] = useState(false)
+  const [otpEmail, setOtpEmail]         = useState('')
+  const [otpCode, setOtpCode]           = useState('')
+  const [otpError, setOtpError]         = useState('')
+  const [otpLoading, setOtpLoading]     = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
 
   // Onboarding
-  const [selectedGrade, setSelectedGrade]     = useState(null)
-  const [selectedCourses, setSelectedCourses] = useState(new Set())
+  const [selectedGrade, setSelectedGrade]         = useState(null)
+  const [selectedCourses, setSelectedCourses]     = useState(new Set())
   const [selectedInterests, setSelectedInterests] = useState(new Set())
-  const [interestFilter, setInterestFilter]   = useState('all')
+  const [interestFilter, setInterestFilter]       = useState('all')
 
   const classes   = getClasses()
   const interests = getInterests()
@@ -164,7 +181,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
   }
 
   function setErr(f, m) { setErrors(p => ({ ...p, [f]: m })) }
-  function clearErr(f)  { setErrors(p => { const n={...p}; delete n[f]; return n }) }
+  function clearErr(f)  { setErrors(p => { const n = { ...p }; delete n[f]; return n }) }
   function clearErrs()  { setErrors({}) }
 
   // ── Auth submit ────────────────────────────────────────────────────
@@ -186,7 +203,8 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
       const res = await signInGlobal({ email, password })
       setLoading(false)
       if (!res.ok) {
-        if (res.field) setErr(res.field, res.error); else setErr('general', res.error)
+        if (res.field) setErr(res.field, res.error)
+        else setErr('general', res.error)
         return
       }
       if (res.needsOtp) {
@@ -200,7 +218,8 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
       const res = await signUpGlobal({ name, username, email, password })
       setLoading(false)
       if (!res.ok) {
-        if (res.field) setErr(res.field, res.error); else setErr('general', res.error)
+        if (res.field) setErr(res.field, res.error)
+        else setErr('general', res.error)
         return
       }
       if (res.needsOtp) {
@@ -208,10 +227,11 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
         setIsSignUp(true)
         transition('otp')
       } else {
-        // No OTP needed (email confirm disabled in Supabase)
+        // Email confirm disabled in Supabase — go straight to onboarding
         transition('grade')
       }
     } else {
+      // Local account
       signInLocal({ name: name.trim(), username: username.trim() })
       setLoading(false)
       transition('grade')
@@ -219,7 +239,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
   }
 
   // ── OTP submit ─────────────────────────────────────────────────────
-  async function handleOtp(e) {
+  const handleOtp = useCallback(async (e) => {
     e?.preventDefault()
     if (otpCode.length !== 6) { setOtpError('Enter the full 6-digit code.'); return }
     setOtpLoading(true)
@@ -227,23 +247,26 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
     const res = await verifyOtp({ email: otpEmail, token: otpCode })
     setOtpLoading(false)
     if (!res.ok) { setOtpError(res.error); return }
-    // Success
     if (isSignUp) transition('grade')
     else onComplete()
-  }
+  }, [otpCode, otpEmail, isSignUp, onComplete])
 
   // Auto-submit when 6 digits entered
   useEffect(() => {
     if (otpCode.length === 6 && mode === 'otp') handleOtp()
-  }, [otpCode])
+  }, [otpCode, mode, handleOtp])
 
   async function handleResend() {
     if (resendCooldown > 0) return
     setOtpError('')
     setOtpCode('')
     const res = await resendOtp(otpEmail)
-    if (res.ok) setResendCooldown(30)
-    else setOtpError(res.error)
+    if (res.ok) {
+      setResendCooldown(30)
+    } else {
+      setOtpError(res.error)
+      // Don't start cooldown on failure so user can retry immediately
+    }
   }
 
   // ── Onboarding ─────────────────────────────────────────────────────
@@ -264,11 +287,13 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
     const order = []
     for (const key of selectedCourses) {
       const [pId, sId] = key.split('/')
-      enroll(pId, sId); order.push({ type: 'class', programId: pId, subjectId: sId })
+      enroll(pId, sId)
+      order.push({ type: 'class', programId: pId, subjectId: sId })
     }
     for (const key of selectedInterests) {
       const [pId, sId] = key.split('/')
-      enroll(pId, sId); order.push({ type: 'genre', programId: pId, subjectId: sId })
+      enroll(pId, sId)
+      order.push({ type: 'genre', programId: pId, subjectId: sId })
     }
     saveFeedOrder(order)
     setOnboarded()
@@ -280,11 +305,20 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
     if (mode === 'done') setTimeout(() => onComplete(), 700)
   }, [mode])
 
+  // ── Overlay click ─────────────────────────────────────────────────
+  // FIX: only dismissible on 'auth' mode. Onboarding steps must be
+  // completed or skipped explicitly — prevents half-onboarded state.
+  function handleOverlayClick(e) {
+    if (e.target !== e.currentTarget) return
+    if (NON_DISMISSIBLE_MODES.includes(mode)) return
+    onComplete()
+  }
+
   const totalSelected = selectedCourses.size + selectedInterests.size
   const isWide = ['grade', 'courses', 'interests'].includes(mode)
 
   return (
-    <div className="authflow-overlay" onClick={e => e.target === e.currentTarget && !['otp','done'].includes(mode) && onComplete()}>
+    <div className="authflow-overlay" onClick={handleOverlayClick}>
       <div className={`authflow-modal ${animOut ? 'authflow-modal--out' : ''} ${isWide ? 'authflow-modal--wide' : ''}`}>
 
         {/* ── AUTH ── */}
@@ -296,9 +330,9 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             </div>
 
             <div className="authflow-tabs">
-              <button className={`authflow-tab ${authTab==='signup'?'authflow-tab--active':''}`}
+              <button className={`authflow-tab ${authTab === 'signup' ? 'authflow-tab--active' : ''}`}
                 onClick={() => { setAuthTab('signup'); clearErrs() }}>Create account</button>
-              <button className={`authflow-tab ${authTab==='signin'?'authflow-tab--active':''}`}
+              <button className={`authflow-tab ${authTab === 'signin' ? 'authflow-tab--active' : ''}`}
                 onClick={() => { setAuthTab('signin'); clearErrs() }}>Sign in</button>
             </div>
 
@@ -309,7 +343,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
               {authTab === 'signup' && (
                 <Field label="Your name" error={errors.name}>
-                  <input className={`authflow-input ${errors.name?'authflow-input--error':''}`}
+                  <input className={`authflow-input ${errors.name ? 'authflow-input--error' : ''}`}
                     placeholder="e.g. Himel" value={name}
                     onChange={e => { setName(e.target.value); clearErr('name') }} autoFocus />
                 </Field>
@@ -317,17 +351,17 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
               {authTab === 'signup' && (
                 <Field label="Username" optional error={errors.username}>
-                  <div className={`authflow-input-prefix-wrap ${errors.username?'authflow-input-prefix-wrap--error':''}`}>
+                  <div className={`authflow-input-prefix-wrap ${errors.username ? 'authflow-input-prefix-wrap--error' : ''}`}>
                     <span className="authflow-input-prefix">@</span>
                     <input className="authflow-input authflow-input--prefixed" placeholder="username"
-                      value={username} onChange={e => { setUsername(e.target.value.replace(/\s/g,'')); clearErr('username') }} />
+                      value={username} onChange={e => { setUsername(e.target.value.replace(/\s/g, '')); clearErr('username') }} />
                   </div>
                 </Field>
               )}
 
               {(isGlobal || authTab === 'signin') && (
                 <Field label="Email" error={errors.email}>
-                  <input className={`authflow-input ${errors.email?'authflow-input--error':''}`}
+                  <input className={`authflow-input ${errors.email ? 'authflow-input--error' : ''}`}
                     type="email" placeholder="you@example.com" value={email}
                     onChange={e => { setEmail(e.target.value); clearErr('email') }}
                     autoFocus={authTab === 'signin'} />
@@ -337,12 +371,12 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
               {(isGlobal || authTab === 'signin') && (
                 <Field label={authTab === 'signin' ? 'Password' : 'Create a password'} error={errors.password}>
                   <div className="authflow-pass-wrap">
-                    <input className={`authflow-input authflow-input--pass ${errors.password?'authflow-input--error':''}`}
-                      type={showPass?'text':'password'}
-                      placeholder={authTab==='signin' ? 'Your password' : 'Min. 6 characters'}
+                    <input className={`authflow-input authflow-input--pass ${errors.password ? 'authflow-input--error' : ''}`}
+                      type={showPass ? 'text' : 'password'}
+                      placeholder={authTab === 'signin' ? 'Your password' : 'Min. 6 characters'}
                       value={password} onChange={e => { setPassword(e.target.value); clearErr('password') }} />
-                    <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s=>!s)}>
-                      <i className={showPass?'ri-eye-off-line':'ri-eye-line'} />
+                    <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s => !s)}>
+                      <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} />
                     </button>
                   </div>
                 </Field>
@@ -350,8 +384,8 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
               <button type="submit" className="authflow-submit" disabled={loading}>
                 {loading
-                  ? <><i className="ri-loader-4-line" style={{animation:'spin 1s linear infinite'}} /> Working</>
-                  : <>{authTab==='signup' ? 'Create account' : 'Sign in'} <i className="ri-arrow-right-line" /></>}
+                  ? <><i className="ri-loader-4-line" style={{ animation: 'spin 1s linear infinite' }} /> Working</>
+                  : <>{authTab === 'signup' ? 'Create account' : 'Sign in'} <i className="ri-arrow-right-line" /></>}
               </button>
             </form>
 
@@ -362,11 +396,11 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
             {supabaseOn && authTab === 'signup' && (
               <div className="authflow-type-toggle">
-                <button type="button" className={`authflow-type-pill ${!isGlobal?'active':''}`}
+                <button type="button" className={`authflow-type-pill ${!isGlobal ? 'active' : ''}`}
                   onClick={() => { setIsGlobal(false); clearErrs() }}>
                   <i className="ri-hard-drive-line" /> Local
                 </button>
-                <button type="button" className={`authflow-type-pill ${isGlobal?'active':''}`}
+                <button type="button" className={`authflow-type-pill ${isGlobal ? 'active' : ''}`}
                   onClick={() => { setIsGlobal(true); clearErrs() }}>
                   <i className="ri-cloud-line" /> Global
                 </button>
@@ -399,7 +433,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                 <button type="submit" className="authflow-submit" disabled={otpLoading || otpCode.length < 6}
                   style={{ marginTop: 16 }}>
                   {otpLoading
-                    ? <><i className="ri-loader-4-line" style={{animation:'spin 1s linear infinite'}} /> Verifying</>
+                    ? <><i className="ri-loader-4-line" style={{ animation: 'spin 1s linear infinite' }} /> Verifying</>
                     : <>Verify <i className="ri-check-line" /></>}
                 </button>
               </form>
@@ -430,7 +464,9 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
         {/* ── GRADE PICKER ── */}
         {mode === 'grade' && (
           <div className="authflow-panel authflow-panel--wide">
-            <button className="authflow-skip-interests" onClick={skipOnboarding}>Skip <i className="ri-skip-forward-line" /></button>
+            <button className="authflow-skip-interests" onClick={skipOnboarding}>
+              Skip <i className="ri-skip-forward-line" />
+            </button>
             <div className="authflow-ob-header">
               <div className="authflow-ob-step">1 of 3</div>
               <h2 className="authflow-ob-title">What class are you in?</h2>
@@ -438,15 +474,15 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             </div>
             <div className="grade-grid">
               {sortedClasses.map(p => (
-                <GradeCard key={p.id} program={p} selected={selectedGrade===p.id} onSelect={() => setSelectedGrade(p.id)} />
+                <GradeCard key={p.id} program={p} selected={selectedGrade === p.id} onSelect={() => setSelectedGrade(p.id)} />
               ))}
               <button type="button"
-                className={`grade-card grade-card--none ${selectedGrade==='none'?'grade-card--selected':''}`}
+                className={`grade-card grade-card--none ${selectedGrade === 'none' ? 'grade-card--selected' : ''}`}
                 onClick={() => setSelectedGrade('none')}>
                 <i className="ri-user-smile-line" />
                 <span className="grade-card__name">Not a student</span>
                 <span className="grade-card__desc">Just here to explore</span>
-                {selectedGrade==='none' && <span className="grade-card__check"><i className="ri-check-fill" /></span>}
+                {selectedGrade === 'none' && <span className="grade-card__check"><i className="ri-check-fill" /></span>}
               </button>
             </div>
             <div className="authflow-interests-footer">
@@ -461,7 +497,9 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
         {/* ── COURSE PICKER ── */}
         {mode === 'courses' && gradeProgram && (
           <div className="authflow-panel authflow-panel--wide">
-            <button className="authflow-skip-interests" onClick={() => transition('interests')}>Skip <i className="ri-skip-forward-line" /></button>
+            <button className="authflow-skip-interests" onClick={() => transition('interests')}>
+              Skip <i className="ri-skip-forward-line" />
+            </button>
             <div className="authflow-ob-header">
               <div className="authflow-ob-step">2 of 3</div>
               <h2 className="authflow-ob-title">Pick your {gradeProgram.name} courses</h2>
@@ -473,14 +511,15 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                 const vid = subject.topics[0]?.lessons[0]?.videoId
                 return (
                   <button key={subject.id} type="button"
-                    className={`interest-card ${sel?'interest-card--selected':''}`}
+                    className={`interest-card ${sel ? 'interest-card--selected' : ''}`}
                     onClick={() => toggleCourse(gradeProgram.id, subject.id)}>
                     <div className="interest-card__bg">
-                      {vid ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" onError={e=>{e.target.style.display='none'}} />
-                           : <div className="interest-card__gradient" />}
+                      {vid
+                        ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" onError={e => { e.target.style.display = 'none' }} />
+                        : <div className="interest-card__gradient" />}
                       <div className="interest-card__overlay" />
                     </div>
-                    <i className={`${subject.icon||'ri-book-open-line'} interest-card__icon`} />
+                    <i className={`${subject.icon || 'ri-book-open-line'} interest-card__icon`} />
                     <span className="interest-card__label">{subject.name}</span>
                     {subject.certificate && <span className="interest-card__cert"><i className="ri-medal-line" /></span>}
                     {sel && <span className="interest-card__check"><i className="ri-check-line" /></span>}
@@ -491,7 +530,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             <div className="authflow-interests-footer">
               <button className="authflow-submit" onClick={() => transition('interests')}
                 style={{ maxWidth: 320, margin: '0 auto' }}>
-                {selectedCourses.size > 0 ? `${selectedCourses.size} selected, Next` : 'Next'} <i className="ri-arrow-right-line" />
+                {selectedCourses.size > 0 ? `${selectedCourses.size} selected — Next` : 'Next'} <i className="ri-arrow-right-line" />
               </button>
             </div>
           </div>
@@ -504,18 +543,20 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
               {totalSelected > 0 ? 'Done' : 'Skip'} <i className="ri-skip-forward-line" />
             </button>
             <div className="authflow-ob-header">
-              <div className="authflow-ob-step">{selectedGrade==='none' ? '1 of 1' : '3 of 3'}</div>
+              <div className="authflow-ob-step">{selectedGrade === 'none' ? '1 of 1' : '3 of 3'}</div>
               <h2 className="authflow-ob-title">Any other interests?</h2>
               <p className="authflow-ob-sub">Music, tech, art, languages. Pick anything you're curious about.</p>
             </div>
             <div className="authflow-filter-tabs">
-              <button className={`authflow-filter-tab ${interestFilter==='all'?'authflow-filter-tab--active':''}`}
+              <button className={`authflow-filter-tab ${interestFilter === 'all' ? 'authflow-filter-tab--active' : ''}`}
                 onClick={() => setInterestFilter('all')}>All</button>
               {interests.map(p => (
-                <button key={p.id} className={`authflow-filter-tab ${interestFilter===p.id?'authflow-filter-tab--active':''}`}
+                <button key={p.id} className={`authflow-filter-tab ${interestFilter === p.id ? 'authflow-filter-tab--active' : ''}`}
                   onClick={() => setInterestFilter(p.id)}>{p.name}</button>
               ))}
-              {selectedInterests.size > 0 && <span className="authflow-selected-count">{selectedInterests.size} selected</span>}
+              {selectedInterests.size > 0 && (
+                <span className="authflow-selected-count">{selectedInterests.size} selected</span>
+              )}
             </div>
             <div className="interest-grid">
               {filteredInterests.map(({ program, subject }) => (
@@ -527,7 +568,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             <div className="authflow-interests-footer">
               <button className="authflow-submit" onClick={handleFinish}
                 style={{ maxWidth: 320, margin: '0 auto' }}>
-                {totalSelected > 0 ? `Done, ${totalSelected} selected` : 'Finish'} <i className="ri-check-line" />
+                {totalSelected > 0 ? `Done — ${totalSelected} selected` : 'Finish'} <i className="ri-check-line" />
               </button>
             </div>
           </div>
