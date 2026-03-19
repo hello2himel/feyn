@@ -313,8 +313,8 @@ export default function Home() {
 
             {/* ── WHAT IS FEYN + COURSES ── */}
             <div className="landing-body container" id="courses">
-              {/* Sticky sidebar: what is Feyn */}
-              <aside className="landing-sidebar">
+              {/* Sticky sidebar: what is Feyn — accented background */}
+              <aside className="landing-sidebar landing-sidebar--accented">
                 <p className="landing-sidebar__label">What is Feyn?</p>
                 <p className="landing-sidebar__text">
                   Feyn is the learning platform of <strong>STΛRGZR</strong>, a community
@@ -339,7 +339,7 @@ export default function Home() {
               {/* Course grid */}
               <div className="landing-courses">
                 <p className="section-label" style={{ marginBottom: 18 }}>
-                  <i className="ri-stack-line" style={{ marginRight: 6 }} />All courses
+                  <i className="ri-stack-line" style={{ marginRight: 6 }} />Flagship courses
                 </p>
                 {classes.length > 0 && (
                   <div style={{ marginBottom: 36 }}>
