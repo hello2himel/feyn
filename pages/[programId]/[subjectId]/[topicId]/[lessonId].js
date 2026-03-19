@@ -33,10 +33,12 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     const pct = getSubjectProgress(program.id, subject.id, subject)
     setSubjectPct(pct)
     if (subject.certificate && pct === 100) setCertReady(true)
+    else setCertReady(false)
     // Load saved watch position for resume
     const progress = getWatchProgress(lessonKey)
     if (progress && !w) setSavedProgress(progress.pct)
-  }, [signedIn])
+    else setSavedProgress(null)
+  }, [signedIn, lesson.id, subject.id])
 
   function handleAutoWatched() {
     if (!signedIn) return
@@ -51,6 +53,8 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     unmarkWatched(program.id, subject.id, topic.id, lesson.id)
     setWatched(false)
     setCertReady(false)
+    const pct = getSubjectProgress(program.id, subject.id, subject)
+    setSubjectPct(pct)
   }
 
   async function handleCert() {
