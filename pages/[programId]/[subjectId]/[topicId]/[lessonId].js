@@ -81,60 +81,33 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     const global     = isGlobalAccount()
 
     setCertLoading(true)
-
-    // ── Step 1: issue cert locally + fetch from DB ────────────────
     setCertStatus('fetching')
-    const cert = await issueCert(program.id, subject.id, subject.name, program.name, userName)
 
-    if (global) {
-      const { getSupabase } = await import('../../../../lib/supabase')
-      const sb = getSupabase()
+    const { cert, dbOk, dbError } = await issueCert(
+      program.id, subject.id, subject.name, program.name, userName
+    )
 
-      if (sb) {
-        // ── Step 2: check if it's already in DB ──────────────────
-        const { data: existing } = await sb
-          .from('certificates')
-          .select('id')
-          .eq('id', cert.id)
-          .maybeSingle()
-
-        if (!existing) {
-          // ── Step 3: not found — push it ────────────────────────
-          setCertStatus('pushing')
-          const { data: sessionData } = await sb.auth.getSession()
-          if (sessionData?.session) {
-            await sb.from('certificates').upsert({
-              user_id:      sessionData.session.user.id,
-              id:           cert.id,
-              program_id:   cert.programId,
-              subject_id:   cert.subjectId,
-              program_name: cert.programName,
-              subject_name: cert.subjectName,
-              user_name:    cert.userName,
-              issued_at:    new Date(cert.issuedAt).toISOString(),
-            }, { onConflict: 'id' })
-          }
-
-          // ── Step 4: verify it landed ───────────────────────────
-          setCertStatus('verifying')
-          await new Promise(r => setTimeout(r, 600))
-          const { data: confirmed } = await sb
-            .from('certificates')
-            .select('id')
-            .eq('id', cert.id)
-            .maybeSingle()
-
-          if (!confirmed) {
-            // Push failed silently — still allow download, just warn
-            console.warn('[Feyn] cert verify: not found after push — proceeding anyway')
-          }
-        }
-      }
+    if (!cert) {
+      setCertLoading(false)
+      setCertStatus('')
+      return
     }
 
-    // ── Step 5: show verified flash, then download ────────────────
-    setCertStatus('verified')
-    await new Promise(r => setTimeout(r, 800))
+    if (global) {
+      if (!dbOk) {
+        // Push failed — show the error in console, mark as failed, still allow download
+        console.error('[Feyn] cert not in DB after push:', dbError)
+        setCertStatus('failed')
+        await new Promise(r => setTimeout(r, 1500))
+      } else {
+        setCertStatus('verified')
+        await new Promise(r => setTimeout(r, 800))
+      }
+    } else {
+      // Local account — no DB, just show verified
+      setCertStatus('verified')
+      await new Promise(r => setTimeout(r, 800))
+    }
 
     await downloadCertificate({
       cert,
@@ -266,15 +239,13 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                       {certReady && (
                         <button className="btn btn--cert" onClick={handleCert} disabled={certLoading}>
                           <i className={
-                            certStatus === 'verified'
-                              ? 'ri-shield-check-fill'
-                              : certStatus
-                              ? 'ri-loader-4-line ri-spin'
-                              : 'ri-medal-line'
+                            certStatus === 'verified' ? 'ri-shield-check-fill'
+                            : certStatus === 'failed' ? 'ri-error-warning-line'
+                            : certStatus ? 'ri-loader-4-line ri-spin'
+                            : 'ri-medal-line'
                           } aria-hidden="true" />
-                          {certStatus === 'fetching'   ? 'Fetching…'
-                            : certStatus === 'pushing'  ? 'Pushing…'
-                            : certStatus === 'verifying'? 'Verifying…'
+                          {certStatus === 'fetching'  ? 'Fetching…'
+                            : certStatus === 'failed' ? 'DB error — downloading anyway'
                             : certStatus === 'verified' ? 'Verified ✓'
                             : hasCert(program.id, subject.id) ? 'Re-download Certificate'
                             : 'Download Certificate'}

@@ -5,7 +5,7 @@ import { Nav, Footer, ProgressBar, useAuth } from '../components/Layout'
 import {
   getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll,
-  getSubjectProgress, getCerts, isGlobalAccount,
+  getSubjectProgress, getCerts, isGlobalAccount, issueCert,
 } from '../lib/userStore'
 import { downloadCertificate } from '../lib/certificate'
 import data, { coaches } from '../data/courses'
@@ -65,53 +65,34 @@ export default function ProfilePage() {
     }
 
     const global = isGlobalAccount()
-
-    // ── Step 1: fetch from DB ────────────────────────────────────
     setStatus('fetching')
 
+    // Re-issue pushes to DB and returns whether it actually landed
+    const { cert: freshCert, dbOk, dbError } = await issueCert(
+      cert.programId || cert.program_id,
+      cert.subjectId || cert.subject_id,
+      cert.subjectName || cert.subject_name,
+      cert.programName || cert.program_name,
+      cert.userName    || cert.user_name,
+    )
+
+    const finalCert = freshCert || cert
+
     if (global) {
-      const { getSupabase } = await import('../lib/supabase')
-      const sb = getSupabase()
-
-      if (sb) {
-        const { data: existing } = await sb
-          .from('certificates')
-          .select('id')
-          .eq('id', id)
-          .maybeSingle()
-
-        if (!existing) {
-          // ── Step 2: not found — push ───────────────────────────
-          setStatus('pushing')
-          const { data: sessionData } = await sb.auth.getSession()
-          if (sessionData?.session) {
-            await sb.from('certificates').upsert({
-              user_id:      sessionData.session.user.id,
-              id:           cert.id,
-              program_id:   cert.programId   || cert.program_id,
-              subject_id:   cert.subjectId   || cert.subject_id,
-              program_name: cert.programName || cert.program_name,
-              subject_name: cert.subjectName || cert.subject_name,
-              user_name:    cert.userName    || cert.user_name,
-              issued_at:    cert.issuedAt
-                ? new Date(cert.issuedAt).toISOString()
-                : (cert.issued_at || new Date().toISOString()),
-            }, { onConflict: 'id' })
-          }
-
-          // ── Step 3: verify it landed ───────────────────────────
-          setStatus('verifying')
-          await new Promise(r => setTimeout(r, 600))
-          await sb.from('certificates').select('id').eq('id', id).maybeSingle()
-        }
+      if (!dbOk) {
+        console.error('[Feyn] profile cert not in DB after push:', dbError)
+        setStatus('failed')
+        await new Promise(r => setTimeout(r, 1500))
+      } else {
+        setStatus('verified')
+        await new Promise(r => setTimeout(r, 800))
       }
+    } else {
+      setStatus('verified')
+      await new Promise(r => setTimeout(r, 800))
     }
 
-    // ── Step 4: verified flash → download ────────────────────────
-    setStatus('verified')
-    await new Promise(r => setTimeout(r, 800))
-
-    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl, isGlobal: global })
+    await downloadCertificate({ cert: finalCert, coachName, coachTitle, coachSignatureUrl, isGlobal: global })
 
     setCertLoading(null)
     setCertStatus(prev => { const n = { ...prev }; delete n[id]; return n })
@@ -269,16 +250,14 @@ export default function ProfilePage() {
                     </div>
                     <button className="btn btn--accent btn--sm" onClick={() => handleDownloadCert(cert)} disabled={certLoading === cert.id}>
                       <i className={
-                        certStatus[cert.id] === 'verified'
-                          ? 'ri-shield-check-fill'
-                          : certStatus[cert.id]
-                          ? 'ri-loader-4-line ri-spin'
-                          : 'ri-download-2-line'
+                        certStatus[cert.id] === 'verified' ? 'ri-shield-check-fill'
+                        : certStatus[cert.id] === 'failed' ? 'ri-error-warning-line'
+                        : certStatus[cert.id] ? 'ri-loader-4-line ri-spin'
+                        : 'ri-download-2-line'
                       } />
-                      {certStatus[cert.id] === 'fetching'    ? 'Fetching…'
-                        : certStatus[cert.id] === 'pushing'  ? 'Pushing…'
-                        : certStatus[cert.id] === 'verifying'? 'Verifying…'
-                        : certStatus[cert.id] === 'verified' ? 'Verified ✓'
+                      {certStatus[cert.id] === 'fetching'   ? 'Fetching…'
+                        : certStatus[cert.id] === 'failed'  ? 'DB error — downloading anyway'
+                        : certStatus[cert.id] === 'verified'? 'Verified ✓'
                         : 'Download PDF'}
                     </button>
                   </div>
