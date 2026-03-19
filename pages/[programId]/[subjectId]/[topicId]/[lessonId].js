@@ -72,12 +72,13 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   }
 
   async function handleCert() {
-    const profile   = getProfile()
-    const userName  = profile?.name || 'Student'
-    const cert      = issueCert(program.id, subject.id, subject.name, program.name, userName)
-    const coachName = coaches[0]?.name || 'Instructor'
+    const profile    = getProfile()
+    const userName   = profile?.name || 'Student'
+    const cert       = issueCert(program.id, subject.id, subject.name, program.name, userName)
+    const coachName  = coaches[0]?.name  || 'Instructor'
+    const coachTitle = coaches[0]?.title || 'Instructor'
     setCertLoading(true)
-    await downloadCertificate({ cert, coachName })
+    await downloadCertificate({ cert, coachName, coachTitle, totalLessons })
     setCertLoading(false)
   }
 
