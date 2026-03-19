@@ -5,13 +5,17 @@
 // - Auto-marks as watched at 80% real watch time
 // - Saves progress percentage to userStore every 5 seconds
 // - Calls onAutoWatched() when 80% threshold is hit
+// - Calls onProgress(pct) every second so parent can show live bar
 // ============================================================
 
 import { useEffect, useRef, useCallback } from 'react'
 import { saveWatchProgress, setLastVisited } from '../lib/userStore'
 
+// ── YouTube IFrame API loader ─────────────────────────────────────────
+// Additive callback list — multiple instances / HMR re-runs never
+// overwrite each other's onYouTubeIframeAPIReady handler.
 let ytApiLoaded = false
-let ytApiCallbacks = []
+const ytApiCallbacks = []
 
 function loadYTApi(cb) {
   if (typeof window === 'undefined') return
@@ -19,9 +23,10 @@ function loadYTApi(cb) {
   ytApiCallbacks.push(cb)
   if (!ytApiLoaded) {
     ytApiLoaded = true
+    const prev = window.onYouTubeIframeAPIReady
     window.onYouTubeIframeAPIReady = () => {
-      ytApiCallbacks.forEach(fn => fn())
-      ytApiCallbacks = []
+      if (typeof prev === 'function') prev()
+      ytApiCallbacks.splice(0).forEach(fn => fn())
     }
     const tag = document.createElement('script')
     tag.src = 'https://www.youtube.com/iframe_api'
@@ -34,6 +39,7 @@ export default function SmartPlayer({
   lessonKey,        // "programId/subjectId/topicId/lessonId" for saving progress
   savedProgress,    // 0-100, previously saved percentage to resume from
   onAutoWatched,    // called when 80% genuine watch time reached
+  onProgress,       // NEW: called with (pct 0-100) every second — for live UI bar
   alreadyWatched,
 }) {
   const containerRef  = useRef(null)
@@ -43,9 +49,21 @@ export default function SmartPlayer({
   const watchedSegs   = useRef(new Set())
   const lastPos       = useRef(0)
   const durationRef   = useRef(0)
-  const autoFired     = useRef(alreadyWatched || false)
-
+  const autoFiredRef  = useRef(alreadyWatched || false)
   const hasStartedRef = useRef(false)
+
+  // Keep autoFired in sync when parent toggles alreadyWatched (mark/unmark)
+  useEffect(() => {
+    autoFiredRef.current = alreadyWatched || false
+  }, [alreadyWatched])
+
+  // Stable refs for every prop-callback so closures are never stale
+  const onAutoWatchedRef = useRef(onAutoWatched)
+  const onProgressRef    = useRef(onProgress)
+  const lessonKeyRef     = useRef(lessonKey)
+  useEffect(() => { onAutoWatchedRef.current = onAutoWatched }, [onAutoWatched])
+  useEffect(() => { onProgressRef.current    = onProgress    }, [onProgress])
+  useEffect(() => { lessonKeyRef.current     = lessonKey     }, [lessonKey])
 
   const computePct = useCallback(() => {
     if (!durationRef.current) return 0
@@ -63,26 +81,28 @@ export default function SmartPlayer({
       }
       lastPos.current = pos
 
+      // Push live genuine-watch % to parent every tick
+      const pct = computePct()
+      onProgressRef.current?.(pct)
+
       // Auto-mark at 80%
-      if (!autoFired.current) {
-        const pct = computePct()
-        if (pct >= 80) {
-          autoFired.current = true
-          onAutoWatched?.()
-        }
+      if (!autoFiredRef.current && pct >= 80) {
+        autoFiredRef.current = true
+        onAutoWatchedRef.current?.()
       }
     } catch (_) {}
-  }, [computePct, onAutoWatched])
+  }, [computePct])
 
-  // Save progress percentage to store every 5 seconds
+  // Save progress every 5s — uses genuine watch %, not raw scrub position
   const saveTick = useCallback(() => {
-    if (!playerRef.current || !lessonKey || !durationRef.current) return
+    const key = lessonKeyRef.current
+    if (!playerRef.current || !key || !durationRef.current) return
     try {
+      const pct = computePct()
       const pos = playerRef.current.getCurrentTime()
-      const pct = Math.round((pos / durationRef.current) * 100)
-      saveWatchProgress(lessonKey, pct, pos)
+      saveWatchProgress(key, pct, pos)
     } catch (_) {}
-  }, [lessonKey])
+  }, [computePct])
 
   useEffect(() => {
     const isPlaceholder = !videoId || videoId === 'YOUTUBE_ID_HERE'
@@ -94,22 +114,20 @@ export default function SmartPlayer({
         playerRef.current = new window.YT.Player(containerRef.current, {
           videoId,
           playerVars: {
-            rel:            0,   // no related videos at end
-            modestbranding: 1,   // minimal YouTube logo
-            iv_load_policy: 3,   // no annotations
-            playsinline:    1,   // inline on iOS
-            showinfo:       0,   // hide video title bar (deprecated but still works)
-            fs:             0,   // hide fullscreen button — we provide our own layout
-            cc_load_policy: 0,   // captions off by default
-            disablekb:      0,   // keep keyboard shortcuts (seek, space)
-            controls:       1,   // show native controls (play/pause/seek/volume only)
+            rel:            0,
+            modestbranding: 1,
+            iv_load_policy: 3,
+            playsinline:    1,
+            showinfo:       0,
+            fs:             1,   // FIXED: was 0, disabled fullscreen with no replacement
+            cc_load_policy: 0,
+            disablekb:      0,
+            controls:       1,
             origin: window.location.origin,
           },
           events: {
             onReady: (e) => {
               durationRef.current = e.target.getDuration()
-
-              // Resume from saved position if available and not already fully watched
               if (savedProgress && savedProgress > 0 && savedProgress < 95 && !alreadyWatched) {
                 const seekTo = (savedProgress / 100) * durationRef.current
                 e.target.seekTo(seekTo, true)
@@ -119,28 +137,28 @@ export default function SmartPlayer({
             onStateChange: (e) => {
               const S = window.YT.PlayerState
               if (e.data === S.PLAYING) {
-                lastPos.current = Math.floor(e.target.getCurrentTime())
+                lastPos.current     = Math.floor(e.target.getCurrentTime())
                 tickRef.current     = setInterval(tick, 1000)
                 saveTickRef.current = setInterval(saveTick, 5000)
-                // Mark this lesson as the last visited immediately on first play
-                if (!hasStartedRef.current && lessonKey) {
+                if (!hasStartedRef.current && lessonKeyRef.current) {
                   hasStartedRef.current = true
-                  const parts = lessonKey.split('/')
+                  const parts = lessonKeyRef.current.split('/')
                   if (parts.length === 4) setLastVisited(...parts)
                 }
               } else {
                 clearInterval(tickRef.current)
                 clearInterval(saveTickRef.current)
-                if (e.data === S.ENDED && !autoFired.current) {
-                  // Mark the last few seconds
+                if (e.data === S.ENDED && !autoFiredRef.current) {
                   const dur = Math.floor(durationRef.current)
                   for (let i = Math.max(0, dur - 3); i <= dur; i++) watchedSegs.current.add(i)
-                  if (computePct() >= 80) {
-                    autoFired.current = true
-                    onAutoWatched?.()
+                  const pct = computePct()
+                  onProgressRef.current?.(pct)
+                  if (pct >= 80) {
+                    autoFiredRef.current = true
+                    onAutoWatchedRef.current?.()
                   }
                 }
-                saveTick() // Save position on pause/end
+                saveTick()
               }
             },
           },
@@ -151,18 +169,20 @@ export default function SmartPlayer({
     return () => {
       clearInterval(tickRef.current)
       clearInterval(saveTickRef.current)
-      saveTick() // Save on unmount (navigation)
+      saveTick()
       try { playerRef.current?.destroy() } catch (_) {}
     }
-  }, [videoId])
+  }, [videoId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // videoId is the correct dep — player rebuilds only on video change.
+  // All other changing values are accessed via stable refs.
 
   const isPlaceholder = !videoId || videoId === 'YOUTUBE_ID_HERE'
 
   return (
-    <div className="video-wrap">
+    <div className="video-wrap" role="region" aria-label="Video player">
       {isPlaceholder ? (
         <div className="video-placeholder">
-          <i className="ri-play-circle-line" />
+          <i className="ri-play-circle-line" aria-hidden="true" />
           <span>Video coming soon</span>
         </div>
       ) : (
