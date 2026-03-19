@@ -3011,3 +3011,66 @@ i[class*="ri-"] {
 }
 .authflow-verify__note i { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
 .authflow-verify__note strong { color: var(--text); }
+
+/* =============================================
+   OTP INPUT
+   ============================================= */
+.otp-input-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0;
+}
+.otp-box {
+  width: 46px;
+  height: 54px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  letter-spacing: 0;
+  background: var(--bg-3);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  outline: none;
+  transition: border-color 150ms, background 150ms;
+  caret-color: transparent;
+}
+.otp-box:focus {
+  border-color: var(--accent-2);
+  background: var(--bg-4, var(--bg-3));
+}
+.otp-box.filled {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+.otp-box:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Resend row */
+.authflow-verify__resend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+.authflow-verify__retry {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--accent);
+  font: inherit;
+  padding: 0;
+  transition: opacity var(--transition);
+}
+.authflow-verify__retry:hover:not(:disabled) { opacity: 0.7; }
+.authflow-verify__retry:disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+}
