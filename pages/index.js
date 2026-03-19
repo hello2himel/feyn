@@ -62,7 +62,7 @@ function ContinueCard({ activity }) {
       <div className="continue-card__thumb">
         {hasThumb ? (
           <>
-            <img src={`https://i.ytimg.com/vi/${lesson.videoId}/mqdefault.jpg`} alt={lesson.title} />
+            <img src={`https://i.ytimg.com/vi/${lesson.videoId}/mqdefault.jpg`} alt={lesson.title} crossOrigin="anonymous" />
             <div className="continue-card__play-overlay">
               <div className="continue-card__play-btn">
                 <i className="ri-play-fill" />

@@ -10,15 +10,23 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
   const [watchedMap, setWatchedMap] = useState({})
   const [topicPct, setTopicPct]     = useState(0)
   const [mounted, setMounted]       = useState(false)
-  const coaches = getCoachesFor(topic.coachIds || subject.coachIds || [])
+
+  // Guard: during client-side navigation Next.js can briefly call the
+  // component before new props arrive — bail out to avoid crashes.
+  const coaches = (topic && subject)
+    ? getCoachesFor(topic.coachIds || subject.coachIds || [])
+    : []
 
   useEffect(() => {
+    if (!topic || !subject || !program) return
     setMounted(true)
     const map = {}
     topic.lessons.forEach(l => { map[l.id] = isWatched(program.id, subject.id, topic.id, l.id) })
     setWatchedMap(map)
     setTopicPct(getTopicProgress(program.id, subject.id, topic))
-  }, [])
+  }, [topic?.id, subject?.id, program?.id])
+
+  if (!program || !subject || !topic) return null
 
   const watchedCount = Object.values(watchedMap).filter(Boolean).length
 

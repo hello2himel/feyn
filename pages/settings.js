@@ -27,7 +27,10 @@ const TABS = [
 
 export default function SettingsPage() {
   const { signedIn, setShowAuth, refresh, mounted } = useAuth()
+  // null = menu screen (mobile); string = active tab (desktop always shows tab)
   const [activeTab, setActiveTab] = useState('account')
+  // Mobile: null means "show menu list", string means "show that section"
+  const [mobileView, setMobileView] = useState(null)
 
   if (!mounted) return null
 
@@ -54,6 +57,27 @@ export default function SettingsPage() {
   }
 
   const groups = [...new Set(TABS.map(t => t.group))]
+  const activeTabDef = TABS.find(t => t.id === (mobileView || activeTab))
+
+  function openTab(id) {
+    setActiveTab(id)
+    setMobileView(id)
+  }
+
+  function renderContent(id) {
+    switch (id) {
+      case 'account':    return <AccountTab    onRefresh={refresh} />
+      case 'security':   return <SecurityTab   onRefresh={refresh} />
+      case 'sync':       return <SyncTab       onRefresh={refresh} />
+      case 'appearance': return <AppearanceTab />
+      case 'classes':    return <ClassesTab />
+      case 'interests':  return <InterestsTab />
+      case 'feed':       return <FeedTab />
+      case 'privacy':    return <PrivacyTab />
+      case 'danger':     return <DangerTab     onRefresh={refresh} />
+      default:           return null
+    }
+  }
 
   return (
     <>
@@ -67,7 +91,7 @@ export default function SettingsPage() {
 
           <div className="settings-layout">
 
-            {/* Sidebar */}
+            {/* ── Desktop sidebar nav (always visible on desktop) ── */}
             <nav className="settings-nav">
               {groups.map(group => (
                 <div key={group} className="settings-nav__group">
@@ -76,7 +100,7 @@ export default function SettingsPage() {
                     <button
                       key={t.id}
                       className={`settings-nav__item ${activeTab === t.id ? 'active' : ''} ${t.id === 'danger' ? 'danger' : ''}`}
-                      onClick={() => setActiveTab(t.id)}
+                      onClick={() => openTab(t.id)}
                     >
                       <i className={t.icon} />
                       {t.label}
@@ -86,17 +110,61 @@ export default function SettingsPage() {
               ))}
             </nav>
 
-            {/* Content */}
+            {/* ── Content area ── */}
             <div className="settings-content">
-              {activeTab === 'account'    && <AccountTab    onRefresh={refresh} />}
-              {activeTab === 'security'   && <SecurityTab   onRefresh={refresh} />}
-              {activeTab === 'sync'       && <SyncTab       onRefresh={refresh} />}
-              {activeTab === 'appearance' && <AppearanceTab />}
-              {activeTab === 'classes'    && <ClassesTab />}
-              {activeTab === 'interests'  && <InterestsTab />}
-              {activeTab === 'feed'       && <FeedTab />}
-              {activeTab === 'privacy'    && <PrivacyTab />}
-              {activeTab === 'danger'     && <DangerTab     onRefresh={refresh} />}
+
+              {/* Mobile: menu list screen (shown when no mobileView selected) */}
+              <div className={`settings-mobile-menu ${mobileView ? 'settings-mobile-menu--hidden' : ''}`}>
+                {groups.map(group => (
+                  <div key={group} className="settings-mobile-group">
+                    <p className="settings-mobile-group__label">{group}</p>
+                    <div className="settings-mobile-group__items">
+                      {TABS.filter(t => t.group === group).map(t => (
+                        <button
+                          key={t.id}
+                          className={`settings-mobile-row ${t.id === 'danger' ? 'settings-mobile-row--danger' : ''}`}
+                          onClick={() => openTab(t.id)}
+                        >
+                          <span className="settings-mobile-row__icon-wrap">
+                            <i className={t.icon} aria-hidden="true" />
+                          </span>
+                          <span className="settings-mobile-row__label">{t.label}</span>
+                          <i className="ri-arrow-right-s-line settings-mobile-row__chevron" aria-hidden="true" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile: content screen (shown when a tab is selected) */}
+              <div className={`settings-mobile-detail ${mobileView ? 'settings-mobile-detail--visible' : ''}`}>
+                {/* Back button header */}
+                <div className="settings-mobile-detail__header">
+                  <button
+                    className="settings-mobile-detail__back"
+                    onClick={() => setMobileView(null)}
+                    aria-label="Back to Settings"
+                  >
+                    <i className="ri-arrow-left-line" aria-hidden="true" />
+                    Settings
+                  </button>
+                  {activeTabDef && (
+                    <span className="settings-mobile-detail__title">
+                      {activeTabDef.label}
+                    </span>
+                  )}
+                </div>
+                <div className="settings-mobile-detail__body">
+                  {mobileView && renderContent(mobileView)}
+                </div>
+              </div>
+
+              {/* Desktop: plain content (controlled by sidebar) */}
+              <div className="settings-desktop-content">
+                {renderContent(activeTab)}
+              </div>
+
             </div>
           </div>
         </div>

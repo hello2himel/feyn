@@ -345,7 +345,7 @@ export function YTThumb({ videoId, alt = '', className = '' }) {
   }
   return (
     <div className={`thumb ${className}`} style={{ aspectRatio: '16/9' }}>
-      <img src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`} alt={alt} onError={() => setErr(true)} />
+      <img src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`} alt={alt} crossOrigin="anonymous" onError={() => setErr(true)} />
       <div className="thumb__play"><i className="ri-play-fill" /></div>
     </div>
   )
@@ -429,18 +429,23 @@ export function MaterialsSidebar({ materials, subjectName }) {
         {inner}
       </aside>
 
-      {/* ── Mobile FAB ── */}
+      {/* ── Mobile persistent bottom bar trigger ── */}
       {materials.length > 0 && (
-        <button
-          className="sidebar-fab"
-          onClick={() => setOpen(true)}
-          aria-label="Open course materials"
-          aria-expanded={open}
-          aria-haspopup="dialog"
-        >
-          <i className="ri-folder-open-line" aria-hidden="true" />
-          <span className="sidebar-fab__badge">{materials.length}</span>
-        </button>
+        <div className="materials-bar" role="complementary" aria-label="Course materials">
+          <button
+            className="materials-bar__btn"
+            onClick={() => setOpen(true)}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+          >
+            <span className="materials-bar__icon">
+              <i className="ri-folder-open-line" aria-hidden="true" />
+            </span>
+            <span className="materials-bar__label">View Course Materials</span>
+            <span className="materials-bar__count">{materials.length}</span>
+            <i className="ri-arrow-up-s-line materials-bar__arrow" aria-hidden="true" />
+          </button>
+        </div>
       )}
 
       {/* ── Mobile bottom sheet ── */}
