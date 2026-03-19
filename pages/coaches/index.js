@@ -45,7 +45,8 @@ export default function CoachesPage() {
               const subjectCount = coachSubjectCount(coach.id)
               const lessonCount  = coachLessonCount(coach.id)
               return (
-                <Link key={coach.id} href={`/coaches/${coach.id}`} className="coach-card">
+                <div key={coach.id} className="coach-card">
+                  <Link href={`/coaches/${coach.id}`} className="coach-card__overlay-link" aria-label={coach.name} />
                   <div className="coach-card__avatar">
                     {coach.avatar
                       ? <img src={coach.avatar} alt={coach.name} />
@@ -61,7 +62,7 @@ export default function CoachesPage() {
                     </div>
                   </div>
                   <i className="ri-arrow-right-line coach-card__arrow" />
-                </Link>
+                </div>
               )
             })}
           </div>

@@ -65,7 +65,8 @@ export default function SubjectPage({ program, subject, allMaterials }) {
               {subject.topics.map(topic => {
                 const firstLesson = topic.lessons[0]
                 return (
-                  <Link key={topic.id} href={`/${program.id}/${subject.id}/${topic.id}`} className="topic-item">
+                  <div key={topic.id} className="topic-item">
+                    <Link href={`/${program.id}/${subject.id}/${topic.id}`} className="topic-item__overlay-link" aria-label={topic.name} />
                     <div className="topic-item__thumb">
                       <YTThumb videoId={firstLesson?.videoId} alt={topic.name} />
                     </div>
@@ -77,7 +78,7 @@ export default function SubjectPage({ program, subject, allMaterials }) {
                       </p>
                     </div>
                     <span className="topic-item__arrow"><i className="ri-arrow-right-line" /></span>
-                  </Link>
+                  </div>
                 )
               })}
             </section>
