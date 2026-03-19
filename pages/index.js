@@ -138,7 +138,7 @@ function FeedCard({ program, subject, enrolled, pct, mounted }) {
   )
 }
 
-function FeedSection({ title, icon, items, enrolledMap, progressMap, mounted, onMoveUp, onMoveDown, isFirst, isLast }) {
+function FeedSection({ title, icon, items, enrolledMap, progressMap, mounted }) {
   const [collapsed, setCollapsed] = useState(false)
   return (
     <section className="feed-section">
@@ -149,10 +149,8 @@ function FeedSection({ title, icon, items, enrolledMap, progressMap, mounted, on
           <span className="feed-section__count">{items.length}</span>
         </div>
         <div className="feed-section__header-right">
-          {!isFirst  && <button className="feed-reorder-btn" onClick={onMoveUp}><i className="ri-arrow-up-s-line" /></button>}
-          {!isLast   && <button className="feed-reorder-btn" onClick={onMoveDown}><i className="ri-arrow-down-s-line" /></button>}
           <button className="feed-reorder-btn" onClick={() => setCollapsed(c => !c)}>
-            <i className={`ri-arrow-${collapsed?'down':'up'}-s-line`} />
+            <i className={`ri-arrow-${collapsed ? 'down' : 'up'}-s-line`} />
           </button>
         </div>
       </div>
@@ -445,9 +443,7 @@ export default function Home() {
           ) : feedSections.length > 0 ? (
             feedSections.map((section, idx) => (
               <FeedSection key={section.id} title={section.title} icon={section.icon} items={section.items}
-                enrolledMap={enrolledMap} progressMap={progressMap} mounted={mounted}
-                onMoveUp={() => moveSection(idx,-1)} onMoveDown={() => moveSection(idx,1)}
-                isFirst={idx===0} isLast={idx===feedSections.length-1} />
+                enrolledMap={enrolledMap} progressMap={progressMap} mounted={mounted} />
             ))
           ) : (
             // Guest default: classes block + interests block
