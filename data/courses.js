@@ -1,5 +1,5 @@
 // ============================================================
-// FEYN — COURSE DATA
+// FEYN, COURSE DATA
 // Taxonomy:
 //   Level 0: programs  = Classes (HSC, SSC, Grade 7…) OR Interests (Music, Tech…)
 //             type: 'class' | 'interest'
@@ -75,13 +75,13 @@ const data = {
       id: "hsc",
       name: "HSC",
       type: "class",
-      description: "Higher Secondary Certificate — complete Science, Humanities and Commerce coverage.",
+      description: "Higher Secondary Certificate, complete Science, Humanities and Commerce coverage.",
       subjects: [
         {
           id: "hsc-physics",
           name: "Physics",
           icon: "ri-flashlight-line",
-          description: "From Newtonian mechanics to modern physics — built from first principles.",
+          description: "From Newtonian mechanics to modern physics, built from first principles.",
           coachIds: ["himel"],
           certificate: true,
           materials: [
@@ -94,20 +94,20 @@ const data = {
               description: "Position, velocity, acceleration and the language of motion.",
               coachIds: ["himel"],
               lessons: [
-                { id: "what-is-motion", title: "What is Motion?", videoId: "GtOt7Os41iE", duration: "11:00", description: "Before equations — what does it actually mean for something to move?", materials: [] },
+                { id: "what-is-motion", title: "What is Motion?", videoId: "GtOt7Os41iE", duration: "11:00", description: "Before equations, what does it actually mean for something to move?", materials: [] },
                 { id: "velocity-vs-speed", title: "Velocity vs Speed", videoId: "DRb5PSxJerM", duration: "9:45", description: "Why direction matters: the difference between scalar and vector quantities.", materials: [] },
-                { id: "acceleration", title: "Acceleration Explained", videoId: "FOkQszg1-j8", duration: "12:20", description: "What acceleration really is — and why it confuses people.", materials: [] },
+                { id: "acceleration", title: "Acceleration Explained", videoId: "FOkQszg1-j8", duration: "12:20", description: "What acceleration really is, and why it confuses people.", materials: [] },
                 { id: "equations-of-motion", title: "Equations of Motion", videoId: "VYgSXBjEA8I", duration: "15:10", description: "Deriving the four kinematic equations from intuition, not memorisation.", materials: [{ id: "m-eom", label: "Equations Cheat Sheet", url: "#", type: "pdf" }] }
               ]
             },
             {
               id: "dynamics",
               name: "Dynamics & Newton's Laws",
-              description: "Forces, mass, inertia — why things move the way they do.",
+              description: "Forces, mass, inertia, why things move the way they do.",
               coachIds: ["himel"],
               lessons: [
                 { id: "newtons-first", title: "Newton's First Law", videoId: "CQYgIBDFDlo", duration: "10:30", description: "Inertia and the natural state of objects. Why do moving things keep moving?", materials: [] },
-                { id: "newtons-second", title: "F = ma — What It Really Means", videoId: "ou9YMWlJgkE", duration: "13:45", description: "The second law unpacked — force, mass, and acceleration.", materials: [] },
+                { id: "newtons-second", title: "F = ma, What It Really Means", videoId: "ou9YMWlJgkE", duration: "13:45", description: "The second law unpacked, force, mass, and acceleration.", materials: [] },
                 { id: "newtons-third", title: "Action & Reaction", videoId: "By-ggTfeuJU", duration: "11:00", description: "Every force has a pair. Understanding Newton's third law deeply.", materials: [] }
               ]
             },
@@ -117,8 +117,8 @@ const data = {
               description: "Heat, temperature, and the laws that govern energy transfer.",
               coachIds: ["himel"],
               lessons: [
-                { id: "what-is-heat", title: "What is Heat?", videoId: "vqDbMEdLiCs", duration: "13:20", description: "Heat as energy in transit — the microscopic picture.", materials: [] },
-                { id: "temperature-scales", title: "Temperature Scales", videoId: "O7zZPqar50g", duration: "8:30", description: "Celsius, Kelvin, Fahrenheit — and why absolute zero matters.", materials: [] },
+                { id: "what-is-heat", title: "What is Heat?", videoId: "vqDbMEdLiCs", duration: "13:20", description: "Heat as energy in transit, the microscopic picture.", materials: [] },
+                { id: "temperature-scales", title: "Temperature Scales", videoId: "O7zZPqar50g", duration: "8:30", description: "Celsius, Kelvin, Fahrenheit, and why absolute zero matters.", materials: [] },
                 { id: "first-law-thermo", title: "First Law of Thermodynamics", videoId: "4i1MUWJoI0U", duration: "14:00", description: "Conservation of energy applied to heat and work.", materials: [] }
               ]
             }
@@ -128,7 +128,7 @@ const data = {
           id: "hsc-chemistry",
           name: "Chemistry",
           icon: "ri-flask-line",
-          description: "From atomic structure to organic reactions — systematic and intuitive.",
+          description: "From atomic structure to organic reactions, systematic and intuitive.",
           coachIds: ["ashiqur"],
           certificate: true,
           materials: [],
@@ -139,9 +139,9 @@ const data = {
               description: "The building blocks of all matter.",
               coachIds: ["ashiqur"],
               lessons: [
-                { id: "atoms-intro", title: "What is an Atom?", videoId: "xazQRcSCRaY", duration: "10:00", description: "Protons, neutrons, electrons — and why the atom is mostly empty space.", materials: [] },
+                { id: "atoms-intro", title: "What is an Atom?", videoId: "xazQRcSCRaY", duration: "10:00", description: "Protons, neutrons, electrons, and why the atom is mostly empty space.", materials: [] },
                 { id: "electron-config", title: "Electron Configuration", videoId: "i5PtaCJJFjw", duration: "14:30", description: "How electrons arrange themselves around the nucleus.", materials: [] },
-                { id: "periodic-table", title: "The Periodic Table Explained", videoId: "0RRVV4Diomg", duration: "12:45", description: "Why the periodic table is arranged the way it is — the logic behind it.", materials: [] }
+                { id: "periodic-table", title: "The Periodic Table Explained", videoId: "0RRVV4Diomg", duration: "12:45", description: "Why the periodic table is arranged the way it is, the logic behind it.", materials: [] }
               ]
             },
             {
@@ -151,7 +151,7 @@ const data = {
               coachIds: ["ashiqur"],
               lessons: [
                 { id: "ionic-bonds", title: "Ionic Bonds", videoId: "CGA8sRwqIFg", duration: "11:15", description: "How atoms transfer electrons to form ionic compounds.", materials: [] },
-                { id: "covalent-bonds", title: "Covalent Bonds", videoId: "S90WKAHthbE", duration: "12:00", description: "Sharing electrons — covalent bond formation explained simply.", materials: [] }
+                { id: "covalent-bonds", title: "Covalent Bonds", videoId: "S90WKAHthbE", duration: "12:00", description: "Sharing electrons, covalent bond formation explained simply.", materials: [] }
               ]
             },
             {
@@ -161,7 +161,7 @@ const data = {
               coachIds: ["ashiqur"],
               lessons: [
                 { id: "intro-organic", title: "Introduction to Organic Chemistry", videoId: "bSMx0NS0XfY", duration: "13:00", description: "Why carbon is special and what makes organic chemistry its own world.", materials: [] },
-                { id: "hydrocarbons", title: "Hydrocarbons", videoId: "R_b-MEKp3ZA", duration: "15:30", description: "Alkanes, alkenes, alkynes — naming and properties.", materials: [] },
+                { id: "hydrocarbons", title: "Hydrocarbons", videoId: "R_b-MEKp3ZA", duration: "15:30", description: "Alkanes, alkenes, alkynes, naming and properties.", materials: [] },
                 { id: "functional-groups", title: "Functional Groups", videoId: "JGkIFAsnWoI", duration: "14:20", description: "The key groups that give organic molecules their properties.", materials: [] }
               ]
             }
@@ -171,7 +171,7 @@ const data = {
           id: "hsc-math",
           name: "Mathematics",
           icon: "ri-calculator-line",
-          description: "Algebra, calculus, vectors — the complete HSC mathematics curriculum.",
+          description: "Algebra, calculus, vectors, the complete HSC mathematics curriculum.",
           coachIds: ["himel"],
           certificate: true,
           materials: [{ id: "hsc-math-m1", label: "HSC Math Formula Sheet", url: "#", type: "pdf" }],
@@ -182,10 +182,10 @@ const data = {
               description: "Vectors, matrices, and linear transformations.",
               coachIds: ["himel"],
               lessons: [
-                { id: "what-is-a-vector", title: "What is a Vector?", videoId: "fNk_zzaMoSs", duration: "12:30", description: "Intuitive introduction to vectors — geometry before formulas.", materials: [{ id: "l-v1-1", label: "Vector Notes", url: "#", type: "pdf" }] },
-                { id: "vector-addition", title: "Vector Addition & Scaling", videoId: "wDJmLJkeXEM", duration: "10:15", description: "How vectors combine — the geometry of addition.", materials: [] },
+                { id: "what-is-a-vector", title: "What is a Vector?", videoId: "fNk_zzaMoSs", duration: "12:30", description: "Intuitive introduction to vectors, geometry before formulas.", materials: [{ id: "l-v1-1", label: "Vector Notes", url: "#", type: "pdf" }] },
+                { id: "vector-addition", title: "Vector Addition & Scaling", videoId: "wDJmLJkeXEM", duration: "10:15", description: "How vectors combine, the geometry of addition.", materials: [] },
                 { id: "intro-to-matrices", title: "What is a Matrix?", videoId: "rowWM-x7IU8", duration: "14:00", description: "Matrices as linear transformations.", materials: [] },
-                { id: "determinants", title: "Determinants", videoId: "Ip3X9LOh2dk", duration: "11:30", description: "What the determinant is really telling you — geometrically.", materials: [] }
+                { id: "determinants", title: "Determinants", videoId: "Ip3X9LOh2dk", duration: "11:30", description: "What the determinant is really telling you, geometrically.", materials: [] }
               ]
             },
             {
@@ -194,8 +194,8 @@ const data = {
               description: "Differentiation and integration from first principles.",
               coachIds: ["himel"],
               lessons: [
-                { id: "limits", title: "Limits — The Foundation", videoId: "W4pGBBUOAC0", duration: "13:00", description: "What a limit is and why calculus needs it.", materials: [] },
-                { id: "derivatives", title: "What is a Derivative?", videoId: "rAof9Ld5sOg", duration: "14:30", description: "The derivative as a rate of change — built from scratch.", materials: [] },
+                { id: "limits", title: "Limits, The Foundation", videoId: "W4pGBBUOAC0", duration: "13:00", description: "What a limit is and why calculus needs it.", materials: [] },
+                { id: "derivatives", title: "What is a Derivative?", videoId: "rAof9Ld5sOg", duration: "14:30", description: "The derivative as a rate of change, built from scratch.", materials: [] },
                 { id: "integration", title: "Integration Explained", videoId: "rfG8ce4nNh0", duration: "15:00", description: "Anti-derivatives and the area under a curve.", materials: [] }
               ]
             }
@@ -205,7 +205,7 @@ const data = {
           id: "hsc-biology",
           name: "Biology",
           icon: "ri-microscope-line",
-          description: "Cell biology, genetics, ecology — life explained at every scale.",
+          description: "Cell biology, genetics, ecology, life explained at every scale.",
           coachIds: ["nadia"],
           certificate: false,
           materials: [],
@@ -216,7 +216,7 @@ const data = {
               description: "The fundamental unit of life.",
               coachIds: ["nadia"],
               lessons: [
-                { id: "cell-intro", title: "The Cell — An Overview", videoId: "URUJD5NEXC8", duration: "12:00", description: "Plant vs animal cells, organelles and their roles.", materials: [] },
+                { id: "cell-intro", title: "The Cell, An Overview", videoId: "URUJD5NEXC8", duration: "12:00", description: "Plant vs animal cells, organelles and their roles.", materials: [] },
                 { id: "cell-membrane", title: "Cell Membrane & Transport", videoId: "Qqe-yvQhBGs", duration: "11:30", description: "How substances move in and out of cells.", materials: [] }
               ]
             },
@@ -226,7 +226,7 @@ const data = {
               description: "DNA, heredity, and how traits pass through generations.",
               coachIds: ["nadia"],
               lessons: [
-                { id: "dna-structure", title: "DNA Structure", videoId: "aeAL6xThRdE", duration: "13:00", description: "The double helix — how information is stored in DNA.", materials: [] },
+                { id: "dna-structure", title: "DNA Structure", videoId: "aeAL6xThRdE", duration: "13:00", description: "The double helix, how information is stored in DNA.", materials: [] },
                 { id: "mendelian-genetics", title: "Mendelian Genetics", videoId: "CB0_D7KTBOI", duration: "14:20", description: "Dominant, recessive, and how traits inherit.", materials: [] }
               ]
             }
@@ -240,7 +240,7 @@ const data = {
       id: "ssc",
       name: "SSC",
       type: "class",
-      description: "Secondary School Certificate — Grades 9–10 full curriculum.",
+      description: "Secondary School Certificate, Grades 9–10 full curriculum.",
       subjects: [
         {
           id: "ssc-math",
@@ -269,7 +269,7 @@ const data = {
               coachIds: ["rafiq"],
               lessons: [
                 { id: "triangles", title: "Properties of Triangles", videoId: "eTiGaJ3kl2c", duration: "10:30", description: "Angle sum, congruence, and similarity.", materials: [] },
-                { id: "pythagoras", title: "Pythagoras Theorem", videoId: "CAkMUdeB06o", duration: "9:45", description: "Why a² + b² = c² — proof and applications.", materials: [] },
+                { id: "pythagoras", title: "Pythagoras Theorem", videoId: "CAkMUdeB06o", duration: "9:45", description: "Why a² + b² = c², proof and applications.", materials: [] },
                 { id: "circles", title: "Circles & Arcs", videoId: "YqqNAkn7vJs", duration: "11:00", description: "Radius, diameter, circumference, and arc length.", materials: [] }
               ]
             }
@@ -290,7 +290,7 @@ const data = {
               description: "States of matter, physical and chemical changes.",
               coachIds: ["nadia"],
               lessons: [
-                { id: "states-matter", title: "States of Matter", videoId: "WMEovlLrOek", duration: "10:00", description: "Solid, liquid, gas — and plasma. What makes each state different.", materials: [] },
+                { id: "states-matter", title: "States of Matter", videoId: "WMEovlLrOek", duration: "10:00", description: "Solid, liquid, gas, and plasma. What makes each state different.", materials: [] },
                 { id: "physical-vs-chemical", title: "Physical vs Chemical Changes", videoId: "OAn6-W0hNas", duration: "9:30", description: "How to tell whether a change is physical or chemical.", materials: [] }
               ]
             }
@@ -311,8 +311,8 @@ const data = {
               description: "Parts of speech, tenses, and sentence structure.",
               coachIds: ["sara"],
               lessons: [
-                { id: "parts-of-speech", title: "Parts of Speech", videoId: "SRpMSjTJ_VQ", duration: "10:30", description: "Nouns, verbs, adjectives, adverbs — the building blocks of English.", materials: [] },
-                { id: "verb-tenses", title: "Verb Tenses", videoId: "pnMcqOOXRdw", duration: "12:00", description: "Past, present, future — and the perfect and continuous forms.", materials: [] },
+                { id: "parts-of-speech", title: "Parts of Speech", videoId: "SRpMSjTJ_VQ", duration: "10:30", description: "Nouns, verbs, adjectives, adverbs, the building blocks of English.", materials: [] },
+                { id: "verb-tenses", title: "Verb Tenses", videoId: "pnMcqOOXRdw", duration: "12:00", description: "Past, present, future, and the perfect and continuous forms.", materials: [] },
                 { id: "passive-voice", title: "Active vs Passive Voice", videoId: "usSMaL0KZFM", duration: "9:45", description: "When and how to use the passive voice correctly.", materials: [] }
               ]
             }
@@ -326,7 +326,7 @@ const data = {
       id: "jsc",
       name: "JSC",
       type: "class",
-      description: "Junior School Certificate — Grade 8 curriculum.",
+      description: "Junior School Certificate, Grade 8 curriculum.",
       subjects: [
         {
           id: "jsc-math",
@@ -343,7 +343,7 @@ const data = {
               description: "Understanding parts of a whole.",
               coachIds: ["rafiq"],
               lessons: [
-                { id: "fractions-intro", title: "What is a Fraction?", videoId: "yg-BGvBM66M", duration: "8:00", description: "Numerator, denominator — and why fractions matter.", materials: [] },
+                { id: "fractions-intro", title: "What is a Fraction?", videoId: "yg-BGvBM66M", duration: "8:00", description: "Numerator, denominator, and why fractions matter.", materials: [] },
                 { id: "ratios", title: "Ratios & Proportions", videoId: "1Rk4eStd7hg", duration: "9:30", description: "How to compare quantities and solve proportion problems.", materials: [] }
               ]
             }
@@ -374,8 +374,8 @@ const data = {
               description: "Place value, rounding, and number lines.",
               coachIds: ["rafiq"],
               lessons: [
-                { id: "place-value", title: "Place Value", videoId: "0x7qRpqFDSI", duration: "7:30", description: "Ones, tens, hundreds — understanding positional notation.", materials: [] },
-                { id: "rounding", title: "Rounding Numbers", videoId: "X4bk5FVEUUo", duration: "6:45", description: "How and when to round — with real examples.", materials: [] }
+                { id: "place-value", title: "Place Value", videoId: "0x7qRpqFDSI", duration: "7:30", description: "Ones, tens, hundreds, understanding positional notation.", materials: [] },
+                { id: "rounding", title: "Rounding Numbers", videoId: "X4bk5FVEUUo", duration: "6:45", description: "How and when to round, with real examples.", materials: [] }
               ]
             }
           ]
@@ -394,7 +394,7 @@ const data = {
           id: "python",
           name: "Python Programming",
           icon: "ri-code-line",
-          description: "From hello world to real projects — Python for complete beginners.",
+          description: "From hello world to real projects, Python for complete beginners.",
           coachIds: ["tanvir"],
           certificate: true,
           materials: [],
@@ -408,7 +408,7 @@ const data = {
                 { id: "hello-world", title: "Hello World & Setup", videoId: "rfscVS0vtbw", duration: "13:30", description: "Installing Python and writing your first program.", materials: [] },
                 { id: "variables", title: "Variables & Data Types", videoId: "TM0pBPn3rrI", duration: "14:00", description: "Storing and manipulating data in Python.", materials: [] },
                 { id: "conditionals", title: "If / Else / Elif", videoId: "DZwmZ8Usvnk", duration: "11:00", description: "Making decisions in code.", materials: [] },
-                { id: "loops", title: "Loops: For & While", videoId: "OnDr4J2UXSA", duration: "12:30", description: "Repeating actions — iteration in Python.", materials: [] }
+                { id: "loops", title: "Loops: For & While", videoId: "OnDr4J2UXSA", duration: "12:30", description: "Repeating actions, iteration in Python.", materials: [] }
               ]
             },
             {
@@ -427,7 +427,7 @@ const data = {
           id: "web-dev",
           name: "Web Development",
           icon: "ri-global-line",
-          description: "HTML, CSS, JavaScript — build real websites from scratch.",
+          description: "HTML, CSS, JavaScript, build real websites from scratch.",
           coachIds: ["tanvir"],
           certificate: false,
           materials: [],
@@ -439,7 +439,7 @@ const data = {
               coachIds: ["tanvir"],
               lessons: [
                 { id: "html-intro", title: "What is HTML?", videoId: "ysEN5RaKOlA", duration: "10:00", description: "Tags, elements, and the anatomy of a web page.", materials: [] },
-                { id: "html-structure", title: "Document Structure", videoId: "mbeT8mpmtHA", duration: "11:30", description: "Head, body, semantic elements — building the right skeleton.", materials: [] }
+                { id: "html-structure", title: "Document Structure", videoId: "mbeT8mpmtHA", duration: "11:30", description: "Head, body, semantic elements, building the right skeleton.", materials: [] }
               ]
             },
             {
@@ -468,7 +468,7 @@ const data = {
           id: "music-theory",
           name: "Music Theory",
           icon: "ri-music-2-line",
-          description: "Notes, scales, chords — the grammar of music.",
+          description: "Notes, scales, chords, the grammar of music.",
           coachIds: ["mitu"],
           certificate: false,
           materials: [],
@@ -480,8 +480,8 @@ const data = {
               coachIds: ["mitu"],
               lessons: [
                 { id: "what-is-a-note", title: "What is a Note?", videoId: "j5I-_CTCzB0", duration: "9:00", description: "Pitch, frequency, and why certain notes sound the way they do.", materials: [] },
-                { id: "major-scale", title: "The Major Scale", videoId: "jQUG1aazSP8", duration: "11:30", description: "Building the major scale — whole steps, half steps, and the pattern.", materials: [] },
-                { id: "minor-scale", title: "The Minor Scale", videoId: "gEsFF_hSmQs", duration: "10:45", description: "Natural minor — the scale behind most emotional music.", materials: [] }
+                { id: "major-scale", title: "The Major Scale", videoId: "jQUG1aazSP8", duration: "11:30", description: "Building the major scale, whole steps, half steps, and the pattern.", materials: [] },
+                { id: "minor-scale", title: "The Minor Scale", videoId: "gEsFF_hSmQs", duration: "10:45", description: "Natural minor, the scale behind most emotional music.", materials: [] }
               ]
             },
             {
@@ -490,7 +490,7 @@ const data = {
               description: "How notes combine into chords and progressions.",
               coachIds: ["mitu"],
               lessons: [
-                { id: "triads", title: "Triads — The Basic Chord", videoId: "9V8BVKnIxXk", duration: "10:00", description: "Major, minor, diminished, augmented — the four triads.", materials: [] },
+                { id: "triads", title: "Triads, The Basic Chord", videoId: "9V8BVKnIxXk", duration: "10:00", description: "Major, minor, diminished, augmented, the four triads.", materials: [] },
                 { id: "chord-progressions", title: "Chord Progressions", videoId: "4RT4cqbMOj8", duration: "12:30", description: "Why certain chord sequences feel resolved, tense, or emotional.", materials: [] }
               ]
             }
@@ -512,7 +512,7 @@ const data = {
               coachIds: ["mitu"],
               lessons: [
                 { id: "guitar-anatomy", title: "Parts of a Guitar", videoId: "oieMaHvCmWs", duration: "7:30", description: "Know your instrument before you play it.", materials: [] },
-                { id: "first-chords", title: "Your First Three Chords", videoId: "HqTnUAUjPFI", duration: "12:00", description: "G, C, D — the three chords that unlock hundreds of songs.", materials: [] }
+                { id: "first-chords", title: "Your First Three Chords", videoId: "HqTnUAUjPFI", duration: "12:00", description: "G, C, D, the three chords that unlock hundreds of songs.", materials: [] }
               ]
             }
           ]
@@ -525,7 +525,7 @@ const data = {
       id: "languages",
       name: "Languages",
       type: "interest",
-      description: "English, Bangla, Arabic and more — language learning for all levels.",
+      description: "English, Bangla, Arabic and more, language learning for all levels.",
       subjects: [
         {
           id: "english-skills",
@@ -543,7 +543,7 @@ const data = {
               coachIds: ["sara"],
               lessons: [
                 { id: "pronunciation", title: "English Pronunciation Basics", videoId: "dOgqEsNyiJw", duration: "10:00", description: "Common pronunciation mistakes and how to fix them.", materials: [] },
-                { id: "fluency", title: "Building Fluency", videoId: "FQK9x5HQVQ0", duration: "11:30", description: "How to speak more naturally — practical techniques.", materials: [] }
+                { id: "fluency", title: "Building Fluency", videoId: "FQK9x5HQVQ0", duration: "11:30", description: "How to speak more naturally, practical techniques.", materials: [] }
               ]
             }
           ]
@@ -556,13 +556,13 @@ const data = {
       id: "art",
       name: "Art & Design",
       type: "interest",
-      description: "Drawing, digital art, design principles — creative skills for everyone.",
+      description: "Drawing, digital art, design principles, creative skills for everyone.",
       subjects: [
         {
           id: "drawing-basics",
           name: "Drawing Fundamentals",
           icon: "ri-brush-line",
-          description: "Lines, forms, shading — the foundation of all visual art.",
+          description: "Lines, forms, shading, the foundation of all visual art.",
           coachIds: ["mitu"],
           certificate: false,
           materials: [],
@@ -573,7 +573,7 @@ const data = {
               description: "Everything is made of simple shapes.",
               coachIds: ["mitu"],
               lessons: [
-                { id: "line-control", title: "Line Control", videoId: "q_QjKDK5J2E", duration: "8:30", description: "Straight lines, curves, and pressure — the fundamentals of drawing.", materials: [] },
+                { id: "line-control", title: "Line Control", videoId: "q_QjKDK5J2E", duration: "8:30", description: "Straight lines, curves, and pressure, the fundamentals of drawing.", materials: [] },
                 { id: "shading", title: "Shading & Value", videoId: "H5sSHLpMNtk", duration: "11:00", description: "How light and shadow create the illusion of 3D form.", materials: [] }
               ]
             }

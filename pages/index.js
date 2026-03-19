@@ -54,7 +54,7 @@ function resolveNextLesson(activity) {
     }
   }
 
-  // All done — return the last watched lesson itself (course complete)
+  // All done, return the last watched lesson itself (course complete)
   const currentLesson = topic.lessons.find(l => l.id === lessonId)
   return currentLesson
     ? { program, subject, topic, lesson: currentLesson, programId, subjectId, topicId, lessonId, completed: true }
@@ -268,14 +268,14 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Feyn — Learn from first principles</title>
-        <meta name="description" content="Feyn is a structured video learning platform inspired by Feynman Files. Every concept built from the ground up — one idea, one lesson." />
+        <title>Feyn, Learn from first principles</title>
+        <meta name="description" content="Feyn is a structured video learning platform inspired by Feynman Files. Every concept built from the ground up, one idea, one lesson." />
       </Head>
       <Nav />
       <main>
 
         {/* ══════════════════════════════════════════
-            LANDING — shown to guests only
+            LANDING, shown to guests only
             ══════════════════════════════════════════ */}
         {(!mounted || !signedIn) && (
           <div className="landing-hero">
@@ -285,7 +285,7 @@ export default function Home() {
               <div className="landing-hero__content">
                 <div className="landing-hero__eyebrow">
                   <span className="landing-hero__badge">
-                    <i className="ri-sparkling-2-line" /> A STΛRGZR project · Free · Open · No signup required
+                    <i className="ri-sparkling-2-line" /> For students who want to actually understand things
                   </span>
                 </div>
                 <h1 className="landing-hero__title">
@@ -293,16 +293,15 @@ export default function Home() {
                   <span className="landing-hero__accent">Feynman would.</span>
                 </h1>
                 <p className="landing-hero__sub">
-                  Feyn is the educational video platform of <strong>STΛRGZR</strong> — a network for
-                  students who refuse to be confined by traditional education. Every lesson starts
-                  from intuition, builds from first principles, and doesn't move on until the idea
-                  is truly understood.
+                  Feyn is where STΛRGZR teaches. Every lesson starts from scratch,
+                  builds slowly, and earns your understanding before moving on.
+                  No skipped steps. No assumed knowledge. No fluff.
                 </p>
                 <p className="landing-hero__quote">
                   <i className="ri-double-quotes-l" />
                   {' '}If you can't explain it simply, you don't understand it well enough.{' '}
                   <i className="ri-double-quotes-r" />
-                  <span className="landing-hero__quote-attr">— Richard Feynman</span>
+                  <span className="landing-hero__quote-attr">Richard Feynman</span>
                 </p>
                 <div className="landing-hero__actions">
                   {mounted && !signedIn && (
@@ -313,100 +312,81 @@ export default function Home() {
                   <a href="#courses" className="btn btn--ghost landing-btn">
                     <i className="ri-play-circle-line" /> Browse courses
                   </a>
-                  <a href="https://stargzr.netlify.app" className="btn btn--ghost landing-btn" target="_blank" rel="noopener noreferrer">
-                    <i className="ri-external-link-line" /> About STΛRGZR
-                  </a>
                 </div>
               </div>
 
-              {/* Metrics */}
-              <div className="landing-metrics">
-                <div className="metric-card">
-                  <span className="metric-card__num">{metrics.programs}</span>
-                  <span className="metric-card__label"><i className="ri-stack-line" /> Programs</span>
-                </div>
-                <div className="metric-card">
-                  <span className="metric-card__num">{metrics.courses}</span>
-                  <span className="metric-card__label"><i className="ri-book-open-line" /> Courses</span>
-                </div>
-                <div className="metric-card">
-                  <span className="metric-card__num">{metrics.lessons}</span>
-                  <span className="metric-card__label"><i className="ri-play-circle-line" /> Lessons</span>
-                </div>
-                <div className="metric-card">
-                  <span className="metric-card__num">{metrics.coaches}</span>
-                  <span className="metric-card__label"><i className="ri-user-star-line" /> Instructors</span>
-                </div>
+              {/* Pills, values, not metrics */}
+              <div className="landing-pills">
+                {[
+                  { icon: 'ri-seedling-line',      text: 'Start from zero. Always.' },
+                  { icon: 'ri-brain-line',          text: 'Intuition before formulas' },
+                  { icon: 'ri-group-line',          text: 'Taught by people who get it' },
+                  { icon: 'ri-lock-unlock-line',    text: 'Completely free. No catch.' },
+                  { icon: 'ri-medal-line',          text: 'Earn real certificates' },
+                  { icon: 'ri-heart-line',          text: 'Built with love by STΛRGZR' },
+                ].map(p => (
+                  <div key={p.text} className="landing-pill">
+                    <i className={p.icon} />
+                    <span>{p.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* ── WHAT IS FEYN ── */}
-            <div className="landing-about">
-              <div className="container">
-                <div className="landing-about__grid">
-                  <div className="landing-about__text">
-                    <p className="landing-about__eyebrow"><i className="ri-information-line" /> What is Feyn?</p>
-                    <h2 className="landing-about__title">Peer-to-peer learning,<br />done properly.</h2>
-                    <p className="landing-about__body">
-                      Born inside STΛRGZR — a community of students and dreamers who believe education
-                      should be a journey of exploration, not memorisation — <strong>Feyn</strong> is
-                      the video wing of that movement.
-                    </p>
-                    <p className="landing-about__body">
-                      The name honours <strong>Feynman Files</strong>: the original series where complex
-                      concepts were explained simply by peers who understood the struggle of learning.
-                      Feyn carries that spirit forward as a full learning platform — structured,
-                      curriculum-aligned, and genuinely curiosity-first.
-                    </p>
-                    <p className="landing-about__body">
-                      We cover the full HSC, SSC and JSC curriculum. We also cover music, programming,
-                      art, and languages — because curiosity doesn't stop at the exam syllabus.
-                    </p>
-                    <a href="https://stargzr.netlify.app" className="landing-about__link" target="_blank" rel="noopener noreferrer">
-                      Learn about STΛRGZR <i className="ri-arrow-right-line" />
-                    </a>
-                  </div>
-                  <div className="landing-about__pillars">
-                    {[
-                      { icon: 'ri-brain-line',            title: 'Curiosity first',     body: 'Genuine curiosity is the foundation of all real learning. We never skip the "why".' },
-                      { icon: 'ri-route-line',            title: 'First principles',     body: 'Every concept starts from intuition and builds up carefully. No unexplained jumps.' },
-                      { icon: 'ri-group-line',            title: 'Peer teaching',        body: 'You learn best from someone who recently understood the same thing you\'re struggling with.' },
-                      { icon: 'ri-lock-unlock-line',      title: 'Radically free',       body: 'No paywalls, no ads, no tracking. Knowledge flows freely here.' },
-                    ].map(p => (
-                      <div key={p.title} className="landing-pillar">
-                        <i className={p.icon} />
-                        <div>
-                          <p className="landing-pillar__title">{p.title}</p>
-                          <p className="landing-pillar__body">{p.body}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* ── WHAT IS FEYN + COURSES ── */}
+            <div className="landing-body container" id="courses">
+              {/* Sticky sidebar: what is Feyn */}
+              <aside className="landing-sidebar">
+                <p className="landing-sidebar__label">What is Feyn?</p>
+                <p className="landing-sidebar__text">
+                  Feyn is the learning platform of <strong>STΛRGZR</strong>, a community
+                  for students who refuse to learn by memorisation alone.
+                </p>
+                <p className="landing-sidebar__text">
+                  It grew out of <strong>Feynman Files</strong>, a peer teaching series
+                  where students explained things the way they wished someone had explained
+                  it to them. That spirit is now a full platform.
+                </p>
+                <p className="landing-sidebar__text">
+                  We cover HSC, SSC and JSC in full. We also go beyond the syllabus
+                  because curiosity does not stop at the exam.
+                </p>
+                {mounted && !signedIn && (
+                  <button className="btn btn--accent btn--sm" onClick={() => setShowAuth(true)} style={{ marginTop: 20 }}>
+                    <i className="ri-user-add-line" /> Join the community
+                  </button>
+                )}
+              </aside>
 
-            {/* ── FEATURE STRIP ── */}
-            <div className="landing-features">
-              <div className="container">
-                <div className="landing-features__grid">
-                  {[
-                    { icon: 'ri-play-circle-line',       title: 'Video-first',              desc: 'Short, focused lessons. One concept per video, 5–15 minutes each.' },
-                    { icon: 'ri-graduation-cap-line',    title: 'HSC · SSC · JSC · Primary', desc: 'Full Bangladeshi curriculum coverage — every subject, every grade.' },
-                    { icon: 'ri-compass-discover-line',  title: 'Beyond the classroom',     desc: 'Music, tech, art, languages — explore anything you\'re curious about.' },
-                    { icon: 'ri-medal-line',             title: 'Certificates',             desc: 'Complete a full course, earn a downloadable PDF certificate.' },
-                    { icon: 'ri-bar-chart-line',         title: 'Track progress',           desc: 'Watch history, completion tracking, and a personalised feed — free with an account.' },
-                    { icon: 'ri-user-star-line',         title: 'Expert instructors',       desc: 'Taught by real educators and STΛRGZR community members.' },
-                  ].map(f => (
-                    <div key={f.title} className="feature-pill">
-                      <i className={f.icon} />
-                      <div>
-                        <p className="feature-pill__title">{f.title}</p>
-                        <p className="feature-pill__desc">{f.desc}</p>
-                      </div>
+              {/* Course grid */}
+              <div className="landing-courses">
+                <p className="section-label" style={{ marginBottom: 18 }}>
+                  <i className="ri-stack-line" style={{ marginRight: 6 }} />All courses
+                </p>
+                {classes.length > 0 && (
+                  <div style={{ marginBottom: 36 }}>
+                    <p className="landing-courses__group-label">
+                      <i className="ri-graduation-cap-line" /> Academic classes
+                    </p>
+                    <div className="feed-grid">
+                      {classes.flatMap(p => p.subjects.map(s => ({ program: p, subject: s }))).map(({ program, subject }) => (
+                        <FeedCard key={`${program.id}/${subject.id}`} program={program} subject={subject} enrolled={false} pct={0} mounted={false} />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+                {interests.length > 0 && (
+                  <div>
+                    <p className="landing-courses__group-label">
+                      <i className="ri-compass-discover-line" /> Interests
+                    </p>
+                    <div className="feed-grid">
+                      {interests.flatMap(p => p.subjects.map(s => ({ program: p, subject: s }))).map(({ program, subject }) => (
+                        <FeedCard key={`${program.id}/${subject.id}`} program={program} subject={subject} enrolled={false} pct={0} mounted={false} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -435,7 +415,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Continue card — or start prompt */}
+              {/* Continue card, or start prompt */}
               <div className="home-hero__continue">
                 {lastActivity
                   ? <ContinueCard activity={lastActivity} />

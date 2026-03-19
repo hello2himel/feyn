@@ -9,6 +9,7 @@
     "export": "next build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.2",
     "jspdf": "^4.2.1",
     "next": "14.2.3",
     "react": "18.3.1",

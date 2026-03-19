@@ -24,7 +24,7 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
 
   return (
     <>
-      <Head><title>{topic.name} — {subject.name} · Feyn</title></Head>
+      <Head><title>{topic.name}, {subject.name} · Feyn</title></Head>
       <Nav />
       <main>
         <div className="page-with-sidebar">

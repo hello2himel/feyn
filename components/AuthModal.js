@@ -1,5 +1,5 @@
 // ============================================================
-// FEYN — AUTH + ONBOARDING
+// FEYN, AUTH + ONBOARDING
 //
 // AuthModal:  shown when user clicks the profile icon while guest.
 //             Step 1: name + username  →  Step 2: classes  →  Step 3: interests
@@ -174,7 +174,7 @@ function AuthModal({ programs, existingProfile, onComplete, onDismiss }) {
           <div className="auth-step">
             <div className="auth-step__icon"><i className="ri-user-smile-line" /></div>
             <h2 className="auth-step__title">Create your account</h2>
-            <p className="auth-step__sub">It's local for now — no email, no password. Just your name.</p>
+            <p className="auth-step__sub">It's local for now, no email, no password. Just your name.</p>
 
             <div className="auth-fields">
               <div className="auth-field">
@@ -238,7 +238,7 @@ function AuthModal({ programs, existingProfile, onComplete, onDismiss }) {
 
             <div className="auth-step__actions">
               <button className="auth-btn auth-btn--primary" onClick={goNext}>
-                {selCls.length > 0 ? `Enrol in ${selCls.length} — Next` : 'Skip for now'}
+                {selCls.length > 0 ? `Enrol in ${selCls.length}, Next` : 'Skip for now'}
                 <i className="ri-arrow-right-line" />
               </button>
             </div>
@@ -250,7 +250,7 @@ function AuthModal({ programs, existingProfile, onComplete, onDismiss }) {
           <div className="auth-step">
             <div className="auth-step__icon auth-step__icon--interest"><i className="ri-compass-discover-line" /></div>
             <h2 className="auth-step__title">What else interests you?</h2>
-            <p className="auth-step__sub">Pick topics beyond your classes — music, skills, hobbies.</p>
+            <p className="auth-step__sub">Pick topics beyond your classes, music, skills, hobbies.</p>
 
             {genres.length === 0
               ? <p className="auth-empty">More content coming soon.</p>
@@ -273,7 +273,7 @@ function AuthModal({ programs, existingProfile, onComplete, onDismiss }) {
 
             <div className="auth-step__actions">
               <button className="auth-btn auth-btn--primary" onClick={finish}>
-                {selGen.length > 0 ? `Add ${selGen.length} — Done` : 'Finish'}
+                {selGen.length > 0 ? `Add ${selGen.length}, Done` : 'Finish'}
                 <i className="ri-check-line" />
               </button>
               <button className="auth-btn auth-btn--ghost" onClick={skipOnboarding}>

@@ -64,7 +64,7 @@ export default function ProfilePage() {
 
   if (!mounted) return null
 
-  // Not signed in — show prompt
+  // Not signed in, show prompt
   if (!signedIn) {
     return (
       <>

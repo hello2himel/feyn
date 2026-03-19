@@ -137,7 +137,7 @@ export function Footer() {
   return (
     <footer className="footer container--wide">
       <p className="footer__left">
-        Feyn — inspired by <em>Feynman Files</em> &amp; Richard Feynman's teaching principle.
+        Feyn, inspired by <em>Feynman Files</em> &amp; Richard Feynman's teaching principle.
       </p>
       <div className="footer__right">
         <a href={DONATE_URL} className="footer__link" target="_blank" rel="noopener noreferrer">
@@ -151,7 +151,7 @@ export function Footer() {
   )
 }
 
-// ── Auth gate — wrap any feature that requires sign-in ─────────────────
+// ── Auth gate, wrap any feature that requires sign-in ─────────────────
 export function AuthGate({ children, fallback }) {
   const { signedIn, setShowAuth, mounted } = useAuth()
   if (!mounted) return null

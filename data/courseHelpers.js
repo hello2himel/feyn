@@ -1,5 +1,5 @@
 // ============================================================
-// FEYN — COURSE HELPERS
+// FEYN, COURSE HELPERS
 // Taxonomy:
 //   programs  = Classes (type:'class') or Interests (type:'interest')
 //   subjects  = Courses
@@ -105,7 +105,7 @@ export function getSubjectMaterials(subject) {
   return out
 }
 
-/** classifySubjects — used by AuthFlow and feed logic.
+/** classifySubjects, used by AuthFlow and feed logic.
  *  Now reads program.type directly instead of using heuristics.
  *  Returns { classes: [{program,subject}], genres: [{program,subject}] }
  */

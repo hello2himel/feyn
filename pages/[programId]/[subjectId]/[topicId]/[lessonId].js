@@ -3,38 +3,47 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { getAllPaths, getProgram, getSubject, getTopic, getLessonNav, getCoachesFor, getSubjectMaterials } from '../../../../data/courseHelpers'
-import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, MaterialsSidebar, LessonMaterials, AuthGate } from '../../../../components/Layout'
+import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, MaterialsSidebar, LessonMaterials } from '../../../../components/Layout'
 import { useAuth } from '../../../../components/Layout'
-import { isWatched, markWatched, unmarkWatched, getSubjectProgress, issueCert, hasCert, getProfile } from '../../../../lib/userStore'
+import {
+  isWatched, markWatched, unmarkWatched,
+  getSubjectProgress, issueCert, hasCert, getProfile,
+  getWatchProgress,
+} from '../../../../lib/userStore'
 import { downloadCertificate } from '../../../../lib/certificate'
 
 const SmartPlayer = dynamic(() => import('../../../../components/SmartPlayer'), { ssr: false })
 
 export default function LessonPage({ program, subject, topic, lesson, prev, next, lessonIndex, totalLessons, allMaterials }) {
   const { signedIn, setShowAuth, mounted } = useAuth()
-  const [watched, setWatched]       = useState(false)
-  const [eligible, setEligible]     = useState(false)
-  const [certReady, setCertReady]   = useState(false)
+  const [watched, setWatched]         = useState(false)
+  const [certReady, setCertReady]     = useState(false)
   const [certLoading, setCertLoading] = useState(false)
+  const [savedProgress, setSavedProgress] = useState(null)
   const coaches = getCoachesFor(topic.coachIds || subject.coachIds || [])
+
+  const lessonKey = `${program.id}/${subject.id}/${topic.id}/${lesson.id}`
 
   useEffect(() => {
     if (!signedIn) return
     const w = isWatched(program.id, subject.id, topic.id, lesson.id)
     setWatched(w)
-    if (w) setEligible(true)
-    if (subject.certificate) {
-      if (getSubjectProgress(program.id, subject.id, subject) === 100) setCertReady(true)
+    if (subject.certificate && getSubjectProgress(program.id, subject.id, subject) === 100) {
+      setCertReady(true)
     }
+    // Load saved watch position for resume
+    const progress = getWatchProgress(lessonKey)
+    if (progress && !w) setSavedProgress(progress.pct)
   }, [signedIn])
 
-  function handleEligible() { setEligible(true) }
-
-  function handleMarkWatched() {
-    if (!eligible || !signedIn) return
+  // Called automatically by SmartPlayer when 80% genuine watch time reached
+  function handleAutoWatched() {
+    if (!signedIn) return
     markWatched(program.id, subject.id, topic.id, lesson.id)
     setWatched(true)
-    if (subject.certificate && getSubjectProgress(program.id, subject.id, subject) === 100) setCertReady(true)
+    if (subject.certificate && getSubjectProgress(program.id, subject.id, subject) === 100) {
+      setCertReady(true)
+    }
   }
 
   function handleUnmark() {
@@ -44,9 +53,9 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   }
 
   async function handleCert() {
-    const profile = getProfile()
-    const userName = profile?.name || 'Student'
-    const cert = issueCert(program.id, subject.id, subject.name, program.name, userName)
+    const profile   = getProfile()
+    const userName  = profile?.name || 'Student'
+    const cert      = issueCert(program.id, subject.id, subject.name, program.name, userName)
     const coachName = coaches[0]?.name || 'Instructor'
     setCertLoading(true)
     await downloadCertificate({ cert, coachName })
@@ -56,7 +65,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   return (
     <>
       <Head>
-        <title>{lesson.title} — {topic.name} · Feyn</title>
+        <title>{lesson.title} - {topic.name} - Feyn</title>
         <meta name="description" content={lesson.description} />
       </Head>
       <Nav />
@@ -77,7 +86,9 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                 <span>Lesson {lessonIndex} of {totalLessons}</span>
                 {lesson.duration && <><span>·</span><span><i className="ri-time-line" /> {lesson.duration}</span></>}
                 {mounted && signedIn && watched && (
-                  <span className="watched-badge"><i className="ri-checkbox-circle-fill" /> Watched</span>
+                  <span className="watched-badge">
+                    <i className="ri-checkbox-circle-fill" /> Watched
+                  </span>
                 )}
               </div>
 
@@ -90,20 +101,20 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                 </div>
               )}
 
-              {/* Video — always visible */}
-              {mounted && (
+              {/* Video */}
+              {mounted ? (
                 <SmartPlayer
                   videoId={lesson.videoId}
-                  title={lesson.title}
-                  onEligible={handleEligible}
+                  lessonKey={signedIn ? lessonKey : null}
+                  savedProgress={signedIn ? savedProgress : null}
+                  onAutoWatched={signedIn ? handleAutoWatched : undefined}
                   alreadyWatched={watched}
                 />
-              )}
-              {!mounted && (
+              ) : (
                 <div className="video-wrap">
                   <div className="video-placeholder">
                     <i className="ri-play-circle-line" />
-                    <span>Loading player…</span>
+                    <span>Loading player</span>
                   </div>
                 </div>
               )}
@@ -111,41 +122,38 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
               {/* Lesson materials */}
               <LessonMaterials materials={lesson.materials || []} />
 
-              {/* Gated: progress tracking */}
+              {/* Auth/progress area */}
               {mounted && (
-                signedIn ? (
-                  <div className="lesson-actions">
-                    {!watched ? (
-                      <button
-                        className={`btn ${eligible ? 'btn--accent' : 'btn--ghost'}`}
-                        onClick={handleMarkWatched}
-                        disabled={!eligible}
-                        title={!eligible ? 'Watch at least 80% of the video first' : ''}
-                      >
-                        <i className={eligible ? 'ri-checkbox-circle-line' : 'ri-time-line'} />
-                        {eligible ? 'Mark as watched' : 'Watch 80% to unlock'}
-                      </button>
-                    ) : (
-                      <button className="btn btn--success" onClick={handleUnmark}>
-                        <i className="ri-checkbox-circle-fill" /> Watched ✓
-                      </button>
-                    )}
-                    {certReady && (
-                      <button className="btn btn--cert" onClick={handleCert} disabled={certLoading}>
-                        <i className="ri-medal-line" />
-                        {certLoading ? 'Generating…' : hasCert(program.id, subject.id) ? 'Re-download Certificate' : 'Download Certificate'}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="lesson-auth-nudge">
-                    <i className="ri-lock-line" />
-                    <span>
-                      <button className="lesson-auth-nudge__link" onClick={() => setShowAuth(true)}>Sign in</button>
-                      {' '}to track progress and earn certificates
-                    </span>
-                  </div>
-                )
+                <div className="lesson-actions">
+                  {signedIn ? (
+                    <>
+                      {watched && (
+                        <>
+                          <span className="lesson-watched-status">
+                            <i className="ri-checkbox-circle-fill" /> Marked as watched
+                          </span>
+                          <button className="btn btn--ghost btn--sm" onClick={handleUnmark}>
+                            <i className="ri-close-circle-line" /> Undo
+                          </button>
+                        </>
+                      )}
+                      {certReady && (
+                        <button className="btn btn--cert" onClick={handleCert} disabled={certLoading}>
+                          <i className="ri-medal-line" />
+                          {certLoading ? 'Generating' : hasCert(program.id, subject.id) ? 'Re-download Certificate' : 'Download Certificate'}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="lesson-auth-nudge">
+                      <i className="ri-lock-line" />
+                      <span>
+                        <button className="lesson-auth-nudge__link" onClick={() => setShowAuth(true)}>Sign in</button>
+                        {' '}to track progress and earn certificates
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {lessonIndex % 3 === 0 && <DonateStrip />}
