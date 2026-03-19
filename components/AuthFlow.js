@@ -1,10 +1,11 @@
 // ============================================================
-// AuthFlow — sign in/up + YouTube-style onboarding
+// AuthFlow, sign in/up + YouTube-style onboarding
 // Steps: auth → pick grade/class → pick courses → interests → done
 // ============================================================
 
 import { useState, useEffect, useMemo } from 'react'
 import { signIn, setOnboarded, enroll, saveFeedOrder } from '../lib/userStore'
+import { isSupabaseAvailable } from '../lib/supabase'
 import { getClasses, getInterests } from '../data/courseHelpers'
 
 // ── Interest tile ─────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ function GradeCard({ program, selected, onSelect }) {
 export default function AuthFlow({ programs, onComplete, initialMode = 'auth' }) {
   const [mode, setMode]         = useState(initialMode)
   const [authTab, setAuthTab]   = useState('signup')
+  const [useGlobal, setUseGlobal] = useState(false)
   const [name, setName]         = useState('')
   const [username, setUsername] = useState('')
   const [error, setError]       = useState('')
@@ -96,11 +98,11 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
     setTimeout(() => { setAnimOut(false); setMode(nextMode) }, 220)
   }
 
-  function handleAuth(e) {
+  async function handleAuth(e) {
     e.preventDefault()
     if (!name.trim()) { setError('Please enter your name.'); return }
     setError('')
-    signIn({ name: name.trim(), username: username.trim() })
+    await signIn({ name: name.trim(), username: username.trim(), global: useGlobal })
     transition('grade')
   }
 
@@ -187,6 +189,16 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
               </button>
             </form>
             <p className="authflow-disclaimer">Your data stays on this device. No email required.</p>
+            {isSupabaseAvailable() && authTab === 'signup' && (
+              <label className="authflow-sync-toggle" title="Enable cross-device sync via Supabase">
+                <input
+                  type="checkbox"
+                  checked={useGlobal}
+                  onChange={e => setUseGlobal(e.target.checked)}
+                />
+                Sync across devices
+              </label>
+            )}
             <button className="authflow-guest" onClick={onComplete}>
               Continue as guest <i className="ri-arrow-right-s-line" />
             </button>
@@ -272,7 +284,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
             <div className="authflow-interests-footer">
               <button className="authflow-submit" onClick={() => transition('interests')} style={{ maxWidth: 320, margin: '0 auto' }}>
-                {selectedCourses.size > 0 ? `${selectedCourses.size} selected — Next` : 'Next'} <i className="ri-arrow-right-line" />
+                {selectedCourses.size > 0 ? `${selectedCourses.size} selected, Next` : 'Next'} <i className="ri-arrow-right-line" />
               </button>
             </div>
           </div>
@@ -287,7 +299,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             <div className="authflow-ob-header">
               <div className="authflow-ob-step">{selectedGrade === 'none' ? '1 of 1' : '3 of 3'}</div>
               <h2 className="authflow-ob-title">Any other interests?</h2>
-              <p className="authflow-ob-sub">Music, tech, art, languages — pick anything you're curious about.</p>
+              <p className="authflow-ob-sub">Music, tech, art, languages, pick anything you're curious about.</p>
             </div>
 
             <div className="authflow-filter-tabs">
@@ -311,7 +323,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
             <div className="authflow-interests-footer">
               <button className="authflow-submit" onClick={handleFinish} style={{ maxWidth: 320, margin: '0 auto' }}>
-                {totalSelected > 0 ? `Done — ${totalSelected} selected` : 'Finish'} <i className="ri-check-line" />
+                {totalSelected > 0 ? `Done, ${totalSelected} selected` : 'Finish'} <i className="ri-check-line" />
               </button>
             </div>
           </div>

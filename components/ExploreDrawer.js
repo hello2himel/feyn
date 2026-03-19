@@ -1,5 +1,5 @@
 // ============================================================
-// ExploreDrawer — slide-in panel to browse all classes/interests
+// ExploreDrawer, slide-in panel to browse all classes/interests
 // Accessible via Nav button for signed-in users
 // ============================================================
 

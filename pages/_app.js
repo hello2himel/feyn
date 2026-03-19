@@ -8,7 +8,7 @@ import { hasOnboarded } from '../lib/userStore'
 // AuthFlow is client-only
 const AuthFlow = dynamic(() => import('../components/AuthFlow'), { ssr: false })
 
-// Inner wrapper — has access to AuthProvider context
+// Inner wrapper, has access to AuthProvider context
 function AppInner({ Component, pageProps }) {
   const { showAuth, setShowAuth, signedIn, refresh, mounted } = useAuth()
   const [showOnboarding, setShowOnboarding] = useState(false)

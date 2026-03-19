@@ -1,5 +1,5 @@
 // ============================================================
-// IconPicker — searchable Remixicon grid for the admin panel
+// IconPicker, searchable Remixicon grid for the admin panel
 // Categories mapped to subject types for smart suggestions
 // ============================================================
 

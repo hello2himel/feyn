@@ -26,7 +26,7 @@ export default function SubjectPage({ program, subject, allMaterials }) {
 
   return (
     <>
-      <Head><title>{subject.name} — {program.name} · Feyn</title></Head>
+      <Head><title>{subject.name}, {program.name} · Feyn</title></Head>
       <Nav />
       <main>
         <div className="page-with-sidebar">

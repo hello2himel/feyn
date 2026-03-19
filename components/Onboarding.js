@@ -99,7 +99,7 @@ export default function Onboarding({ programs, onComplete }) {
             <div className="onboarding-step__icon"><i className="ri-sparkling-line" /></div>
             <h1 className="onboarding-step__title">Welcome to Feyn</h1>
             <p className="onboarding-step__body">
-              A learning space inspired by Richard Feynman — where every concept is
+              A learning space inspired by Richard Feynman, where every concept is
               built from the ground up, one idea at a time.
             </p>
             <p className="onboarding-step__body" style={{ marginTop: 8, opacity: 0.6, fontSize: '0.85rem' }}>
@@ -166,7 +166,7 @@ export default function Onboarding({ programs, onComplete }) {
                       onClick={() => toggleClass(program.id, subject.id)}
                     >
                       <i className={subject.icon || 'ri-book-open-line'} />
-                      <span>{program.name} — {subject.name}</span>
+                      <span>{program.name}, {subject.name}</span>
                       {sel && <i className="ri-check-line onboarding-chip__check" />}
                     </button>
                   )
@@ -175,7 +175,7 @@ export default function Onboarding({ programs, onComplete }) {
             )}
 
             <button className="onboarding-btn" onClick={next}>
-              {selClasses.length > 0 ? `Enrolled in ${selClasses.length} — Continue` : 'Skip for now'} <i className="ri-arrow-right-line" />
+              {selClasses.length > 0 ? `Enrolled in ${selClasses.length}, Continue` : 'Skip for now'} <i className="ri-arrow-right-line" />
             </button>
           </div>
         )}
@@ -186,7 +186,7 @@ export default function Onboarding({ programs, onComplete }) {
             <div className="onboarding-step__icon"><i className="ri-heart-line" /></div>
             <h2 className="onboarding-step__title">Any other interests?</h2>
             <p className="onboarding-step__body">
-              Beyond your classes — what else would you like to explore?
+              Beyond your classes, what else would you like to explore?
             </p>
 
             {genres.length === 0 ? (
@@ -211,7 +211,7 @@ export default function Onboarding({ programs, onComplete }) {
             )}
 
             <button className="onboarding-btn" onClick={finish}>
-              {selGenres.length > 0 ? `Add ${selGenres.length} interests — Finish` : 'Finish'} <i className="ri-check-line" />
+              {selGenres.length > 0 ? `Add ${selGenres.length} interests, Finish` : 'Finish'} <i className="ri-check-line" />
             </button>
           </div>
         )}
