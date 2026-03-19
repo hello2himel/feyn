@@ -20,6 +20,11 @@
   query = {url = ":url", w = ":width", q = ":quality"}
 
 [[redirects]]
+  from = "/verify/:certId"
+  to   = "/verify/?id=:certId"
+  status = 301
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
