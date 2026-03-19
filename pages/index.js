@@ -263,7 +263,7 @@ export default function Home() {
               <div className="landing-hero__content">
                 <div className="landing-hero__eyebrow">
                   <span className="landing-hero__badge">
-                    <i className="ri-sparkling-2-line" /> For students who want to actually understand things
+                    <i className="ri-sparkling-2-line" /> Understanding, rebuilt.
                   </span>
                 </div>
                 <h1 className="landing-hero__title">
