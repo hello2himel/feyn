@@ -4,7 +4,14 @@ import dynamic from 'next/dynamic'
 const SearchPalette = dynamic(() => import('./SearchPalette'), { ssr: false })
 import { isSignedIn, getProfile, signOut } from '../lib/userStore'
 
-const DONATE_URL = 'https://hello2himel.netlify.app/donate?source=Feyn&session_id=feyn-9a2c41bd-7e30-4f1a-b882-3d08c5e2a719'
+const DONATE_BASE = 'https://hello2himel.netlify.app/donate'
+
+function getDonateUrl(profile) {
+  if (profile?.supabaseId) {
+    return `${DONATE_BASE}?source=Feyn&session_id=${profile.supabaseId}`
+  }
+  return `${DONATE_BASE}?source=Feyn`
+}
 
 // ── Theme ─────────────────────────────────────────────────────────────
 export function useTheme() {
@@ -110,7 +117,7 @@ export function Nav() {
           </button>
 
           {/* Support */}
-          <a href={DONATE_URL} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
+          <a href={getDonateUrl(user)} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
             <i className="ri-heart-fill" /><span>Support</span>
           </a>
 
@@ -184,7 +191,9 @@ export function Nav() {
 
 // ── Footer ─────────────────────────────────────────────────────────────
 export function Footer() {
-  const year = new Date().getFullYear()
+  const year    = new Date().getFullYear()
+  const profile = typeof window !== 'undefined' ? getProfile() : null
+  const donate  = getDonateUrl(profile)
   return (
     <footer className="footer-full">
       <div className="footer-full__inner container--wide">
@@ -201,7 +210,7 @@ export function Footer() {
               Learn the way Feynman would.<br />
               First principles. No fluff.
             </p>
-            <a href={DONATE_URL} className="footer-full__support" target="_blank" rel="noopener noreferrer">
+            <a href={donate} className="footer-full__support" target="_blank" rel="noopener noreferrer">
               <i className="ri-heart-fill" /> Support the project
             </a>
           </div>
@@ -223,7 +232,7 @@ export function Footer() {
               <p className="footer-full__col-label">Company</p>
               <Link href="/about" className="footer-full__link">About</Link>
               <Link href="/contact" className="footer-full__link">Contact</Link>
-              <a href={DONATE_URL} className="footer-full__link" target="_blank" rel="noopener noreferrer">Donate</a>
+              <a href={donate} className="footer-full__link" target="_blank" rel="noopener noreferrer">Donate</a>
             </div>
             <div className="footer-full__col">
               <p className="footer-full__col-label">Legal</p>
@@ -285,12 +294,14 @@ export function Breadcrumb({ crumbs }) {
 
 // ── DonateStrip ────────────────────────────────────────────────────────
 export function DonateStrip() {
+  const profile = typeof window !== 'undefined' ? getProfile() : null
+  const donate  = getDonateUrl(profile)
   return (
     <div className="donate-strip">
       <p className="donate-strip__text">
         This content is free. If it's helped you, consider supporting the project.
       </p>
-      <a href={DONATE_URL} className="donate-strip__btn" target="_blank" rel="noopener noreferrer">
+      <a href={donate} className="donate-strip__btn" target="_blank" rel="noopener noreferrer">
         <i className="ri-heart-fill" /> Support
       </a>
     </div>
