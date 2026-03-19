@@ -48,12 +48,18 @@ export default function ProfilePage() {
 
   async function handleDownloadCert(cert) {
     setCertLoading(cert.id)
-    let coachName = 'Instructor'
+    let coachName = 'Instructor', coachTitle = 'Instructor', coachSignatureUrl = null
     for (const program of data.programs) {
-      const subj = program.subjects.find(s => s.id === cert.subjectId)
-      if (subj) { coachName = getCoachesFor(subj.coachIds || [])[0]?.name || coachName; break }
+      const subj = program.subjects.find(s => s.id === (cert.subjectId || cert.subject_id))
+      if (subj) {
+        const coach = getCoachesFor(subj.coachIds || [])[0]
+        coachName         = coach?.name      || coachName
+        coachTitle        = coach?.title     || coachTitle
+        coachSignatureUrl = coach?.signature || null
+        break
+      }
     }
-    await downloadCertificate({ cert, coachName })
+    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl })
     setCertLoading(null)
   }
 

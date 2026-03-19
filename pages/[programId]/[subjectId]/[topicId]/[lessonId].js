@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { getAllPaths, getProgram, getSubject, getTopic, getLessonNav, getCoachesFor, getSubjectMaterials } from '../../../../data/courseHelpers'
+import { getAllPaths, getProgram, getSubject, getTopic, getLessonNav, getCoachesFor, getSubjectMaterials, getTotalLessons } from '../../../../data/courseHelpers'
 import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, MaterialsSidebar, LessonMaterials } from '../../../../components/Layout'
 import { useAuth } from '../../../../components/Layout'
 import {
@@ -14,7 +14,7 @@ import { downloadCertificate } from '../../../../lib/certificate'
 
 const SmartPlayer = dynamic(() => import('../../../../components/SmartPlayer'), { ssr: false })
 
-export default function LessonPage({ program, subject, topic, lesson, prev, next, lessonIndex, totalLessons, allMaterials }) {
+export default function LessonPage({ program, subject, topic, lesson, prev, next, lessonIndex, totalLessons, subjectTotalLessons, allMaterials }) {
   const { signedIn, setShowAuth, mounted } = useAuth()
   const [watched, setWatched]         = useState(false)
   const [certReady, setCertReady]     = useState(false)
@@ -78,7 +78,14 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     const coachName  = coaches[0]?.name  || 'Instructor'
     const coachTitle = coaches[0]?.title || 'Instructor'
     setCertLoading(true)
-    await downloadCertificate({ cert, coachName, coachTitle, totalLessons })
+    await downloadCertificate({
+      cert,
+      coachName,
+      coachTitle,
+      totalLessons:       subjectTotalLessons,
+      subjectDesc:        subject.description || '',
+      coachSignatureUrl:  coaches[0]?.signature || null,
+    })
     setCertLoading(false)
   }
 
@@ -264,7 +271,8 @@ export async function getStaticProps({ params }) {
       program, subject, topic, lesson,
       prev: prev || null, next: next || null,
       lessonIndex,
-      totalLessons: topic.lessons.length,
+      totalLessons:        topic.lessons.length,
+      subjectTotalLessons: getTotalLessons(subject),
       allMaterials: getSubjectMaterials(subject),
     }
   }
