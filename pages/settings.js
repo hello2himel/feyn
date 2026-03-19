@@ -278,30 +278,53 @@ function SecurityTab({ onRefresh }) {
 function SyncTab({ onRefresh }) {
   const isGlobal   = isGlobalAccount()
   const supabaseOn = isSupabaseAvailable()
+  const profile    = getProfile() || {}
+
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState(profile.username || '')
+  const [showPass, setShowPass] = useState(false)
+  const [errors, setErrors]     = useState({})
   const [upgrading, setUpgrading] = useState(false)
   const [result, setResult]       = useState(null)
 
-  async function handleUpgrade() {
+  function setErr(field, msg) { setErrors(p => ({ ...p, [field]: msg })) }
+  function clearErr(field)    { setErrors(p => { const n = { ...p }; delete n[field]; return n }) }
+
+  async function handleUpgrade(e) {
+    e.preventDefault()
+    setErrors({}); setResult(null)
+    let hasError = false
+    if (!email.trim() || !email.includes('@')) { setErr('email', 'Enter a valid email.'); hasError = true }
+    if (!password || password.length < 6)       { setErr('password', 'Min. 6 characters.'); hasError = true }
+    if (hasError) return
+
     if (!confirm('This will create a cloud account and upload all your local progress. Continue?')) return
     setUpgrading(true)
-    setResult(null)
-    const res = await upgradeToGlobal()
+    const res = await upgradeToGlobal({ email, password, username: username || profile.username })
     setUpgrading(false)
-    setResult(res)
-    if (res.ok) onRefresh()
+
+    if (!res.ok) {
+      if (res.field) setErr(res.field, res.error)
+      else setResult({ ok: false, msg: res.error })
+      return
+    }
+    if (res.needsVerify) {
+      setResult({ ok: 'verify', email })
+      return
+    }
+    setResult({ ok: true })
+    onRefresh()
   }
 
   return (
     <div className="settings-section">
       <SectionHeader title="Sync and storage" desc="Control where your data lives." />
 
-      {/* Current status */}
       <div className="settings-sync-status">
         <div className={`settings-sync-indicator ${isGlobal ? 'active' : ''}`} />
         <div>
-          <p className="settings-sync-status__label">
-            {isGlobal ? 'Cloud sync is on' : 'Local only'}
-          </p>
+          <p className="settings-sync-status__label">{isGlobal ? 'Cloud sync is on' : 'Local only'}</p>
           <p className="settings-sync-status__sub">
             {isGlobal
               ? 'Your progress, certs and enrollments sync across all your devices.'
@@ -310,34 +333,90 @@ function SyncTab({ onRefresh }) {
         </div>
       </div>
 
-      {!isGlobal && supabaseOn && (
+      {!isGlobal && supabaseOn && !result?.ok && (
         <>
           <div className="settings-divider" />
           <SectionHeader
             title="Upgrade to cloud sync"
-            desc="Sync your progress, certificates and enrolled courses across all your devices. Free, no email required."
+            desc="Sync your progress and certificates across all your devices. Create an account with email and password."
           />
-          <div className="settings-upgrade-box">
-            <div className="settings-upgrade-box__features">
-              {[
-                'Access your progress from any device',
-                'Certificates stored in the cloud',
-                'Enrolled courses synced everywhere',
-                'Anonymous — no email or password needed',
-              ].map(f => (
+
+          {result?.ok === 'verify' && (
+            <StatusBadge type="success">
+              Check your email at <strong>{result.email}</strong> to confirm, then sign in again.
+            </StatusBadge>
+          )}
+
+          <form onSubmit={handleUpgrade} className="settings-fields" style={{ marginTop: 16 }}>
+            {/* Username — may already be set */}
+            <div className="settings-field">
+              <label className="settings-field__label">
+                Username <span style={{ opacity: 0.5, fontSize: '0.75em' }}>(optional)</span>
+              </label>
+              <div className={`authflow-input-prefix-wrap ${errors.username ? 'authflow-input-prefix-wrap--error' : ''}`}>
+                <span className="authflow-input-prefix">@</span>
+                <input
+                  className="authflow-input authflow-input--prefixed"
+                  placeholder={profile.username || 'username'}
+                  value={username}
+                  onChange={e => { setUsername(e.target.value.replace(/\s/g, '')); clearErr('username') }}
+                />
+              </div>
+              {errors.username && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.username}</p>}
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-field__label">Email address</label>
+              <input
+                className={`authflow-input ${errors.email ? 'authflow-input--error' : ''}`}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => { setEmail(e.target.value); clearErr('email') }}
+              />
+              {errors.email && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.email}</p>}
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-field__label">Create a password</label>
+              <div className="authflow-pass-wrap">
+                <input
+                  className={`authflow-input authflow-input--pass ${errors.password ? 'authflow-input--error' : ''}`}
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Min. 6 characters"
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); clearErr('password') }}
+                />
+                <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s => !s)}>
+                  <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                </button>
+              </div>
+              {errors.password && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.password}</p>}
+            </div>
+
+            {result && !result.ok && <StatusBadge type="error">{result.msg}</StatusBadge>}
+
+            <div className="settings-upgrade-box__features" style={{ marginBottom: 4 }}>
+              {['Access progress from any device', 'Certificates stored in cloud', 'Anonymous local data uploaded'].map(f => (
                 <p key={f} className="settings-upgrade-box__feat">
                   <i className="ri-check-line" /> {f}
                 </p>
               ))}
             </div>
-            <button className="btn btn--accent" onClick={handleUpgrade} disabled={upgrading}>
+
+            <button type="submit" className="btn btn--accent" disabled={upgrading}>
               {upgrading
                 ? <><i className="ri-loader-4-line" /> Upgrading</>
                 : <><i className="ri-cloud-upload-line" /> Enable cloud sync</>}
             </button>
-            {result && !result.ok && <StatusBadge type="error">{result.error}</StatusBadge>}
-            {result && result.ok  && <StatusBadge type="success">Cloud sync enabled! Your data has been uploaded.</StatusBadge>}
-          </div>
+          </form>
+        </>
+      )}
+
+      {result?.ok === true && (
+        <>
+          <div className="settings-divider" />
+          <StatusBadge type="success">Cloud sync enabled. Your data has been uploaded.</StatusBadge>
         </>
       )}
 
@@ -349,30 +428,10 @@ function SyncTab({ onRefresh }) {
             <div>
               <p style={{ fontWeight: 500, marginBottom: 4 }}>Cloud sync not configured</p>
               <p style={{ fontSize: '0.83rem', color: 'var(--text-2)' }}>
-                Cloud sync requires Supabase to be set up. If you're the site admin,
-                add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your Netlify environment variables.
+                Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your Netlify environment variables.
               </p>
             </div>
           </div>
-        </>
-      )}
-
-      {isGlobal && (
-        <>
-          <div className="settings-divider" />
-          <SectionHeader title="Manual sync" desc="Force a full re-sync of your local data to the cloud." />
-          <button className="btn btn--ghost btn--sm" onClick={async () => {
-            const profile = getProfile()
-            if (profile?.supabaseId) {
-              const { syncLocalToSupabase } = await import('../lib/userStore')
-              // syncLocalToSupabase is private — upgradeToGlobal handles re-sync
-            }
-          }}>
-            <i className="ri-refresh-line" /> Re-sync now
-          </button>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 6 }}>
-            Sync happens automatically as you use the app.
-          </p>
         </>
       )}
     </div>
