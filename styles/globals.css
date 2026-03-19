@@ -2840,3 +2840,47 @@ i[class*="ri-"] {
   color: var(--accent);
   transform: translateX(3px);
 }
+
+/* =============================================
+   AUTH — password field + per-field errors
+   ============================================= */
+.authflow-pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.authflow-input--pass {
+  padding-right: 44px;
+  width: 100%;
+}
+.authflow-pass-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  transition: color var(--transition);
+}
+.authflow-pass-toggle:hover { color: var(--text); }
+
+.authflow-input--error,
+.authflow-input-prefix-wrap--error {
+  border-color: var(--danger) !important;
+}
+
+.authflow-field-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--danger);
+  margin-top: 5px;
+}
+.authflow-field-error i { font-size: 0.85rem; }
