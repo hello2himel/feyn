@@ -132,14 +132,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                         />
                       </div>
                       <span className="video-meta-bar__pct">
-                        {subjectPct}%
-                        {subject.certificate && (
-                          <span className="video-meta-bar__cert-hint">
-                            {subjectPct === 100
-                              ? <><i className="ri-medal-fill" /> Complete</>
-                              : <><i className="ri-medal-line" /> {100 - subjectPct}% left for cert</>}
-                          </span>
-                        )}
+                        {subjectPct}% completed
                       </span>
                     </>
                   ) : (
