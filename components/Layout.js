@@ -147,7 +147,7 @@ export function Nav() {
                       {/* Theme toggle — lives here, not as a standalone nav button */}
                       <button className="nav__user-menu__item nav__user-menu__item--theme" onClick={toggle}>
                         <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
-                        {theme === 'dark' ? 'Light' : 'Dark'}
+                        {theme === 'dark' ? 'Mode' : 'Mode'}
                         <span className="nav__user-menu__theme-badge">
                           {theme === 'dark' ? 'Dark' : 'Light'}
                         </span>
