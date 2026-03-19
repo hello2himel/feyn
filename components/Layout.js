@@ -282,7 +282,7 @@ export function Breadcrumb({ crumbs }) {
       <Link href="/"><i className="ri-home-4-line" /></Link>
       {crumbs.map((c, i) => (
         <span key={i} style={{ display: 'contents' }}>
-          <span className="breadcrumb__sep"><i className="ri-arrow-right-s-line" /></span>
+          <span className="breadcrumb__sep" aria-hidden="true"><i className="ri-arrow-right-s-line" /></span>
           {c.href
             ? <Link href={c.href}>{c.label}</Link>
             : <span className="breadcrumb__current">{c.label}</span>}
@@ -312,8 +312,8 @@ export function DonateStrip() {
 export function CoachChip({ coach }) {
   return (
     <Link href={`/coaches/${coach.id}`} className="coach-chip">
-      <span className="coach-chip__avatar">
-        {coach.avatar ? <img src={coach.avatar} alt={coach.name} /> : coach.name[0]}
+      <span className="coach-chip__avatar" aria-label={coach.name}>
+        {coach.avatar ? <img src={coach.avatar} alt={coach.name} /> : <span aria-hidden="true">{coach.name[0]}</span>}
       </span>
       <span className="coach-chip__name">{coach.name}</span>
     </Link>
@@ -377,7 +377,6 @@ export function MaterialsSidebar({ materials, subjectName }) {
       <div className={`sidebar-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
       <button className="sidebar-fab" onClick={() => setOpen(true)} aria-label="Open materials">
         <i className="ri-folder-open-line" />
-        Course materials
       </button>
       <aside className={`materials-sidebar ${open ? 'open' : ''}`}>
         <div className="sidebar-header">
@@ -429,14 +428,19 @@ export function LessonMaterials({ materials }) {
   if (!materials || materials.length === 0) return null
   return (
     <div className="lesson-materials">
-      <div className="lesson-materials__header" onClick={() => setOpen(o => !o)}>
+      <button
+        className="lesson-materials__header"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-controls="lesson-materials-body"
+      >
         <span className="lesson-materials__title">
-          <i className="ri-folder-open-line" /> Lesson Materials ({materials.length})
+          <i className="ri-folder-open-line" aria-hidden="true" /> Lesson Materials ({materials.length})
         </span>
-        <i className={`ri-arrow-down-s-line lesson-materials__toggle ${open ? 'open' : ''}`} />
-      </div>
+        <i className={`ri-arrow-down-s-line lesson-materials__toggle ${open ? 'open' : ''}`} aria-hidden="true" />
+      </button>
       {open && (
-        <div className="lesson-materials__body">
+        <div className="lesson-materials__body" id="lesson-materials-body">
           {materials.map(m => <MaterialItem key={m.id} material={m} />)}
         </div>
       )}

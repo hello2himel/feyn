@@ -457,7 +457,46 @@ const data = {
       ]
     },
 
-    // ── INTEREST: Music ───────────────────────────────────────────────
+    // ── INTEREST: Quick Wins (1-video cert demo) ──────────────────────
+    {
+      id: "quick-wins",
+      name: "Quick Wins",
+      type: "interest",
+      description: "Bite-sized standalone courses, each a single lesson with a certificate.",
+      subjects: [
+        {
+          id: "feynman-technique",
+          name: "The Feynman Technique",
+          icon: "ri-lightbulb-line",
+          description: "Master the single most powerful learning strategy ever devised — in one lesson.",
+          coachIds: ["himel"],
+          certificate: true,
+          materials: [
+            { id: "ft-cheatsheet", label: "Feynman Technique Cheat Sheet", url: "#", type: "pdf" }
+          ],
+          topics: [
+            {
+              id: "the-method",
+              name: "The Method",
+              description: "One topic, one video, one certificate.",
+              coachIds: ["himel"],
+              lessons: [
+                {
+                  id: "feynman-explained",
+                  title: "The Feynman Technique Explained",
+                  videoId: "tkm0TNFzIeg",
+                  duration: "11:37",
+                  description: "Richard Feynman's four-step method for learning anything deeply — explained from first principles. Watch this once, watch the bar fill up, and collect your certificate.",
+                  materials: []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+
     {
       id: "music",
       name: "Music",
