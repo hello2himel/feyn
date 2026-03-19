@@ -143,47 +143,10 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                     </span>
                   )}
                 </div>
-
-                {/* Materials toggle — always visible, opens inline panel on mobile */}
-                {allMaterials.length > 0 && (
-                  <button
-                    className={`video-meta-bar__mats-btn ${materialsOpen ? 'active' : ''}`}
-                    onClick={() => setMaterialsOpen(o => !o)}
-                    aria-expanded={materialsOpen}
-                  >
-                    <i className="ri-folder-open-line" />
-                    Course materials
-                    <i className={`ri-arrow-${materialsOpen ? 'up' : 'down'}-s-line`} />
-                  </button>
-                )}
+                <span className="video-meta-bar__lesson-pos">
+                  Lesson {lessonIndex} / {totalLessons}
+                </span>
               </div>
-
-              {/* Inline materials panel (slides open) */}
-              {materialsOpen && allMaterials.length > 0 && (
-                <div className="video-materials-panel">
-                  {allMaterials.map(m => (
-                    <a
-                      key={m.id}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="video-materials-item"
-                    >
-                      <span className="video-materials-item__icon">
-                        <i className={
-                          m.type === 'pdf'   ? 'ri-file-pdf-2-line' :
-                          m.type === 'doc'   ? 'ri-file-word-line'  :
-                          m.type === 'video' ? 'ri-video-line'      :
-                          m.type === 'link'  ? 'ri-link'            : 'ri-attachment-line'
-                        } />
-                      </span>
-                      <span className="video-materials-item__label">{m.label}</span>
-                      <span className="video-materials-item__type">{m.type}</span>
-                      <i className="ri-external-link-line video-materials-item__ext" />
-                    </a>
-                  ))}
-                </div>
-              )}
 
               {/* Lesson materials */}
               <LessonMaterials materials={lesson.materials || []} />

@@ -377,6 +377,7 @@ export function MaterialsSidebar({ materials, subjectName }) {
       <div className={`sidebar-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
       <button className="sidebar-fab" onClick={() => setOpen(true)} aria-label="Open materials">
         <i className="ri-folder-open-line" />
+        Course materials
       </button>
       <aside className={`materials-sidebar ${open ? 'open' : ''}`}>
         <div className="sidebar-header">
