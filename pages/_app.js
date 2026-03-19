@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from '../components/Layout'
 import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import data from '../data/courses'
+import { getSupabase } from '../lib/supabase'
+import { isGlobalAccount } from '../lib/userStore'
 
 const AuthFlow = dynamic(() => import('../components/AuthFlow'), { ssr: false })
 
@@ -16,6 +18,16 @@ function AppInner({ Component, pageProps }) {
       window.dispatchEvent(new Event('feyn:auth'))
     }
   }
+
+  // Prime the Supabase session on mount so the JWT is loaded into the client
+  // before any DB write is attempted. Without this, writes fire before the
+  // async session restore completes — Supabase receives unauthenticated
+  // requests, RLS blocks them, and no data reaches the tables.
+  useEffect(() => {
+    if (!isGlobalAccount()) return
+    const sb = getSupabase()
+    if (sb) sb.auth.getSession()
+  }, [])
 
   // Allow any page (e.g. Settings SyncTab) to open the auth modal
   // by dispatching window.dispatchEvent(new Event('feyn:show-auth'))
