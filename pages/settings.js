@@ -26,7 +26,7 @@ const TABS = [
 ]
 
 export default function SettingsPage() {
-  const { signedIn, setShowAuth, refresh, mounted, theme, setTheme } = useAuth()
+  const { signedIn, setShowAuth, refresh, mounted } = useAuth()
   const [activeTab, setActiveTab] = useState('account')
 
   if (!mounted) return null
@@ -309,8 +309,8 @@ function SyncTab({ onRefresh }) {
       else setResult({ ok: false, msg: res.error })
       return
     }
-    if (res.needsVerify) {
-      setResult({ ok: 'verify', email })
+    if (res.needsOtp) {
+      setResult({ ok: 'otp', email })
       return
     }
     setResult({ ok: true })

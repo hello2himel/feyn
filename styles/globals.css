@@ -981,22 +981,8 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 }
 
 /* =============================================
-   AUTH MODAL
+   AUTH MODAL (legacy classes kept for compat)
    ============================================= */
-.auth-overlay {
-  position: fixed; inset: 0; z-index: 500;
-  background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-  display: flex; align-items: center; justify-content: center; padding: 20px;
-}
-.auth-modal {
-  background: var(--bg-2); border: 1px solid var(--border);
-  border-radius: var(--radius-md); width: 100%; max-width: 480px;
-  max-height: 90vh; overflow-y: auto; position: relative;
-  animation: auth-in 280ms cubic-bezier(0.16,1,0.3,1);
-}
-.auth-modal--exit { animation: auth-out 220ms ease forwards; }
-@keyframes auth-in  { from { opacity:0; transform:scale(.95) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
-@keyframes auth-out { from { opacity:1; transform:scale(1) } to { opacity:0; transform:scale(.95) } }
 
 .auth-modal__progress {
   height: 3px; background: var(--border); position: absolute; top: 0; left: 0; right: 0;
@@ -1102,24 +1088,7 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
   box-shadow: var(--shadow); z-index: 200; overflow: hidden;
   animation: auth-in 200ms ease;
 }
-.nav__profile-menu-backdrop {
-  position: fixed; inset: 0; z-index: 199;
-}
-.nav__profile-menu-header {
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 2px;
-}
-.nav__profile-menu-name { font-family: var(--font-serif); font-size: 0.95rem; color: var(--text); }
-.nav__profile-menu-user { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-3); }
-.nav__profile-menu-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 16px; width: 100%; background: none; border: none;
-  font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-2);
-  cursor: pointer; transition: background var(--transition); text-decoration: none;
-}
-.nav__profile-menu-item:hover { background: var(--bg-3); color: var(--text); }
-.nav__profile-menu-item--danger:hover { background: var(--danger-bg); color: var(--danger); }
-.nav__profile-menu-item i { font-size: 1rem; }
+/* nav__profile-menu-backdrop defined below in nav section */
 
 /* ── Sign-in gate ── */
 .signin-gate {
@@ -1379,8 +1348,7 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
   animation: auth-in 280ms cubic-bezier(0.16,1,0.3,1);
 }
 .authflow-modal--out { animation: auth-out 220ms ease forwards; }
-@keyframes auth-in  { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-@keyframes auth-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.96); } }
+/* auth-in / auth-out keyframes defined once in AUTH MODAL section above */
 
 /* ── Auth panel ── */
 .authflow-panel { padding: 40px 44px; max-width: 420px; width: 100%; margin: 0 auto; }

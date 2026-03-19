@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import { AuthProvider, useAuth } from '../components/Layout'
+import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import data from '../data/courses'
 
@@ -15,6 +16,15 @@ function AppInner({ Component, pageProps }) {
       window.dispatchEvent(new Event('feyn:auth'))
     }
   }
+
+  // Allow any page (e.g. Settings SyncTab) to open the auth modal
+  // by dispatching window.dispatchEvent(new Event('feyn:show-auth'))
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = () => setShowAuth(true)
+    window.addEventListener('feyn:show-auth', handler)
+    return () => window.removeEventListener('feyn:show-auth', handler)
+  }, [setShowAuth])
 
   return (
     <>
