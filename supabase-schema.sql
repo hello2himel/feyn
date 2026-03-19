@@ -131,6 +131,12 @@ create policy "Users can insert their own certificates"
   on public.certificates for insert
   with check (auth.uid() = user_id);
 
+-- Required for upsert (upsert = INSERT + UPDATE).
+-- Without this, .upsert() is silently blocked by RLS and no rows are written.
+create policy "Users can update their own certificates"
+  on public.certificates for update
+  using (auth.uid() = user_id);
+
 
 -- ── User preferences (feed order, last visited, future prefs) ─────────
 -- Generic key/value store per user. Current keys:
@@ -163,6 +169,13 @@ create policy "Users can manage their own preferences"
 -- and just need to add the new user_preferences table.
 -- Skip if running fresh.
 -- ============================================================
+
+-- FIX: Missing UPDATE policy on certificates (caused 0 rows — upsert requires UPDATE)
+-- Run this if you already have the schema and certs aren't saving to the DB:
+--
+-- create policy "Users can update their own certificates"
+--   on public.certificates for update
+--   using (auth.uid() = user_id);
 
 -- create table if not exists public.user_preferences (
 --   id         bigserial primary key,

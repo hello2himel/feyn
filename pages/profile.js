@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [enrolled, setEnrolled]   = useState([])
   const [certs, setCerts]         = useState([])
   const [certLoading, setCertLoading] = useState(null)
+  const [certStatus, setCertStatus]   = useState({})  // { [certId]: 'fetching'|'pushing'|'verifying'|'verified' }
 
   function load() {
     const p = getProfile()
@@ -47,7 +48,10 @@ export default function ProfilePage() {
   }
 
   async function handleDownloadCert(cert) {
-    setCertLoading(cert.id)
+    const id = cert.id
+    setCertLoading(id)
+    const setStatus = s => setCertStatus(prev => ({ ...prev, [id]: s }))
+
     let coachName = 'Instructor', coachTitle = 'Instructor', coachSignatureUrl = null
     for (const program of data.programs) {
       const subj = program.subjects.find(s => s.id === (cert.subjectId || cert.subject_id))
@@ -59,8 +63,58 @@ export default function ProfilePage() {
         break
       }
     }
-    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl, isGlobal: isGlobalAccount() })
+
+    const global = isGlobalAccount()
+
+    // ── Step 1: fetch from DB ────────────────────────────────────
+    setStatus('fetching')
+
+    if (global) {
+      const { getSupabase } = await import('../lib/supabase')
+      const sb = getSupabase()
+
+      if (sb) {
+        const { data: existing } = await sb
+          .from('certificates')
+          .select('id')
+          .eq('id', id)
+          .maybeSingle()
+
+        if (!existing) {
+          // ── Step 2: not found — push ───────────────────────────
+          setStatus('pushing')
+          const { data: sessionData } = await sb.auth.getSession()
+          if (sessionData?.session) {
+            await sb.from('certificates').upsert({
+              user_id:      sessionData.session.user.id,
+              id:           cert.id,
+              program_id:   cert.programId   || cert.program_id,
+              subject_id:   cert.subjectId   || cert.subject_id,
+              program_name: cert.programName || cert.program_name,
+              subject_name: cert.subjectName || cert.subject_name,
+              user_name:    cert.userName    || cert.user_name,
+              issued_at:    cert.issuedAt
+                ? new Date(cert.issuedAt).toISOString()
+                : (cert.issued_at || new Date().toISOString()),
+            }, { onConflict: 'id' })
+          }
+
+          // ── Step 3: verify it landed ───────────────────────────
+          setStatus('verifying')
+          await new Promise(r => setTimeout(r, 600))
+          await sb.from('certificates').select('id').eq('id', id).maybeSingle()
+        }
+      }
+    }
+
+    // ── Step 4: verified flash → download ────────────────────────
+    setStatus('verified')
+    await new Promise(r => setTimeout(r, 800))
+
+    await downloadCertificate({ cert, coachName, coachTitle, coachSignatureUrl, isGlobal: global })
+
     setCertLoading(null)
+    setCertStatus(prev => { const n = { ...prev }; delete n[id]; return n })
   }
 
   function handleSignOut() {
@@ -214,7 +268,18 @@ export default function ProfilePage() {
                       <p className="cert-card__id">{cert.id}</p>
                     </div>
                     <button className="btn btn--accent btn--sm" onClick={() => handleDownloadCert(cert)} disabled={certLoading === cert.id}>
-                      {certLoading === cert.id ? 'Generating…' : 'Download PDF'}
+                      <i className={
+                        certStatus[cert.id] === 'verified'
+                          ? 'ri-shield-check-fill'
+                          : certStatus[cert.id]
+                          ? 'ri-loader-4-line ri-spin'
+                          : 'ri-download-2-line'
+                      } />
+                      {certStatus[cert.id] === 'fetching'    ? 'Fetching…'
+                        : certStatus[cert.id] === 'pushing'  ? 'Pushing…'
+                        : certStatus[cert.id] === 'verifying'? 'Verifying…'
+                        : certStatus[cert.id] === 'verified' ? 'Verified ✓'
+                        : 'Download PDF'}
                     </button>
                   </div>
                 ))}
