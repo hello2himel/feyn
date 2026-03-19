@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-const ExploreDrawer = dynamic(() => import('./ExploreDrawer'), { ssr: false })
-import { isSignedIn, getProfile, signOut, hasOnboarded } from '../lib/userStore'
+const SearchDrawer = dynamic(() => import('./ExploreDrawer'), { ssr: false })
+import { isSignedIn, getProfile, signOut } from '../lib/userStore'
 
-const DONATE_URL = 'https://hello2himel.netlify.app/donate'
+const DONATE_URL = 'https://hello2himel.netlify.app/donate?source=Feyn&session_id=feyn-9a2c41bd-7e30-4f1a-b882-3d08c5e2a719'
 
 // ── Theme ─────────────────────────────────────────────────────────────
 export function useTheme() {
@@ -26,14 +26,13 @@ export function useTheme() {
 }
 
 // ── Auth context ───────────────────────────────────────────────────────
-// Provides: { user, signedIn, refresh, showAuth, setShowAuth }
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]           = useState(null)
-  const [signedIn, setSignedIn]   = useState(false)
-  const [showAuth, setShowAuth]   = useState(false)
-  const [mounted, setMounted]     = useState(false)
+  const [user, setUser]         = useState(null)
+  const [signedIn, setSignedIn] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [mounted, setMounted]   = useState(false)
 
   const refresh = useCallback(() => {
     const profile = getProfile()
@@ -41,10 +40,7 @@ export function AuthProvider({ children }) {
     setSignedIn(!!profile)
   }, [])
 
-  useEffect(() => {
-    setMounted(true)
-    refresh()
-  }, [refresh])
+  useEffect(() => { setMounted(true); refresh() }, [refresh])
 
   return (
     <AuthCtx.Provider value={{ user, signedIn, refresh, showAuth, setShowAuth, mounted }}>
@@ -59,31 +55,71 @@ export function useAuth() {
   return ctx
 }
 
+// ── FeynLogo ───────────────────────────────────────────────────────────
+// Brain icon + "Feyn" wordmark — used everywhere
+export function FeynLogo({ className = '' }) {
+  return (
+    <span className={`feyn-logo ${className}`}>
+      <i className="ri-brain-line feyn-logo__icon" />
+      <span className="feyn-logo__word">Feyn</span>
+    </span>
+  )
+}
+
 // ── Nav ────────────────────────────────────────────────────────────────
 export function Nav() {
   const { theme, toggle } = useTheme()
   const { user, signedIn, setShowAuth, refresh, mounted } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [exploreOpen, setExploreOpen]   = useState(false)
+  const [searchOpen, setSearchOpen]     = useState(false)
+
+  // keyboard shortcut: Cmd/Ctrl+K opens search
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(o => !o)
+      }
+      if (e.key === 'Escape') setSearchOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   function handleSignOut() {
-    signOut()
-    refresh()
-    setUserMenuOpen(false)
+    signOut(); refresh(); setUserMenuOpen(false)
   }
 
   return (
     <nav className="nav">
-      <Link href="/" className="nav__logo">Feyn</Link>
+      <Link href="/" className="nav__logo" aria-label="Feyn home">
+        <FeynLogo />
+      </Link>
 
       <div className="nav__right">
+        {/* Search / Explore button */}
+        <button
+          className="nav__search-btn"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Search courses"
+          title="Search courses  ⌘K"
+        >
+          <i className="ri-search-line" />
+          <span className="nav__search-btn__label">Search</span>
+          <span className="nav__search-btn__kbd">⌘K</span>
+        </button>
+
+        {/* Theme toggle */}
         <button className="nav__icon-btn" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
           <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
         </button>
-        <button className="nav__icon-btn" onClick={() => setExploreOpen(true)} title="Explore courses" aria-label="Explore">
-          <i className="ri-compass-discover-line" />
-        </button>
 
+        {/* Support */}
+        <a href={DONATE_URL} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
+          <i className="ri-heart-fill" /><span>Support</span>
+        </a>
+
+        {/* Auth */}
         {mounted && (
           signedIn ? (
             <div className="nav__user-wrap">
@@ -94,7 +130,6 @@ export function Nav() {
               >
                 {user?.name?.[0]?.toUpperCase() || <i className="ri-user-line" />}
               </button>
-
               {userMenuOpen && (
                 <>
                   <div className="nav__user-backdrop" onClick={() => setUserMenuOpen(false)} />
@@ -122,36 +157,80 @@ export function Nav() {
             </button>
           )
         )}
-
-        <a href={DONATE_URL} className="nav__donate" target="_blank" rel="noopener noreferrer">
-          Support
-        </a>
       </div>
-      {exploreOpen && <ExploreDrawer onClose={() => setExploreOpen(false)} />}
+
+      {searchOpen && <SearchDrawer onClose={() => setSearchOpen(false)} />}
     </nav>
   )
 }
 
 // ── Footer ─────────────────────────────────────────────────────────────
 export function Footer() {
+  const year = new Date().getFullYear()
   return (
-    <footer className="footer container--wide">
-      <p className="footer__left">
-        Feyn, inspired by <em>Feynman Files</em> &amp; Richard Feynman's teaching principle.
-      </p>
-      <div className="footer__right">
-        <a href={DONATE_URL} className="footer__link" target="_blank" rel="noopener noreferrer">
-          <i className="ri-heart-line" style={{ marginRight: 4 }} />Support
-        </a>
-        <Link href="/" className="footer__link">
-          <i className="ri-home-line" style={{ marginRight: 4 }} />Home
-        </Link>
+    <footer className="footer-full">
+      <div className="footer-full__inner container--wide">
+
+        {/* Top row: brand + link columns */}
+        <div className="footer-full__top">
+
+          {/* Brand */}
+          <div className="footer-full__brand">
+            <Link href="/" className="footer-full__logo">
+              <FeynLogo />
+            </Link>
+            <p className="footer-full__tagline">
+              Learn the way Feynman would.<br />
+              First principles. No fluff.
+            </p>
+            <a href={DONATE_URL} className="footer-full__support" target="_blank" rel="noopener noreferrer">
+              <i className="ri-heart-fill" /> Support the project
+            </a>
+          </div>
+
+          {/* Link columns */}
+          <div className="footer-full__links">
+            <div className="footer-full__col">
+              <p className="footer-full__col-label">Learn</p>
+              <Link href="/#courses" className="footer-full__link">All courses</Link>
+              <Link href="/coaches" className="footer-full__link">Coaches</Link>
+              <Link href="/about" className="footer-full__link">About Feyn</Link>
+            </div>
+            <div className="footer-full__col">
+              <p className="footer-full__col-label">Account</p>
+              <Link href="/profile" className="footer-full__link">Profile</Link>
+              <Link href="/settings" className="footer-full__link">Settings</Link>
+            </div>
+            <div className="footer-full__col">
+              <p className="footer-full__col-label">Company</p>
+              <Link href="/about" className="footer-full__link">About</Link>
+              <Link href="/contact" className="footer-full__link">Contact</Link>
+              <a href={DONATE_URL} className="footer-full__link" target="_blank" rel="noopener noreferrer">Donate</a>
+            </div>
+            <div className="footer-full__col">
+              <p className="footer-full__col-label">Legal</p>
+              <Link href="/privacy" className="footer-full__link">Privacy policy</Link>
+              <Link href="/terms" className="footer-full__link">Terms of use</Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="footer-full__bottom">
+          <p className="footer-full__copy">
+            © {year} Feyn · Part of <strong>STΛRGZR</strong> · Inspired by Feynman Files
+          </p>
+          <p className="footer-full__copy" style={{ opacity: 0.5 }}>
+            Free forever. No ads. No tracking.
+          </p>
+        </div>
+
       </div>
     </footer>
   )
 }
 
-// ── Auth gate, wrap any feature that requires sign-in ─────────────────
+// ── Auth gate ──────────────────────────────────────────────────────────
 export function AuthGate({ children, fallback }) {
   const { signedIn, setShowAuth, mounted } = useAuth()
   if (!mounted) return null
@@ -194,7 +273,7 @@ export function DonateStrip() {
         This content is free. If it's helped you, consider supporting the project.
       </p>
       <a href={DONATE_URL} className="donate-strip__btn" target="_blank" rel="noopener noreferrer">
-        <i className="ri-heart-line" /> Donate
+        <i className="ri-heart-fill" /> Support
       </a>
     </div>
   )
@@ -237,11 +316,7 @@ export function YTThumb({ videoId, alt = '', className = '' }) {
   }
   return (
     <div className={`thumb ${className}`} style={{ aspectRatio: '16/9' }}>
-      <img
-        src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`}
-        alt={alt}
-        onError={() => setErr(true)}
-      />
+      <img src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`} alt={alt} onError={() => setErr(true)} />
       <div className="thumb__play"><i className="ri-play-fill" /></div>
     </div>
   )

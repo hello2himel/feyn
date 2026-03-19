@@ -325,7 +325,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
         {mode === 'auth' && (
           <div className="authflow-panel">
             <div className="authflow-brand">
-              <i className="ri-play-circle-fill authflow-brand__icon" />
+              <i className="ri-brain-line authflow-brand__icon" />
               <span className="authflow-brand__name">Feyn</span>
             </div>
 

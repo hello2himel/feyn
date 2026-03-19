@@ -94,10 +94,15 @@ export default function SmartPlayer({
         playerRef.current = new window.YT.Player(containerRef.current, {
           videoId,
           playerVars: {
-            rel:            0,   // no related videos
-            modestbranding: 1,   // minimal logo
+            rel:            0,   // no related videos at end
+            modestbranding: 1,   // minimal YouTube logo
             iv_load_policy: 3,   // no annotations
-            playsinline:    1,
+            playsinline:    1,   // inline on iOS
+            showinfo:       0,   // hide video title bar (deprecated but still works)
+            fs:             0,   // hide fullscreen button — we provide our own layout
+            cc_load_policy: 0,   // captions off by default
+            disablekb:      0,   // keep keyboard shortcuts (seek, space)
+            controls:       1,   // show native controls (play/pause/seek/volume only)
             origin: window.location.origin,
           },
           events: {

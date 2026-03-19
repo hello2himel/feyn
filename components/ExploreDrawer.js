@@ -49,8 +49,8 @@ export default function ExploreDrawer({ onClose }) {
         {/* Header */}
         <div className="explore-drawer__header">
           <div className="explore-drawer__header-left">
-            <i className="ri-compass-discover-line" />
-            <h2 className="explore-drawer__title">Explore</h2>
+            <i className="ri-search-line" />
+            <h2 className="explore-drawer__title">Search courses</h2>
           </div>
           <button className="nav__icon-btn" onClick={onClose} aria-label="Close">
             <i className="ri-close-line" />
