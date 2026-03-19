@@ -23,7 +23,6 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   const [subjectPct, setSubjectPct]   = useState(0)
   // Live video watch % — updated every second by SmartPlayer via onProgress
   const [videoPct, setVideoPct]       = useState(0)
-  const [materialsOpen, setMaterialsOpen] = useState(false)
 
   // Memoised to avoid new array ref on every render
   const coaches = useMemo(
@@ -140,7 +139,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                 </div>
               )}
 
-              {/* Below-video bar: video progress + course progress + materials toggle */}
+              {/* Below-video bar: video progress + course progress */}
               <div className="video-meta-bar">
                 <div className="video-meta-bar__left">
                   {mounted && signedIn ? (
@@ -175,48 +174,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                     </span>
                   )}
                 </div>
-
-                {/* Materials toggle — always visible on mobile, hidden on desktop (sidebar handles it) */}
-                {allMaterials.length > 0 && (
-                  <button
-                    className={`video-meta-bar__mats-btn ${materialsOpen ? 'active' : ''}`}
-                    onClick={() => setMaterialsOpen(o => !o)}
-                    aria-expanded={materialsOpen}
-                    aria-controls="inline-materials-panel"
-                  >
-                    <i className="ri-folder-open-line" aria-hidden="true" />
-                    Course materials
-                    <i className={`ri-arrow-${materialsOpen ? 'up' : 'down'}-s-line`} aria-hidden="true" />
-                  </button>
-                )}
               </div>
-
-              {/* Inline materials panel (slides open on mobile) */}
-              {materialsOpen && allMaterials.length > 0 && (
-                <div className="video-materials-panel" id="inline-materials-panel">
-                  {allMaterials.map(m => (
-                    <a
-                      key={m.id}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="video-materials-item"
-                    >
-                      <span className="video-materials-item__icon" aria-hidden="true">
-                        <i className={
-                          m.type === 'pdf'   ? 'ri-file-pdf-2-line' :
-                          m.type === 'doc'   ? 'ri-file-word-line'  :
-                          m.type === 'video' ? 'ri-video-line'      :
-                          m.type === 'link'  ? 'ri-link'            : 'ri-attachment-line'
-                        } />
-                      </span>
-                      <span className="video-materials-item__label">{m.label}</span>
-                      <span className="video-materials-item__type">{m.type}</span>
-                      <i className="ri-external-link-line video-materials-item__ext" aria-hidden="true" />
-                    </a>
-                  ))}
-                </div>
-              )}
 
               {/* Lesson materials */}
               <LessonMaterials materials={lesson.materials || []} />

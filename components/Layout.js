@@ -363,8 +363,11 @@ export function materialIcon(type) {
 }
 
 // ── MaterialsSidebar ───────────────────────────────────────────────────
+// Desktop: sticky sidebar column
+// Mobile (≤900px): FAB → bottom sheet with drag-handle + backdrop dismiss
 export function MaterialsSidebar({ materials, subjectName }) {
   const [open, setOpen] = useState(false)
+
   const courseMats = materials.filter(m => m._source === 'course')
   const lessonMats = materials.filter(m => m._source === 'lesson')
   const byLesson   = {}
@@ -372,40 +375,111 @@ export function MaterialsSidebar({ materials, subjectName }) {
     if (!byLesson[m._lessonId]) byLesson[m._lessonId] = { title: m._lessonTitle, items: [] }
     byLesson[m._lessonId].items.push(m)
   }
+
+  // Lock body scroll when sheet is open (mobile only)
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const inner = (
+    <>
+      {materials.length === 0 && (
+        <p style={{ padding: '20px 16px', fontSize: '0.8rem', color: 'var(--text-3)', fontStyle: 'italic' }}>No materials yet.</p>
+      )}
+      {courseMats.length > 0 && (
+        <div className="sidebar-section">
+          <p className="sidebar-section__label"><i className="ri-book-open-line" aria-hidden="true" /> Course-level</p>
+          {courseMats.map(m => <MaterialItem key={m.id} material={m} />)}
+        </div>
+      )}
+      {Object.entries(byLesson).map(([lid, { title, items }]) => (
+        <div className="sidebar-section" key={lid}>
+          <p className="sidebar-section__label" title={title}>
+            <i className="ri-play-circle-line" aria-hidden="true" />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 170 }}>{title}</span>
+          </p>
+          {items.map(m => <MaterialItem key={m.id} material={m} />)}
+        </div>
+      ))}
+    </>
+  )
+
   return (
     <>
-      <div className={`sidebar-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
-      <button className="sidebar-fab" onClick={() => setOpen(true)} aria-label="Open materials">
-        <i className="ri-folder-open-line" />
-      </button>
-      <aside className={`materials-sidebar ${open ? 'open' : ''}`}>
+      {/* ── Desktop sidebar ── */}
+      <aside className="materials-sidebar materials-sidebar--desktop">
         <div className="sidebar-header">
           <span className="sidebar-header__title">
-            <i className="ri-folder-open-line" /> Course Materials
+            <i className="ri-folder-open-line" aria-hidden="true" /> Course Materials
           </span>
-          <button className="sidebar-toggle" onClick={() => setOpen(false)}>
-            <i className="ri-close-line" />
+        </div>
+        {inner}
+      </aside>
+
+      {/* ── Mobile FAB ── */}
+      {materials.length > 0 && (
+        <button
+          className="sidebar-fab"
+          onClick={() => setOpen(true)}
+          aria-label="Open course materials"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+        >
+          <i className="ri-folder-open-line" aria-hidden="true" />
+          <span className="sidebar-fab__badge">{materials.length}</span>
+        </button>
+      )}
+
+      {/* ── Mobile bottom sheet ── */}
+      {/* Backdrop */}
+      <div
+        className={`sheet-backdrop ${open ? 'sheet-backdrop--open' : ''}`}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Sheet */}
+      <div
+        className={`bottom-sheet ${open ? 'bottom-sheet--open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Course Materials"
+      >
+        {/* Drag handle (decorative) */}
+        <div className="bottom-sheet__handle" aria-hidden="true" />
+
+        {/* Header */}
+        <div className="bottom-sheet__header">
+          <span className="bottom-sheet__title">
+            <i className="ri-folder-open-line" aria-hidden="true" /> Course Materials
+          </span>
+          <button
+            className="bottom-sheet__close"
+            onClick={() => setOpen(false)}
+            aria-label="Close materials"
+          >
+            <i className="ri-close-line" aria-hidden="true" />
           </button>
         </div>
-        {materials.length === 0 && (
-          <p style={{ padding: '20px 16px', fontSize: '0.8rem', color: 'var(--text-3)', fontStyle: 'italic' }}>No materials yet.</p>
-        )}
-        {courseMats.length > 0 && (
-          <div className="sidebar-section">
-            <p className="sidebar-section__label"><i className="ri-book-open-line" /> Course-level</p>
-            {courseMats.map(m => <MaterialItem key={m.id} material={m} />)}
-          </div>
-        )}
-        {Object.entries(byLesson).map(([lid, { title, items }]) => (
-          <div className="sidebar-section" key={lid}>
-            <p className="sidebar-section__label" title={title}>
-              <i className="ri-play-circle-line" />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 170 }}>{title}</span>
-            </p>
-            {items.map(m => <MaterialItem key={m.id} material={m} />)}
-          </div>
-        ))}
-      </aside>
+
+        {/* Scrollable content */}
+        <div className="bottom-sheet__body">
+          {inner}
+        </div>
+      </div>
     </>
   )
 }
