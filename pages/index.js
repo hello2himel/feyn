@@ -71,7 +71,8 @@ function ContinueCard({ activity }) {
   const hasThumb = lesson.videoId && lesson.videoId !== 'YOUTUBE_ID_HERE'
 
   return (
-    <Link href={href} className="continue-card">
+    <div className="continue-card">
+      <Link href={href} className="continue-card__overlay-link" aria-label={`Continue: ${lesson.title}`} />
       {/* Thumbnail */}
       <div className="continue-card__thumb">
         {hasThumb ? (
@@ -91,7 +92,6 @@ function ContinueCard({ activity }) {
             <i className="ri-play-circle-line" />
           </div>
         )}
-        {/* Course progress bar along bottom of thumb */}
         <div className="continue-card__thumb-bar">
           <div className="continue-card__thumb-fill" style={{ width: `${pct}%` }} />
         </div>
@@ -126,7 +126,7 @@ function ContinueCard({ activity }) {
       <div className="continue-card__arrow">
         <i className="ri-arrow-right-line" />
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -136,7 +136,8 @@ function FeedCard({ program, subject, enrolled, pct, mounted }) {
   const firstVid = subject.topics[0]?.lessons[0]?.videoId
   const total    = getTotalLessons(subject)
   return (
-    <Link href={`/${program.id}/${subject.id}`} className="feed-card">
+    <div className="feed-card">
+      <Link href={`/${program.id}/${subject.id}`} className="feed-card__overlay-link" aria-label={subject.name} />
       <div className="feed-card__thumb">
         <YTThumb videoId={firstVid} alt={subject.name} />
         {mounted && enrolled && (
@@ -147,7 +148,7 @@ function FeedCard({ program, subject, enrolled, pct, mounted }) {
       </div>
       <div className="feed-card__body">
         <p className="feed-card__program">
-          <Link href={`/${program.id}`} onClick={e => e.stopPropagation()} className="feed-card__program-link">{program.name}</Link>
+          <Link href={`/${program.id}`} className="feed-card__program-link" style={{ position: 'relative', zIndex: 2 }}>{program.name}</Link>
         </p>
         <h3 className="feed-card__title">{subject.name}</h3>
         <p className="feed-card__desc">{subject.description}</p>
@@ -159,7 +160,7 @@ function FeedCard({ program, subject, enrolled, pct, mounted }) {
           {mounted && enrolled && <span className="feed-card__enrolled-tag"><i className="ri-checkbox-circle-fill" /> {pct}%</span>}
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 

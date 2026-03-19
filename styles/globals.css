@@ -2792,3 +2792,51 @@ i[class*="ri-"] {
 @media (max-width: 600px) {
   .settings-theme-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* =============================================
+   CARD OVERLAY LINK PATTERN
+   Fixes: <a> cannot contain <div> (hydration error)
+   Usage: parent div gets position:relative,
+   child <Link className="*__overlay-link"> covers the whole card.
+   Other interactive elements inside get position:relative; z-index:2
+   ============================================= */
+[class$="__overlay-link"] {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* All card containers that use the overlay pattern need position:relative */
+.feed-card,
+.continue-card,
+.coach-card,
+.topic-item,
+.explore-card,
+.program-subject-card,
+.coach-lesson-row {
+  position: relative;
+}
+
+/* Hover state: cards still animate on the wrapper */
+.feed-card:has(.feed-card__overlay-link:hover),
+.continue-card:has(.continue-card__overlay-link:hover),
+.coach-card:has(.coach-card__overlay-link:hover),
+.topic-item:has(.topic-item__overlay-link:hover),
+.explore-card:has(.explore-card__overlay-link:hover),
+.program-subject-card:has(.program-subject-card__overlay-link:hover),
+.coach-lesson-row:has(.coach-lesson-row__overlay-link:hover) {
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Arrow animation on hover */
+.continue-card:has(.continue-card__overlay-link:hover) .continue-card__arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+.coach-card:has(.coach-card__overlay-link:hover) .coach-card__arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}

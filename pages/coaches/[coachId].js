@@ -66,14 +66,15 @@ export default function CoachPage({ coach, subjects }) {
                     </Link>
                     <div className="coach-lessons">
                       {topic.lessons.map((lesson, i) => (
-                        <Link key={lesson.id} href={`/${program.id}/${subject.id}/${topic.id}/${lesson.id}`} className="coach-lesson-row">
+                        <div key={lesson.id} className="coach-lesson-row">
+                          <Link href={`/${program.id}/${subject.id}/${topic.id}/${lesson.id}`} className="coach-lesson-row__overlay-link" aria-label={lesson.title} />
                           <span className="coach-lesson-row__num">{String(i + 1).padStart(2, '0')}</span>
                           <div className="coach-lesson-row__thumb">
                             <YTThumb videoId={lesson.videoId} alt={lesson.title} />
                           </div>
                           <span className="coach-lesson-row__title">{lesson.title}</span>
                           <span className="coach-lesson-row__dur"><i className="ri-time-line" /> {lesson.duration}</span>
-                        </Link>
+                        </div>
                       ))}
                     </div>
                   </div>

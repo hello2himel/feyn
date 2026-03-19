@@ -67,11 +67,11 @@ export default function ProgramPage({ program }) {
                 const info        = progressMap[subject.id] || {}
 
                 return (
-                  <Link
+                  <div
                     key={subject.id}
-                    href={`/${program.id}/${subject.id}`}
                     className="program-subject-card"
                   >
+                    <Link href={`/${program.id}/${subject.id}`} className="program-subject-card__overlay-link" aria-label={subject.name} />
                     {/* Thumbnail */}
                     <div className="program-subject-card__thumb">
                       <YTThumb videoId={firstVid} alt={subject.name} />
@@ -113,7 +113,7 @@ export default function ProgramPage({ program }) {
                         <ProgressBar pct={info.pct} label={`${info.pct}%`} />
                       )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

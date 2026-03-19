@@ -146,11 +146,13 @@ function ExploreCard({ program, subject, onClose }) {
   const coaches  = getCoachesFor(subject.coachIds || [])
 
   return (
-    <Link
-      href={`/${program.id}/${subject.id}`}
-      className="explore-card"
-      onClick={onClose}
-    >
+    <div className="explore-card">
+      <Link
+        href={`/${program.id}/${subject.id}`}
+        className="explore-card__overlay-link"
+        onClick={onClose}
+        aria-label={subject.name}
+      />
       <div className="explore-card__thumb">
         <YTThumb videoId={firstVid} alt={subject.name} />
       </div>
@@ -163,6 +165,6 @@ function ExploreCard({ program, subject, onClose }) {
           {coaches.length > 0 && <> · {coaches[0].name}</>}
         </p>
       </div>
-    </Link>
+    </div>
   )
 }
