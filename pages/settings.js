@@ -341,10 +341,22 @@ function SyncTab({ onRefresh }) {
             desc="Sync your progress and certificates across all your devices. Create an account with email and password."
           />
 
-          {result?.ok === 'verify' && (
-            <StatusBadge type="success">
-              Check your email at <strong>{result.email}</strong> to confirm, then sign in again.
-            </StatusBadge>
+          {result?.ok === 'otp' && (
+            <div style={{ background: 'var(--accent-glow)', border: '1px solid var(--accent-2)', borderRadius: 'var(--radius-md)', padding: '16px 18px', marginBottom: 16 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+                <i className="ri-secure-payment-line" /> Check your email
+              </p>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-2)', marginBottom: 6 }}>
+                We sent a 6-digit code to <strong style={{ color: 'var(--text)' }}>{result.email}</strong>.
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>
+                Enter that code in the sign-in modal to complete your upgrade. 
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', font: 'inherit', padding: 0, marginLeft: 6 }}
+                  onClick={() => window.dispatchEvent(new Event('feyn:show-auth'))}>
+                  Open sign-in
+                </button>
+              </p>
+            </div>
           )}
 
           <form onSubmit={handleUpgrade} className="settings-fields" style={{ marginTop: 16 }}>
