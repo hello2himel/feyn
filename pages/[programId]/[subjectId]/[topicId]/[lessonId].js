@@ -8,7 +8,7 @@ import { useAuth } from '../../../../components/Layout'
 import {
   isWatched, markWatched, unmarkWatched,
   getSubjectProgress, issueCert, hasCert, getProfile,
-  getWatchProgress,
+  getWatchProgress, isGlobalAccount,
 } from '../../../../lib/userStore'
 import { downloadCertificate } from '../../../../lib/certificate'
 
@@ -74,7 +74,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   async function handleCert() {
     const profile    = getProfile()
     const userName   = profile?.name || 'Student'
-    const cert       = issueCert(program.id, subject.id, subject.name, program.name, userName)
+    const cert       = await issueCert(program.id, subject.id, subject.name, program.name, userName)
     const coachName  = coaches[0]?.name  || 'Instructor'
     const coachTitle = coaches[0]?.title || 'Instructor'
     setCertLoading(true)
@@ -85,6 +85,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
       totalLessons:       subjectTotalLessons,
       subjectDesc:        subject.description || '',
       coachSignatureUrl:  coaches[0]?.signature || null,
+      isGlobal:           isGlobalAccount(),
     })
     setCertLoading(false)
   }
