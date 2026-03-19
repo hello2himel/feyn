@@ -6,6 +6,7 @@ export default function ContactPage() {
     <>
       <Head>
         <title>Contact - Feyn</title>
+        <meta name="description" content="Get in touch with the Feyn team." />
       </Head>
       <Nav />
       <main>
@@ -15,17 +16,11 @@ export default function ContactPage() {
               <p className="static-page__eyebrow">Contact</p>
               <h1 className="static-page__title">Get in touch</h1>
             </header>
-
             <div className="static-page__body">
-              <p>
-                For all inquiries, use the email below.
-              </p>
-
+              <p>For all inquiries, use the email below.</p>
               <h2>Email</h2>
               <p>
-                <a href="mailto:stargzr.science@gmail.com">
-                  stargzr.science@gmail.com
-                </a>
+                <a href="mailto:stargzr.science@gmail.com">stargzr.science@gmail.com</a>
               </p>
             </div>
           </div>
