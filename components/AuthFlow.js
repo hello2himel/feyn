@@ -52,7 +52,7 @@ function InterestCard({ subject, selected, onToggle }) {
     <button type="button" className={`interest-card ${selected ? 'interest-card--selected' : ''}`} onClick={onToggle}>
       <div className="interest-card__bg">
         {vid && vid !== 'YOUTUBE_ID_HERE'
-          ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" onError={e => { e.target.style.display = 'none' }} />
+          ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" crossOrigin="anonymous" onError={e => { e.target.style.display = 'none' }} />
           : <div className="interest-card__gradient" />}
         <div className="interest-card__overlay" />
       </div>
@@ -515,7 +515,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                     onClick={() => toggleCourse(gradeProgram.id, subject.id)}>
                     <div className="interest-card__bg">
                       {vid
-                        ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" onError={e => { e.target.style.display = 'none' }} />
+                        ? <img src={`https://i.ytimg.com/vi/${vid}/mqdefault.jpg`} alt="" crossOrigin="anonymous" onError={e => { e.target.style.display = 'none' }} />
                         : <div className="interest-card__gradient" />}
                       <div className="interest-card__overlay" />
                     </div>

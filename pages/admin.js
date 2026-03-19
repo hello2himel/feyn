@@ -289,7 +289,7 @@ export default function AdminPage() {
                 <div key={l.id} style={{...s.row, ...(selL===i?s.rowActive:{})}} onClick={()=>setSelL(i)}>
                   <span style={s.rowNum}>{String(i+1).padStart(2,'0')}</span>
                   {l.videoId && l.videoId!=='YOUTUBE_ID_HERE' && (
-                    <img src={`https://i.ytimg.com/vi/${l.videoId}/default.jpg`} alt="" style={{width:64,height:36,objectFit:'cover',borderRadius:2,flexShrink:0}} />
+                    <img src={`https://i.ytimg.com/vi/${l.videoId}/default.jpg`} crossOrigin="anonymous" alt="" style={{width:64,height:36,objectFit:'cover',borderRadius:2,flexShrink:0}} />
                   )}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={s.rowLabel}>{l.title||'(untitled)'}</div>

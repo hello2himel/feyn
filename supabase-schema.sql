@@ -121,6 +121,12 @@ create policy "Users can read their own certificates"
   on public.certificates for select
   using (auth.uid() = user_id);
 
+-- PUBLIC read by cert ID — allows the /verify/[id] page to look up any cert
+-- without requiring the viewer to be signed in.
+create policy "Anyone can verify a certificate by ID"
+  on public.certificates for select
+  using (true);
+
 create policy "Users can insert their own certificates"
   on public.certificates for insert
   with check (auth.uid() = user_id);

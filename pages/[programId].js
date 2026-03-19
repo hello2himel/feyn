@@ -11,6 +11,7 @@ export default function ProgramPage({ program }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    if (!program) return
     setMounted(true)
     const map = {}
     for (const subject of program.subjects) {
@@ -20,7 +21,9 @@ export default function ProgramPage({ program }) {
       }
     }
     setProgressMap(map)
-  }, [])
+  }, [program?.id])
+
+  if (!program) return null
 
   const totalSubjects = program.subjects.length
   const totalLessons  = program.subjects.reduce((a, s) => a + getTotalLessons(s), 0)

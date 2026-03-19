@@ -10,13 +10,16 @@ export default function SubjectPage({ program, subject, allMaterials }) {
   const { signedIn, setShowAuth, mounted } = useAuth()
   const [enrolled, setEnrolled] = useState(false)
   const [pct, setPct]           = useState(0)
-  const coaches = getCoachesFor(subject.coachIds || [])
+
+  const coaches = (subject) ? getCoachesFor(subject.coachIds || []) : []
 
   useEffect(() => {
-    if (!signedIn) return
+    if (!signedIn || !program || !subject) return
     setEnrolled(isEnrolled(program.id, subject.id))
     setPct(getSubjectProgress(program.id, subject.id, subject))
-  }, [signedIn])
+  }, [signedIn, program?.id, subject?.id])
+
+  if (!program || !subject) return null
 
   function toggleEnroll() {
     if (!signedIn) { setShowAuth(true); return }
