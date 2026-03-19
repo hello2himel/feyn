@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-const SearchDrawer = dynamic(() => import('./ExploreDrawer'), { ssr: false })
+const SearchPalette = dynamic(() => import('./SearchPalette'), { ssr: false })
 import { isSignedIn, getProfile, signOut } from '../lib/userStore'
 
 const DONATE_URL = 'https://hello2himel.netlify.app/donate?source=Feyn&session_id=feyn-9a2c41bd-7e30-4f1a-b882-3d08c5e2a719'
@@ -73,14 +73,13 @@ export function Nav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen]     = useState(false)
 
-  // keyboard shortcut: Cmd/Ctrl+K opens search
+  // Cmd/Ctrl+K — open search palette
   useEffect(() => {
     function onKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen(o => !o)
       }
-      if (e.key === 'Escape') setSearchOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -91,76 +90,95 @@ export function Nav() {
   }
 
   return (
-    <nav className="nav">
-      <Link href="/" className="nav__logo" aria-label="Feyn home">
-        <FeynLogo />
-      </Link>
+    <>
+      <nav className="nav">
+        <Link href="/" className="nav__logo" aria-label="Feyn home">
+          <FeynLogo />
+        </Link>
 
-      <div className="nav__right">
-        {/* Search / Explore button */}
-        <button
-          className="nav__search-btn"
-          onClick={() => setSearchOpen(true)}
-          aria-label="Search courses"
-          title="Search courses  ⌘K"
-        >
-          <i className="ri-search-line" />
-          <span className="nav__search-btn__label">Search</span>
-          <span className="nav__search-btn__kbd">⌘K</span>
-        </button>
+        <div className="nav__right">
+          {/* Search */}
+          <button
+            className="nav__search-btn"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search courses"
+            title="Search  ⌘K"
+          >
+            <i className="ri-search-line" />
+            <span className="nav__search-btn__label">Search</span>
+            <span className="nav__search-btn__kbd">⌘K</span>
+          </button>
 
-        {/* Theme toggle */}
-        <button className="nav__icon-btn" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
-          <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
-        </button>
+          {/* Support */}
+          <a href={DONATE_URL} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
+            <i className="ri-heart-fill" /><span>Support</span>
+          </a>
 
-        {/* Support */}
-        <a href={DONATE_URL} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
-          <i className="ri-heart-fill" /><span>Support</span>
-        </a>
+          {/* Auth */}
+          {mounted && (
+            signedIn ? (
+              <div className="nav__user-wrap">
+                <button
+                  className="nav__avatar"
+                  onClick={() => setUserMenuOpen(o => !o)}
+                  aria-label="User menu"
+                >
+                  {user?.name?.[0]?.toUpperCase() || <i className="ri-user-line" />}
+                </button>
 
-        {/* Auth */}
-        {mounted && (
-          signedIn ? (
-            <div className="nav__user-wrap">
-              <button
-                className="nav__avatar"
-                onClick={() => setUserMenuOpen(o => !o)}
-                aria-label="User menu"
-              >
-                {user?.name?.[0]?.toUpperCase() || <i className="ri-user-line" />}
-              </button>
-              {userMenuOpen && (
-                <>
-                  <div className="nav__user-backdrop" onClick={() => setUserMenuOpen(false)} />
-                  <div className="nav__user-menu">
-                    <div className="nav__user-menu__header">
-                      <p className="nav__user-menu__name">{user?.name || 'User'}</p>
-                      {user?.username && <p className="nav__user-menu__username">@{user.username}</p>}
+                {userMenuOpen && (
+                  <>
+                    <div className="nav__user-backdrop" onClick={() => setUserMenuOpen(false)} />
+                    <div className="nav__user-menu">
+                      {/* User info */}
+                      <div className="nav__user-menu__header">
+                        <p className="nav__user-menu__name">{user?.name || 'User'}</p>
+                        {user?.username && <p className="nav__user-menu__username">@{user.username}</p>}
+                      </div>
+
+                      {/* Nav links */}
+                      <Link href="/profile" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                        <i className="ri-user-line" /> Profile
+                      </Link>
+                      <Link href="/settings" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                        <i className="ri-settings-3-line" /> Settings
+                      </Link>
+
+                      {/* Theme toggle — lives here, not as a standalone nav button */}
+                      <button className="nav__user-menu__item nav__user-menu__item--theme" onClick={toggle}>
+                        <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
+                        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                        <span className="nav__user-menu__theme-badge">
+                          {theme === 'dark' ? 'Dark' : 'Light'}
+                        </span>
+                      </button>
+
+                      {/* Sign out */}
+                      <button className="nav__user-menu__item nav__user-menu__item--danger" onClick={handleSignOut}>
+                        <i className="ri-logout-box-line" /> Sign out
+                      </button>
                     </div>
-                    <Link href="/profile" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                      <i className="ri-user-line" /> Profile
-                    </Link>
-                    <Link href="/settings" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                      <i className="ri-settings-3-line" /> Settings
-                    </Link>
-                    <button className="nav__user-menu__item nav__user-menu__item--danger" onClick={handleSignOut}>
-                      <i className="ri-logout-box-line" /> Sign out
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <button className="nav__signin-btn" onClick={() => setShowAuth(true)}>
-              <i className="ri-user-line" /> Sign in
-            </button>
-          )
-        )}
-      </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Logged-out: theme toggle stays as icon in nav */}
+                <button className="nav__icon-btn" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
+                  <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
+                </button>
+                <button className="nav__signin-btn" onClick={() => setShowAuth(true)}>
+                  <i className="ri-user-line" /> Sign in
+                </button>
+              </>
+            )
+          )}
+        </div>
+      </nav>
 
-      {searchOpen && <SearchDrawer onClose={() => setSearchOpen(false)} />}
-    </nav>
+      {/* Search palette — rendered outside nav so it can be truly full-screen */}
+      {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} />}
+    </>
   )
 }
 
