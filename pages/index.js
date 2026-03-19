@@ -29,8 +29,9 @@ function getSiteMetrics() {
 }
 
 // ── Continue where you left off ───────────────────────────────────────
-// Resolves last activity → next unwatched lesson in sequence
-function resolveNextLesson(activity) {
+// Shows the exact lesson the user last opened/played.
+// "Next lesson" logic only kicks in if that lesson is fully watched.
+function resolveCurrentLesson(activity) {
   if (!activity) return null
   const { programId, subjectId, topicId, lessonId } = activity
 
@@ -39,33 +40,17 @@ function resolveNextLesson(activity) {
   const topic   = getTopic(programId, subjectId, topicId)
   if (!program || !subject || !topic) return null
 
-  // Try next lesson in same topic first
-  const { next } = getLessonNav(programId, subjectId, topicId, lessonId)
-  if (next) {
-    return { program, subject, topic, lesson: next, programId, subjectId, topicId, lessonId: next.id }
-  }
+  const lesson = topic.lessons.find(l => l.id === lessonId)
+  if (!lesson) return null
 
-  // Next topic in same subject
-  const topicIdx = subject.topics.findIndex(t => t.id === topicId)
-  for (let ti = topicIdx + 1; ti < subject.topics.length; ti++) {
-    const nextTopic = subject.topics[ti]
-    if (nextTopic.lessons.length > 0) {
-      return { program, subject, topic: nextTopic, lesson: nextTopic.lessons[0], programId, subjectId, topicId: nextTopic.id, lessonId: nextTopic.lessons[0].id }
-    }
-  }
-
-  // All done, return the last watched lesson itself (course complete)
-  const currentLesson = topic.lessons.find(l => l.id === lessonId)
-  return currentLesson
-    ? { program, subject, topic, lesson: currentLesson, programId, subjectId, topicId, lessonId, completed: true }
-    : null
+  return { program, subject, topic, lesson, programId, subjectId, topicId, lessonId }
 }
 
 function ContinueCard({ activity }) {
-  const resolved = resolveNextLesson(activity)
+  const resolved = resolveCurrentLesson(activity)
   if (!resolved) return null
 
-  const { program, subject, topic, lesson, programId, subjectId, topicId, lessonId, completed } = resolved
+  const { program, subject, topic, lesson, programId, subjectId, topicId, lessonId } = resolved
   const href = `/${programId}/${subjectId}/${topicId}/${lessonId}`
   const pct  = getSubjectProgress(programId, subjectId, subject)
   const hasThumb = lesson.videoId && lesson.videoId !== 'YOUTUBE_ID_HERE'
@@ -77,10 +62,7 @@ function ContinueCard({ activity }) {
       <div className="continue-card__thumb">
         {hasThumb ? (
           <>
-            <img
-              src={`https://i.ytimg.com/vi/${lesson.videoId}/mqdefault.jpg`}
-              alt={lesson.title}
-            />
+            <img src={`https://i.ytimg.com/vi/${lesson.videoId}/mqdefault.jpg`} alt={lesson.title} />
             <div className="continue-card__play-overlay">
               <div className="continue-card__play-btn">
                 <i className="ri-play-fill" />
@@ -97,13 +79,9 @@ function ContinueCard({ activity }) {
         </div>
       </div>
 
-      {/* Info */}
       <div className="continue-card__body">
         <p className="continue-card__eyebrow">
-          {completed
-            ? <><i className="ri-checkbox-circle-fill" /> Course complete</>
-            : <><i className="ri-play-circle-line" /> Continue watching</>
-          }
+          <i className="ri-history-line" /> Continue watching
         </p>
         <h3 className="continue-card__title">{lesson.title}</h3>
         <p className="continue-card__breadcrumb">
@@ -115,14 +93,10 @@ function ContinueCard({ activity }) {
         </p>
         <div className="continue-card__meta">
           {lesson.duration && <span><i className="ri-time-line" /> {lesson.duration}</span>}
-          <span>
-            <i className="ri-bar-chart-line" />
-            {pct}% of {subject.name} complete
-          </span>
+          <span><i className="ri-bar-chart-line" /> {pct}% of {subject.name}</span>
         </div>
       </div>
 
-      {/* Arrow */}
       <div className="continue-card__arrow">
         <i className="ri-arrow-right-line" />
       </div>

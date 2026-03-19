@@ -225,21 +225,66 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
         {/* ── EMAIL VERIFY SCREEN ── */}
         {globalSuccess === 'verify' && (
-          <div className="authflow-panel authflow-panel--center">
-            <div style={{ fontSize: '3rem', color: 'var(--accent)', marginBottom: 16 }}>
-              <i className="ri-mail-send-line" />
+          <div className="authflow-panel">
+            <div className="authflow-verify">
+              <div className="authflow-verify__icon">
+                <i className="ri-mail-check-line" />
+              </div>
+              <h2 className="authflow-verify__title">Check your inbox</h2>
+              <p className="authflow-verify__body">
+                We sent a confirmation link to
+              </p>
+              <p className="authflow-verify__email">{email}</p>
+              <p className="authflow-verify__body">
+                Click the link in that email to activate your account. It may take a minute or two.
+              </p>
+
+              <div className="authflow-verify__steps">
+                {[
+                  { icon: 'ri-mail-open-line', text: 'Open the email from Feyn' },
+                  { icon: 'ri-cursor-line',    text: 'Click the confirmation link' },
+                  { icon: 'ri-login-box-line', text: 'Come back here and sign in' },
+                ].map((s, i) => (
+                  <div key={i} className="authflow-verify__step">
+                    <span className="authflow-verify__step-num">{i + 1}</span>
+                    <i className={s.icon} />
+                    <span>{s.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button className="authflow-submit" style={{ marginTop: 8 }} onClick={() => {
+                setGlobalSuccess(null)
+                setAuthTab('signin')
+                clearAllErrors()
+              }}>
+                I've confirmed — sign me in <i className="ri-arrow-right-line" />
+              </button>
+
+              <p className="authflow-verify__trouble">
+                Didn't get the email? Check your spam folder, or{' '}
+                <button
+                  type="button"
+                  className="authflow-verify__retry"
+                  onClick={() => {
+                    setGlobalSuccess(null)
+                    clearAllErrors()
+                  }}
+                >
+                  try a different email
+                </button>.
+              </p>
+
+              <div className="authflow-verify__note">
+                <i className="ri-information-line" />
+                <p>
+                  The confirmation link will redirect you to this site. Make sure the link in the email
+                  goes to <strong>{typeof window !== 'undefined' ? window.location.origin : 'feyn.netlify.app'}</strong>.
+                  If it says localhost, your Supabase redirect URL needs to be updated in your Supabase dashboard under
+                  Authentication &gt; URL Configuration.
+                </p>
+              </div>
             </div>
-            <h2 className="authflow-done-title">Check your email</h2>
-            <p className="authflow-done-sub" style={{ marginBottom: 20 }}>
-              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back and sign in.
-            </p>
-            <button className="authflow-submit" onClick={() => {
-              setGlobalSuccess(null)
-              setAuthTab('signin')
-              clearAllErrors()
-            }}>
-              Back to sign in <i className="ri-arrow-right-line" />
-            </button>
           </div>
         )}
 
@@ -352,16 +397,26 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                 : 'Your data stays on this device only.'}
             </p>
 
-            {/* Invisible sync toggle — only on signup when Supabase available */}
+            {/* Account type pill toggle */}
             {supabaseOn && authTab === 'signup' && (
-              <label className="authflow-sync-toggle" title="Store your account in the cloud to sync across devices">
-                <input
-                  type="checkbox"
-                  checked={isGlobal}
-                  onChange={e => { setIsGlobal(e.target.checked); clearAllErrors() }}
-                />
-                Sync across devices
-              </label>
+              <div className="authflow-type-toggle">
+                <button
+                  type="button"
+                  className={`authflow-type-pill ${!isGlobal ? 'active' : ''}`}
+                  onClick={() => { setIsGlobal(false); clearAllErrors() }}
+                >
+                  <i className="ri-hard-drive-line" />
+                  Local
+                </button>
+                <button
+                  type="button"
+                  className={`authflow-type-pill ${isGlobal ? 'active' : ''}`}
+                  onClick={() => { setIsGlobal(true); clearAllErrors() }}
+                >
+                  <i className="ri-cloud-line" />
+                  Global
+                </button>
+              </div>
             )}
 
             <button className="authflow-guest" onClick={onComplete}>

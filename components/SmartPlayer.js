@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useEffect, useRef, useCallback } from 'react'
-import { saveWatchProgress } from '../lib/userStore'
+import { saveWatchProgress, setLastVisited } from '../lib/userStore'
 
 let ytApiLoaded = false
 let ytApiCallbacks = []
@@ -44,6 +44,8 @@ export default function SmartPlayer({
   const lastPos       = useRef(0)
   const durationRef   = useRef(0)
   const autoFired     = useRef(alreadyWatched || false)
+
+  const hasStartedRef = useRef(false)
 
   const computePct = useCallback(() => {
     if (!durationRef.current) return 0
@@ -115,6 +117,12 @@ export default function SmartPlayer({
                 lastPos.current = Math.floor(e.target.getCurrentTime())
                 tickRef.current     = setInterval(tick, 1000)
                 saveTickRef.current = setInterval(saveTick, 5000)
+                // Mark this lesson as the last visited immediately on first play
+                if (!hasStartedRef.current && lessonKey) {
+                  hasStartedRef.current = true
+                  const parts = lessonKey.split('/')
+                  if (parts.length === 4) setLastVisited(...parts)
+                }
               } else {
                 clearInterval(tickRef.current)
                 clearInterval(saveTickRef.current)
