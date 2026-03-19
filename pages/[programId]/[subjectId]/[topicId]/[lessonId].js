@@ -20,6 +20,8 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
   const [certReady, setCertReady]     = useState(false)
   const [certLoading, setCertLoading] = useState(false)
   const [savedProgress, setSavedProgress] = useState(null)
+  const [subjectPct, setSubjectPct]   = useState(0)
+  const [materialsOpen, setMaterialsOpen] = useState(false)
   const coaches = getCoachesFor(topic.coachIds || subject.coachIds || [])
 
   const lessonKey = `${program.id}/${subject.id}/${topic.id}/${lesson.id}`
@@ -28,22 +30,21 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     if (!signedIn) return
     const w = isWatched(program.id, subject.id, topic.id, lesson.id)
     setWatched(w)
-    if (subject.certificate && getSubjectProgress(program.id, subject.id, subject) === 100) {
-      setCertReady(true)
-    }
+    const pct = getSubjectProgress(program.id, subject.id, subject)
+    setSubjectPct(pct)
+    if (subject.certificate && pct === 100) setCertReady(true)
     // Load saved watch position for resume
     const progress = getWatchProgress(lessonKey)
     if (progress && !w) setSavedProgress(progress.pct)
   }, [signedIn])
 
-  // Called automatically by SmartPlayer when 80% genuine watch time reached
   function handleAutoWatched() {
     if (!signedIn) return
     markWatched(program.id, subject.id, topic.id, lesson.id)
     setWatched(true)
-    if (subject.certificate && getSubjectProgress(program.id, subject.id, subject) === 100) {
-      setCertReady(true)
-    }
+    const pct = getSubjectProgress(program.id, subject.id, subject)
+    setSubjectPct(pct)
+    if (subject.certificate && pct === 100) setCertReady(true)
   }
 
   function handleUnmark() {
@@ -116,6 +117,78 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
                     <i className="ri-play-circle-line" />
                     <span>Loading player</span>
                   </div>
+                </div>
+              )}
+
+              {/* Below-video bar: course progress + materials toggle */}
+              <div className="video-meta-bar">
+                <div className="video-meta-bar__left">
+                  {mounted && signedIn ? (
+                    <>
+                      <div className="video-meta-bar__progress-track">
+                        <div
+                          className="video-meta-bar__progress-fill"
+                          style={{ width: `${subjectPct}%` }}
+                        />
+                      </div>
+                      <span className="video-meta-bar__pct">
+                        {subjectPct}%
+                        {subject.certificate && (
+                          <span className="video-meta-bar__cert-hint">
+                            {subjectPct === 100
+                              ? <><i className="ri-medal-fill" /> Complete</>
+                              : <><i className="ri-medal-line" /> {100 - subjectPct}% left for cert</>}
+                          </span>
+                        )}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="video-meta-bar__guest">
+                      <Link href={`/${program.id}/${subject.id}`} className="video-meta-bar__course-link">
+                        <i className="ri-book-open-line" /> {subject.name}
+                      </Link>
+                    </span>
+                  )}
+                </div>
+
+                {/* Materials toggle — always visible, opens inline panel on mobile */}
+                {allMaterials.length > 0 && (
+                  <button
+                    className={`video-meta-bar__mats-btn ${materialsOpen ? 'active' : ''}`}
+                    onClick={() => setMaterialsOpen(o => !o)}
+                    aria-expanded={materialsOpen}
+                  >
+                    <i className="ri-folder-open-line" />
+                    Course materials
+                    <i className={`ri-arrow-${materialsOpen ? 'up' : 'down'}-s-line`} />
+                  </button>
+                )}
+              </div>
+
+              {/* Inline materials panel (slides open) */}
+              {materialsOpen && allMaterials.length > 0 && (
+                <div className="video-materials-panel">
+                  {allMaterials.map(m => (
+                    <a
+                      key={m.id}
+                      href={m.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="video-materials-item"
+                    >
+                      <span className="video-materials-item__icon">
+                        <i className={
+                          m.type === 'pdf'   ? 'ri-file-pdf-2-line' :
+                          m.type === 'doc'   ? 'ri-file-word-line'  :
+                          m.type === 'video' ? 'ri-video-line'      :
+                          m.type === 'link'  ? 'ri-link'            : 'ri-attachment-line'
+                        } />
+                      </span>
+                      <span className="video-materials-item__label">{m.label}</span>
+                      <span className="video-materials-item__type">{m.type}</span>
+                      <i className="ri-external-link-line video-materials-item__ext" />
+                    </a>
+                  ))}
                 </div>
               )}
 
