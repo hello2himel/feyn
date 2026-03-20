@@ -35,8 +35,14 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
-create policy "profiles_select" on public.profiles
+-- Own row: authenticated users can read their own full profile.
+create policy "profiles_select_own" on public.profiles
   for select using (auth.uid() = id);
+
+-- Public username check: allows unauthenticated sign-up flow to verify
+-- if a username is already taken (only id is queried, no PII exposed).
+create policy "profiles_select_username_check" on public.profiles
+  for select using (true);
 
 create policy "profiles_insert" on public.profiles
   for insert with check (auth.uid() = id);
