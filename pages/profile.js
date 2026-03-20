@@ -5,7 +5,7 @@ import { Nav, Footer, ProgressBar, useAuth } from '../components/Layout'
 import {
   getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll,
-  getSubjectProgress, getCerts, isGlobalAccount, issueCert,
+  getSubjectProgress, getCerts, issueCert,
 } from '../lib/userStore'
 import { downloadCertificate } from '../lib/certificate'
 import data, { coaches } from '../data/courses'
@@ -64,7 +64,6 @@ export default function ProfilePage() {
       }
     }
 
-    const global = isGlobalAccount()
     setStatus('fetching')
 
     // Re-issue pushes to DB and returns whether it actually landed
@@ -78,21 +77,16 @@ export default function ProfilePage() {
 
     const finalCert = freshCert || cert
 
-    if (global) {
-      if (!dbOk) {
-        console.error('[Feyn] profile cert not in DB after push:', dbError)
-        setStatus('failed')
-        await new Promise(r => setTimeout(r, 1500))
-      } else {
-        setStatus('verified')
-        await new Promise(r => setTimeout(r, 800))
-      }
+    if (!dbOk) {
+      console.error('[Feyn] profile cert not in DB after push:', dbError)
+      setStatus('failed')
+      await new Promise(r => setTimeout(r, 1500))
     } else {
       setStatus('verified')
       await new Promise(r => setTimeout(r, 800))
     }
 
-    await downloadCertificate({ cert: finalCert, coachName, coachTitle, coachSignatureUrl, isGlobal: global })
+    await downloadCertificate({ cert: finalCert, coachName, coachTitle, coachSignatureUrl, isGlobal: true })
 
     setCertLoading(null)
     setCertStatus(prev => { const n = { ...prev }; delete n[id]; return n })

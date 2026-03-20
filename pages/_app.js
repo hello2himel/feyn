@@ -8,36 +8,42 @@ import { attachAuthListener } from '../lib/userStore'
 
 const AuthFlow = dynamic(() => import('../components/AuthFlow'), { ssr: false })
 
-// ── Module-level listener attachment ─────────────────────────────────
+// ── Module-level listener attachment (synctest pattern) ───────────────
 //
-// WHY NOT useEffect:
-//   INITIAL_SESSION fires during getSession() inside getSupabase(),
-//   which runs at module import time — before React mounts, before
-//   useEffect runs. Listeners registered in useEffect miss it entirely.
-//   Result: no feyn:auth dispatch, no DB pull, UI stays "signed out"
-//   on every page load until something else triggers a re-render.
+// THE BUG THIS FIXES:
+//   INITIAL_SESSION fires during getSession() inside getSupabase(), which
+//   runs at module import time. If listeners are attached inside useEffect,
+//   they miss INITIAL_SESSION entirely — React hasn't mounted yet.
+//   Result: no feyn:auth dispatch, no DB pull, UI stays "signed out" until
+//   the user manually interacts.
 //
-// THE FIX (matches synctest pattern):
-//   Attach both listeners at module scope, client-side guarded.
-//   They're registered before INITIAL_SESSION fires.
+// THE FIX:
+//   Attach both listeners at module scope (client-side guarded), exactly
+//   like synctest does. They're registered before INITIAL_SESSION fires,
+//   so they catch it reliably on every page load.
 //
 // ORDER MATTERS:
-//   1. App listener first  — setCurrentToken() before any DB call
-//   2. userStore listener  — DB pull uses the real JWT
+//   1. attachAppListener runs first — setCurrentToken() called FIRST,
+//      before userStore's listener fires any DB calls.
+//   2. attachAuthListener runs second — DB pull uses the real JWT.
 
 if (typeof window !== 'undefined') {
+  // App-level listener: sets token + dispatches feyn:auth for UI re-renders
   let _appListenerAttached = false
-  ;(function attachAppListener() {
+  function attachAppListener() {
     if (_appListenerAttached) return
     _appListenerAttached = true
     const sb = getSupabase()
     if (!sb) return
     sb.auth.onAuthStateChange((event, session) => {
+      // Set token FIRST — before userStore's listener fires DB calls.
       setCurrentToken(session?.access_token ?? null)
       window.dispatchEvent(new CustomEvent('feyn:auth', { detail: { event, session } }))
     })
-  })()
+  }
+  attachAppListener()
 
+  // UserStore listener: pulls DB data into localStorage on session restore
   attachAuthListener()
 }
 
@@ -49,7 +55,7 @@ function AppInner({ Component, pageProps }) {
     refresh()
   }
 
-  // Re-render when auth changes (sign-in, sign-out, token refresh, page restore)
+  // Re-render when auth changes
   useEffect(() => {
     if (!mounted) return
     const handler = () => refresh()
@@ -62,7 +68,7 @@ function AppInner({ Component, pageProps }) {
     }
   }, [mounted, refresh])
 
-  // Allow any page to open the auth modal via window.dispatchEvent(new Event('feyn:show-auth'))
+  // Allow any page to open the auth modal
   useEffect(() => {
     if (typeof window === 'undefined') return
     const handler = () => setShowAuth(true)

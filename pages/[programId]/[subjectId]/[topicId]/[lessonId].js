@@ -8,7 +8,7 @@ import { useAuth } from '../../../../components/Layout'
 import {
   isWatched, markWatched, unmarkWatched,
   getSubjectProgress, issueCert, hasCert, getProfile,
-  getWatchProgress, isGlobalAccount,
+  getWatchProgress,
 } from '../../../../lib/userStore'
 import { downloadCertificate } from '../../../../lib/certificate'
 
@@ -78,7 +78,6 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
     const coachName  = coaches[0]?.name      || 'Instructor'
     const coachTitle = coaches[0]?.title     || 'Instructor'
     const coachSig   = coaches[0]?.signature || null
-    const global     = isGlobalAccount()
 
     setCertLoading(true)
     setCertStatus('fetching')
@@ -93,18 +92,11 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
       return
     }
 
-    if (global) {
-      if (!dbOk) {
-        // Push failed — show the error in console, mark as failed, still allow download
-        console.error('[Feyn] cert not in DB after push:', dbError)
-        setCertStatus('failed')
-        await new Promise(r => setTimeout(r, 1500))
-      } else {
-        setCertStatus('verified')
-        await new Promise(r => setTimeout(r, 800))
-      }
+    if (!dbOk) {
+      console.error('[Feyn] cert not in DB after push:', dbError)
+      setCertStatus('failed')
+      await new Promise(r => setTimeout(r, 1500))
     } else {
-      // Local account — no DB, just show verified
       setCertStatus('verified')
       await new Promise(r => setTimeout(r, 800))
     }
@@ -116,7 +108,7 @@ export default function LessonPage({ program, subject, topic, lesson, prev, next
       totalLessons:      subjectTotalLessons,
       subjectDesc:       subject.description || '',
       coachSignatureUrl: coachSig,
-      isGlobal:          global,
+      isGlobal:          true,
     })
 
     setCertLoading(false)

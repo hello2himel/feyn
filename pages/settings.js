@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { Nav, Footer, useAuth, ProgressBar, YTThumb } from '../components/Layout'
 import {
-  getProfile, saveProfile, signOut, isGlobalAccount, getAccountType,
+  getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll, getFeedOrder, saveFeedOrder,
-  getSubjectProgress, getCerts, upgradeToGlobal, exportAccountData,
+  getSubjectProgress, getCerts, exportAccountData,
 } from '../lib/userStore'
 import { isSupabaseAvailable } from '../lib/supabase'
 import { classifySubjects, getTotalLessons, getCoachesFor } from '../data/courseHelpers'
@@ -226,8 +226,8 @@ function AccountTab({ onRefresh }) {
     setTimeout(() => setSaved(false), 2400)
   }
 
-  const isGlobal = isGlobalAccount()
-  const accountType = isGlobal ? 'Global (synced)' : 'Local (this device only)'
+  const isGlobal = true  // all accounts are cloud accounts
+  const accountType = 'Cloud account'
 
   return (
     <div className="settings-section">
@@ -243,7 +243,7 @@ function AccountTab({ onRefresh }) {
             Profile picture coming soon. Avatar will use your initials for now.
           </p>
           <span className="settings-account-type">
-            <i className={isGlobal ? 'ri-cloud-line' : 'ri-hard-drive-line'} />
+            <i className="ri-cloud-line" />
             {accountType}
           </span>
         </div>
@@ -280,63 +280,42 @@ function AccountTab({ onRefresh }) {
 
 // ── SECURITY TAB ──────────────────────────────────────────────────────
 function SecurityTab({ onRefresh }) {
-  const isGlobal  = isGlobalAccount()
-  const supabaseOn = isSupabaseAvailable()
-
   return (
     <div className="settings-section">
       <SectionHeader title="Security" desc="Manage how you sign in to Feyn." />
 
-      {!isGlobal && (
-        <div className="settings-info-box">
-          <i className="ri-information-line" />
-          <div>
-            <p style={{ fontWeight: 500, marginBottom: 4 }}>Local account</p>
-            <p style={{ fontSize: '0.83rem', color: 'var(--text-2)' }}>
-              Your account lives on this device only. There is no password or email
-              because nothing is sent to a server. To add cross-device security and
-              sync, upgrade to a global account in the Sync tab.
-            </p>
-          </div>
-        </div>
-      )}
+      <div className="settings-field">
+        <label className="settings-field__label">Account type</label>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className="ri-cloud-line" style={{ color: 'var(--accent)' }} />
+          Cloud account — progress synced via Supabase
+        </p>
+      </div>
 
-      {isGlobal && (
-        <>
-          <div className="settings-field">
-            <label className="settings-field__label">Account type</label>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <i className="ri-cloud-line" style={{ color: 'var(--accent)' }} />
-              Global account — synced via Supabase
-            </p>
-          </div>
+      <div className="settings-divider" />
 
-          <div className="settings-divider" />
+      <SectionHeader
+        title="Session"
+        desc="You are signed in with email and password. Your session is stored securely in the browser and refreshes automatically."
+      />
 
-          <SectionHeader
-            title="Session"
-            desc="You are signed in anonymously (no email or password required). Your session persists via a secure token stored in your browser."
-          />
-
-          <button className="btn btn--ghost btn--sm" onClick={() => {
-            if (confirm('Sign out of this device? Your synced data will remain in the cloud.')) {
-              signOut(); window.location.href = '/'
-            }
-          }}>
-            <i className="ri-logout-box-line" /> Sign out of this device
-          </button>
-        </>
-      )}
+      <button className="btn btn--ghost btn--sm" onClick={() => {
+        if (confirm('Sign out of this device? Your synced data will remain in the cloud.')) {
+          signOut(); window.location.href = '/'
+        }
+      }}>
+        <i className="ri-logout-box-line" /> Sign out of this device
+      </button>
 
       <div className="settings-divider" />
 
       <SectionHeader
         title="Session management"
-        desc="Active sessions on other devices. Full session management available after email auth is added."
+        desc="Active sessions on other devices. Full session management available in a future update."
       />
       <div className="settings-coming-soon">
         <i className="ri-computer-line" />
-        <span>Multi-device session management coming in a future update.</span>
+        <span>Multi-device session management coming soon.</span>
       </div>
     </div>
   )
@@ -344,176 +323,29 @@ function SecurityTab({ onRefresh }) {
 
 // ── SYNC TAB ──────────────────────────────────────────────────────────
 function SyncTab({ onRefresh }) {
-  const isGlobal   = isGlobalAccount()
-  const supabaseOn = isSupabaseAvailable()
-  const profile    = getProfile() || {}
-
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [username, setUsername] = useState(profile.username || '')
-  const [showPass, setShowPass] = useState(false)
-  const [errors, setErrors]     = useState({})
-  const [upgrading, setUpgrading] = useState(false)
-  const [result, setResult]       = useState(null)
-
-  function setErr(field, msg) { setErrors(p => ({ ...p, [field]: msg })) }
-  function clearErr(field)    { setErrors(p => { const n = { ...p }; delete n[field]; return n }) }
-
-  async function handleUpgrade(e) {
-    e.preventDefault()
-    setErrors({}); setResult(null)
-    let hasError = false
-    if (!email.trim() || !email.includes('@')) { setErr('email', 'Enter a valid email.'); hasError = true }
-    if (!password || password.length < 6)       { setErr('password', 'Min. 6 characters.'); hasError = true }
-    if (hasError) return
-
-    if (!confirm('This will create a cloud account and upload all your local progress. Continue?')) return
-    setUpgrading(true)
-    const res = await upgradeToGlobal({ email, password, username: username || profile.username })
-    setUpgrading(false)
-
-    if (!res.ok) {
-      if (res.field) setErr(res.field, res.error)
-      else setResult({ ok: false, msg: res.error })
-      return
-    }
-    if (res.needsOtp) {
-      setResult({ ok: 'otp', email })
-      return
-    }
-    setResult({ ok: true })
-    onRefresh()
-  }
+  const profile = getProfile() || {}
 
   return (
     <div className="settings-section">
       <SectionHeader title="Sync and storage" desc="Control where your data lives." />
 
       <div className="settings-sync-status">
-        <div className={`settings-sync-indicator ${isGlobal ? 'active' : ''}`} />
+        <div className="settings-sync-indicator active" />
         <div>
-          <p className="settings-sync-status__label">{isGlobal ? 'Cloud sync is on' : 'Local only'}</p>
+          <p className="settings-sync-status__label">Cloud sync is on</p>
           <p className="settings-sync-status__sub">
-            {isGlobal
-              ? 'Your progress, certs and enrollments sync across all your devices.'
-              : 'Everything is stored on this device. Nothing leaves your browser.'}
+            Your progress, certificates and enrollments sync across all your devices.
           </p>
         </div>
       </div>
 
-      {!isGlobal && supabaseOn && !result?.ok && (
-        <>
-          <div className="settings-divider" />
-          <SectionHeader
-            title="Upgrade to cloud sync"
-            desc="Sync your progress and certificates across all your devices. Create an account with email and password."
-          />
+      <div className="settings-divider" />
 
-          {result?.ok === 'otp' && (
-            <div style={{ background: 'var(--accent-glow)', border: '1px solid var(--accent-2)', borderRadius: 'var(--radius-md)', padding: '16px 18px', marginBottom: 16 }}>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
-                <i className="ri-secure-payment-line" /> Check your email
-              </p>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-2)', marginBottom: 6 }}>
-                We sent a 6-digit code to <strong style={{ color: 'var(--text)' }}>{result.email}</strong>.
-              </p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>
-                Enter that code in the sign-in modal to complete your upgrade. 
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', font: 'inherit', padding: 0, marginLeft: 6 }}
-                  onClick={() => window.dispatchEvent(new Event('feyn:show-auth'))}>
-                  Open sign-in
-                </button>
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleUpgrade} className="settings-fields" style={{ marginTop: 16 }}>
-            {/* Username — may already be set */}
-            <div className="settings-field">
-              <label className="settings-field__label">
-                Username <span style={{ opacity: 0.5, fontSize: '0.75em' }}>(optional)</span>
-              </label>
-              <div className={`authflow-input-prefix-wrap ${errors.username ? 'authflow-input-prefix-wrap--error' : ''}`}>
-                <span className="authflow-input-prefix">@</span>
-                <input
-                  className="authflow-input authflow-input--prefixed"
-                  placeholder={profile.username || 'username'}
-                  value={username}
-                  onChange={e => { setUsername(e.target.value.replace(/\s/g, '')); clearErr('username') }}
-                />
-              </div>
-              {errors.username && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.username}</p>}
-            </div>
-
-            <div className="settings-field">
-              <label className="settings-field__label">Email address</label>
-              <input
-                className={`authflow-input ${errors.email ? 'authflow-input--error' : ''}`}
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => { setEmail(e.target.value); clearErr('email') }}
-              />
-              {errors.email && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.email}</p>}
-            </div>
-
-            <div className="settings-field">
-              <label className="settings-field__label">Create a password</label>
-              <div className="authflow-pass-wrap">
-                <input
-                  className={`authflow-input authflow-input--pass ${errors.password ? 'authflow-input--error' : ''}`}
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="Min. 6 characters"
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); clearErr('password') }}
-                />
-                <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s => !s)}>
-                  <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} />
-                </button>
-              </div>
-              {errors.password && <p className="authflow-field-error"><i className="ri-error-warning-line" /> {errors.password}</p>}
-            </div>
-
-            {result && !result.ok && <StatusBadge type="error">{result.msg}</StatusBadge>}
-
-            <div className="settings-upgrade-box__features" style={{ marginBottom: 4 }}>
-              {['Access progress from any device', 'Certificates stored in cloud', 'Anonymous local data uploaded'].map(f => (
-                <p key={f} className="settings-upgrade-box__feat">
-                  <i className="ri-check-line" /> {f}
-                </p>
-              ))}
-            </div>
-
-            <button type="submit" className="btn btn--accent" disabled={upgrading}>
-              {upgrading
-                ? <><i className="ri-loader-4-line" /> Upgrading</>
-                : <><i className="ri-cloud-upload-line" /> Enable cloud sync</>}
-            </button>
-          </form>
-        </>
-      )}
-
-      {result?.ok === true && (
-        <>
-          <div className="settings-divider" />
-          <StatusBadge type="success">Cloud sync enabled. Your data has been uploaded.</StatusBadge>
-        </>
-      )}
-
-      {!supabaseOn && !isGlobal && (
-        <>
-          <div className="settings-divider" />
-          <div className="settings-info-box">
-            <i className="ri-cloud-off-line" />
-            <div>
-              <p style={{ fontWeight: 500, marginBottom: 4 }}>Cloud sync not configured</p>
-              <p style={{ fontSize: '0.83rem', color: 'var(--text-2)' }}>
-                Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your Netlify environment variables.
-              </p>
-            </div>
-          </div>
-        </>
-      )}
+      <SectionHeader title="Account" desc="Your Feyn account details." />
+      <div className="settings-field">
+        <label className="settings-field__label">Email</label>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-2)' }}>{profile.email || '—'}</p>
+      </div>
     </div>
   )
 }
@@ -826,7 +658,6 @@ function PrivacyTab() {
 // ── DANGER TAB ────────────────────────────────────────────────────────
 function DangerTab({ onRefresh }) {
   const [confirmText, setConfirmText] = useState('')
-  const isGlobal = isGlobalAccount()
 
   function handleDelete() {
     if (confirmText !== 'delete my account') return
@@ -841,7 +672,7 @@ function DangerTab({ onRefresh }) {
       <div className="settings-danger-box">
         <p style={{ fontSize: '0.88rem', color: 'var(--text-2)', marginBottom: 12, lineHeight: 1.6 }}>
           This will delete your profile, enrolled courses, watch history, and certificates.
-          {isGlobal ? ' Your cloud data will also be removed.' : ' Since you have a local account, this only affects this device.'}
+          Your cloud data will also be removed from Feyn's servers.
           {' '}This cannot be undone.
         </p>
         <div className="settings-field" style={{ marginBottom: 14 }}>
