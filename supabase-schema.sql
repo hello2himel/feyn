@@ -1,34 +1,33 @@
 -- ============================================================
--- FEYN — Supabase Database Schema  (v17.2)
--- Run this in the Supabase SQL Editor to set up the database.
--- If you already ran the previous schema, scroll to the bottom
--- for the migration-only section.
--- ============================================================
--- Setup steps:
---   1. Create a free project at https://supabase.com
---   2. Go to SQL Editor and run this file
---   3. Go to Settings > API and copy:
---        - Project URL  → NEXT_PUBLIC_SUPABASE_URL
---        - anon key     → NEXT_PUBLIC_SUPABASE_ANON_KEY
---   4. In Netlify: Site settings > Environment variables → add both
---   5. Redeploy. Global accounts now work.
+-- FEYN — Supabase Database Schema (v25, clean)
 --
--- What syncs across devices:
---   ✓ Enrollments       (enrollments)
---   ✓ Lesson progress   (lesson_progress)
---   ✓ Certificates      (certificates)
---   ✓ Watch positions   (watch_positions)
---   ✓ Feed order        (user_preferences key='feed_order')
---   ✓ Last visited      (user_preferences key='last_visited')
---   ✓ Profile name/user (profiles)
+-- HOW TO USE:
+--   1. Go to Supabase → SQL Editor
+--   2. Run this entire file
+--
+-- Drops everything first and rebuilds clean.
+-- Safe to run multiple times.
 -- ============================================================
 
 
--- ── Profiles ─────────────────────────────────────────────────────────
-create table if not exists public.profiles (
-  id          uuid primary key references auth.users(id) on delete cascade,
+-- ============================================================
+-- STEP 1 — Drop everything (clean slate)
+-- ============================================================
+drop table if exists public.user_preferences  cascade;
+drop table if exists public.certificates      cascade;
+drop table if exists public.watch_positions   cascade;
+drop table if exists public.lesson_progress   cascade;
+drop table if exists public.enrollments       cascade;
+drop table if exists public.profiles          cascade;
+
+
+-- ============================================================
+-- STEP 2 — Profiles
+-- ============================================================
+create table public.profiles (
+  id          uuid        primary key references auth.users(id) on delete cascade,
   name        text,
-  username    text unique,
+  username    text        unique,
   email       text,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
@@ -36,158 +35,161 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
-create policy "Users can read their own profile"
-  on public.profiles for select
-  using (auth.uid() = id);
+create policy "profiles_select" on public.profiles
+  for select using (auth.uid() = id);
 
-create policy "Users can insert their own profile"
-  on public.profiles for insert
+create policy "profiles_insert" on public.profiles
+  for insert with check (auth.uid() = id);
+
+create policy "profiles_update" on public.profiles
+  for update using (auth.uid() = id)
   with check (auth.uid() = id);
 
-create policy "Users can update their own profile"
-  on public.profiles for update
-  using (auth.uid() = id);
 
-
--- ── Enrollments ───────────────────────────────────────────────────────
+-- ============================================================
+-- STEP 3 — Enrollments
 -- subject_key format: "programId/subjectId"
-create table if not exists public.enrollments (
-  id          bigserial primary key,
-  user_id     uuid references auth.users(id) on delete cascade,
-  subject_key text not null,
+-- ============================================================
+create table public.enrollments (
+  id          bigserial   primary key,
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  subject_key text        not null,
   enrolled_at timestamptz default now(),
   unique (user_id, subject_key)
 );
 
 alter table public.enrollments enable row level security;
 
-create policy "Users can manage their own enrollments"
-  on public.enrollments for all
-  using (auth.uid() = user_id);
+create policy "enrollments_select" on public.enrollments
+  for select using (auth.uid() = user_id);
+
+create policy "enrollments_insert" on public.enrollments
+  for insert with check (auth.uid() = user_id);
+
+create policy "enrollments_update" on public.enrollments
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "enrollments_delete" on public.enrollments
+  for delete using (auth.uid() = user_id);
 
 
--- ── Lesson progress ───────────────────────────────────────────────────
+-- ============================================================
+-- STEP 4 — Lesson Progress
 -- lesson_key format: "programId/subjectId/topicId/lessonId"
-create table if not exists public.lesson_progress (
-  id          bigserial primary key,
-  user_id     uuid references auth.users(id) on delete cascade,
-  lesson_key  text not null,
+-- ============================================================
+create table public.lesson_progress (
+  id          bigserial   primary key,
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  lesson_key  text        not null,
   watched_at  timestamptz default now(),
   unique (user_id, lesson_key)
 );
 
 alter table public.lesson_progress enable row level security;
 
-create policy "Users can manage their own lesson progress"
-  on public.lesson_progress for all
-  using (auth.uid() = user_id);
+create policy "lesson_progress_select" on public.lesson_progress
+  for select using (auth.uid() = user_id);
+
+create policy "lesson_progress_insert" on public.lesson_progress
+  for insert with check (auth.uid() = user_id);
+
+create policy "lesson_progress_update" on public.lesson_progress
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "lesson_progress_delete" on public.lesson_progress
+  for delete using (auth.uid() = user_id);
 
 
--- ── Watch positions (resume playback) ─────────────────────────────────
--- Syncs the exact second a user paused, so they resume in the right spot
--- on any device.
-create table if not exists public.watch_positions (
-  id          bigserial primary key,
-  user_id     uuid references auth.users(id) on delete cascade,
-  lesson_key  text not null,
-  pct         integer default 0,         -- 0–100 percentage watched
-  pos_seconds numeric default 0,         -- exact second position
+-- ============================================================
+-- STEP 5 — Watch Positions
+-- ============================================================
+create table public.watch_positions (
+  id          bigserial   primary key,
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  lesson_key  text        not null,
+  pct         integer     default 0,
+  pos_seconds numeric     default 0,
   saved_at    timestamptz default now(),
   unique (user_id, lesson_key)
 );
 
 alter table public.watch_positions enable row level security;
 
-create policy "Users can manage their own watch positions"
-  on public.watch_positions for all
-  using (auth.uid() = user_id);
+create policy "watch_positions_select" on public.watch_positions
+  for select using (auth.uid() = user_id);
+
+create policy "watch_positions_insert" on public.watch_positions
+  for insert with check (auth.uid() = user_id);
+
+create policy "watch_positions_update" on public.watch_positions
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "watch_positions_delete" on public.watch_positions
+  for delete using (auth.uid() = user_id);
 
 
--- ── Certificates ──────────────────────────────────────────────────────
-create table if not exists public.certificates (
-  id            text primary key,        -- FEYN-XXXXXX
-  user_id       uuid references auth.users(id) on delete cascade,
-  program_id    text,
-  subject_id    text,
-  program_name  text,
-  subject_name  text,
-  user_name     text,
-  issued_at     timestamptz default now()
+-- ============================================================
+-- STEP 6 — Certificates
+-- ============================================================
+create table public.certificates (
+  id           text        primary key,
+  user_id      uuid        references auth.users(id) on delete cascade,
+  program_id   text,
+  subject_id   text,
+  program_name text,
+  subject_name text,
+  user_name    text,
+  issued_at    timestamptz default now()
 );
 
 alter table public.certificates enable row level security;
 
-create policy "Users can read their own certificates"
-  on public.certificates for select
-  using (auth.uid() = user_id);
+create policy "certificates_select_owner" on public.certificates
+  for select using (auth.uid() = user_id);
 
--- PUBLIC read by cert ID — allows the /verify/[id] page to look up any cert
--- without requiring the viewer to be signed in.
-create policy "Anyone can verify a certificate by ID"
-  on public.certificates for select
-  using (true);
+create policy "certificates_select_public" on public.certificates
+  for select using (true);
 
-create policy "Users can insert their own certificates"
-  on public.certificates for insert
+create policy "certificates_insert" on public.certificates
+  for insert with check (auth.uid() = user_id);
+
+create policy "certificates_update" on public.certificates
+  for update using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Required for upsert (upsert = INSERT + UPDATE).
--- Without this, .upsert() is silently blocked by RLS and no rows are written.
-create policy "Users can update their own certificates"
-  on public.certificates for update
-  using (auth.uid() = user_id);
 
-
--- ── User preferences (feed order, last visited, future prefs) ─────────
--- Generic key/value store per user. Current keys:
---   'feed_order'    — JSON array of feed section ordering
---   'last_visited'  — JSON object { key: "p/s/t/l", savedAt: timestamp }
-create table if not exists public.user_preferences (
-  id         bigserial primary key,
-  user_id    uuid references auth.users(id) on delete cascade,
-  key        text not null,
-  value      text not null,              -- JSON string
+-- ============================================================
+-- STEP 7 — User Preferences
+-- Keys: 'feed_order', 'last_visited'
+-- ============================================================
+create table public.user_preferences (
+  id         bigserial   primary key,
+  user_id    uuid        not null references auth.users(id) on delete cascade,
+  key        text        not null,
+  value      text        not null,
   updated_at timestamptz default now(),
   unique (user_id, key)
 );
 
 alter table public.user_preferences enable row level security;
 
-create policy "Users can manage their own preferences"
-  on public.user_preferences for all
-  using (auth.uid() = user_id);
+create policy "user_preferences_select" on public.user_preferences
+  for select using (auth.uid() = user_id);
 
+create policy "user_preferences_insert" on public.user_preferences
+  for insert with check (auth.uid() = user_id);
 
--- ── Helper: delete all user data ──────────────────────────────────────
--- All tables cascade from auth.users, so deleting the auth user
--- automatically removes all their data.
--- await supabase.auth.admin.deleteUser(userId)
+create policy "user_preferences_update" on public.user_preferences
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "user_preferences_delete" on public.user_preferences
+  for delete using (auth.uid() = user_id);
 
 
 -- ============================================================
--- MIGRATION — run this if you already have the old schema
--- and just need to add the new user_preferences table.
--- Skip if running fresh.
+-- Done. All policies have explicit USING + WITH CHECK.
 -- ============================================================
-
--- FIX: Missing UPDATE policy on certificates (caused 0 rows — upsert requires UPDATE)
--- Run this if you already have the schema and certs aren't saving to the DB:
---
--- create policy "Users can update their own certificates"
---   on public.certificates for update
---   using (auth.uid() = user_id);
-
--- create table if not exists public.user_preferences (
---   id         bigserial primary key,
---   user_id    uuid references auth.users(id) on delete cascade,
---   key        text not null,
---   value      text not null,
---   updated_at timestamptz default now(),
---   unique (user_id, key)
--- );
---
--- alter table public.user_preferences enable row level security;
---
--- create policy "Users can manage their own preferences"
---   on public.user_preferences for all
---   using (auth.uid() = user_id);
