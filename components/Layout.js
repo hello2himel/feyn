@@ -6,8 +6,8 @@ import { isSignedIn, getProfile, signOut } from '../lib/userStore'
 
 const DONATE_BASE = 'https://hello2himel.netlify.app/donate'
 
-function getDonateUrl(profile) {
-  if (profile?.supabaseId) {
+function getDonateUrl(profile, mounted = false) {
+  if (mounted && profile?.supabaseId) {
     return `${DONATE_BASE}?source=Feyn&session_id=${profile.supabaseId}`
   }
   return `${DONATE_BASE}?source=Feyn`
@@ -117,7 +117,7 @@ export function Nav() {
           </button>
 
           {/* Support */}
-          <a href={getDonateUrl(user)} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
+          <a href={getDonateUrl(user, mounted)} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
             <i className="ri-heart-fill" /><span>Support</span>
           </a>
 
@@ -191,9 +191,11 @@ export function Nav() {
 
 // ── Footer ─────────────────────────────────────────────────────────────
 export function Footer() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const year    = new Date().getFullYear()
   const profile = typeof window !== 'undefined' ? getProfile() : null
-  const donate  = getDonateUrl(profile)
+  const donate  = getDonateUrl(profile, mounted)
   return (
     <footer className="footer-full">
       <div className="footer-full__inner container--wide">
@@ -294,8 +296,10 @@ export function Breadcrumb({ crumbs }) {
 
 // ── DonateStrip ────────────────────────────────────────────────────────
 export function DonateStrip() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const profile = typeof window !== 'undefined' ? getProfile() : null
-  const donate  = getDonateUrl(profile)
+  const donate  = getDonateUrl(profile, mounted)
   return (
     <div className="donate-strip">
       <p className="donate-strip__text">

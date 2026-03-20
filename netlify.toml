@@ -6,7 +6,7 @@
 # point of the prefix. Netlify's secrets scanner doesn't know this, so we tell it
 # to skip them explicitly.
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_SUPABASE_ANON_KEY"
 
 [[headers]]
   for = "/_next/static/*"

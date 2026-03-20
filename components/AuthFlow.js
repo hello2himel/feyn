@@ -1,29 +1,21 @@
 // ============================================================
-// AuthFlow — Feyn authentication + onboarding  (v17)
+// AuthFlow — Feyn authentication + onboarding  (v18)
 //
 // Sign-up flow:   auth → otp → grade → courses → interests → done
 // Sign-in flow:   auth → (otp if unconfirmed) → done
-// Upgrade flow:   auth → otp → done  (initialMode='upgrade')
 //
-// FIXES (v17):
-//   1. "Check your email" screen (mode:'otp') now always shows after
-//      signup — removed the silent otpFailed bypass in userStore.
-//   2. Outside-click on overlay no longer dismisses onboarding steps
-//      (grade / courses / interests) — those must be completed or
-//      explicitly skipped, preventing half-onboarded state.
-//   3. When outside-click closes the modal while on mode:'auth', the
-//      entire AuthFlow unmounts cleanly — no orphaned DOM nodes.
-//   4. handleOtp useEffect now includes handleOtp in deps via useCallback
-//      to prevent stale closure auto-submit bug.
-//   5. Resend OTP error no longer freezes the cooldown timer.
+// v18 changes:
+//   · Removed local account mode entirely. All accounts are Supabase.
+//   · Removed Local/Global toggle — email+password always shown.
+//   · Removed isGlobal state — no longer needed.
+//   · signInLocal removed from imports.
 // ============================================================
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
-  signInLocal, signUpGlobal, signInGlobal, verifyOtp, resendOtp,
+  signUpGlobal, signInGlobal, verifyOtp, resendOtp,
   setOnboarded, enroll, saveFeedOrder,
 } from '../lib/userStore'
-import { isSupabaseAvailable } from '../lib/supabase'
 import { getClasses, getInterests } from '../data/courseHelpers'
 
 const GRADE_ORDER = ['primary', 'jsc', 'ssc', 'hsc']
@@ -122,11 +114,8 @@ function OtpInput({ value, onChange, disabled }) {
 
 // ── Main ──────────────────────────────────────────────────────────────
 export default function AuthFlow({ programs, onComplete, initialMode = 'auth' }) {
-  const supabaseOn = isSupabaseAvailable()
-
   const [mode, setMode]         = useState(initialMode)
   const [authTab, setAuthTab]   = useState('signup')
-  const [isGlobal, setIsGlobal] = useState(supabaseOn)
   const [animOut, setAnimOut]   = useState(false)
   const [loading, setLoading]   = useState(false)
   const [isSignUp, setIsSignUp] = useState(true)
@@ -191,10 +180,8 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
 
     let hasErr = false
     if (authTab === 'signup' && !name.trim()) { setErr('name', 'Please enter your name.'); hasErr = true }
-    if (isGlobal || authTab === 'signin') {
-      if (!email.trim() || !email.includes('@')) { setErr('email', 'Enter a valid email address.'); hasErr = true }
-      if (!password || password.length < 6)       { setErr('password', 'Password must be at least 6 characters.'); hasErr = true }
-    }
+    if (!email.trim() || !email.includes('@')) { setErr('email', 'Enter a valid email address.'); hasErr = true }
+    if (!password || password.length < 6)       { setErr('password', 'Password must be at least 6 characters.'); hasErr = true }
     if (hasErr) return
 
     setLoading(true)
@@ -214,7 +201,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
       } else {
         onComplete()
       }
-    } else if (isGlobal) {
+    } else {
       const res = await signUpGlobal({ name, username, email, password })
       setLoading(false)
       if (!res.ok) {
@@ -230,11 +217,6 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
         // Email confirm disabled in Supabase — go straight to onboarding
         transition('grade')
       }
-    } else {
-      // Local account
-      signInLocal({ name: name.trim(), username: username.trim() })
-      setLoading(false)
-      transition('grade')
     }
   }
 
@@ -359,7 +341,7 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                 </Field>
               )}
 
-              {(isGlobal || authTab === 'signin') && (
+              {(authTab === 'signup' || authTab === 'signin') && (
                 <Field label="Email" error={errors.email}>
                   <input className={`authflow-input ${errors.email ? 'authflow-input--error' : ''}`}
                     type="email" placeholder="you@example.com" value={email}
@@ -368,19 +350,17 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
                 </Field>
               )}
 
-              {(isGlobal || authTab === 'signin') && (
-                <Field label={authTab === 'signin' ? 'Password' : 'Create a password'} error={errors.password}>
-                  <div className="authflow-pass-wrap">
-                    <input className={`authflow-input authflow-input--pass ${errors.password ? 'authflow-input--error' : ''}`}
-                      type={showPass ? 'text' : 'password'}
-                      placeholder={authTab === 'signin' ? 'Your password' : 'Min. 6 characters'}
-                      value={password} onChange={e => { setPassword(e.target.value); clearErr('password') }} />
-                    <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s => !s)}>
-                      <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} />
-                    </button>
-                  </div>
-                </Field>
-              )}
+              <Field label={authTab === 'signin' ? 'Password' : 'Create a password'} error={errors.password}>
+                <div className="authflow-pass-wrap">
+                  <input className={`authflow-input authflow-input--pass ${errors.password ? 'authflow-input--error' : ''}`}
+                    type={showPass ? 'text' : 'password'}
+                    placeholder={authTab === 'signin' ? 'Your password' : 'Min. 6 characters'}
+                    value={password} onChange={e => { setPassword(e.target.value); clearErr('password') }} />
+                  <button type="button" className="authflow-pass-toggle" onClick={() => setShowPass(s => !s)}>
+                    <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                  </button>
+                </div>
+              </Field>
 
               <button type="submit" className="authflow-submit" disabled={loading}>
                 {loading
@@ -390,22 +370,8 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
             </form>
 
             <p className="authflow-disclaimer">
-              {isGlobal ? 'Your progress syncs across all your devices.'
-                        : 'Your data stays on this device only.'}
+              Your progress syncs across all your devices.
             </p>
-
-            {supabaseOn && authTab === 'signup' && (
-              <div className="authflow-type-toggle">
-                <button type="button" className={`authflow-type-pill ${!isGlobal ? 'active' : ''}`}
-                  onClick={() => { setIsGlobal(false); clearErrs() }}>
-                  <i className="ri-hard-drive-line" /> Local
-                </button>
-                <button type="button" className={`authflow-type-pill ${isGlobal ? 'active' : ''}`}
-                  onClick={() => { setIsGlobal(true); clearErrs() }}>
-                  <i className="ri-cloud-line" /> Global
-                </button>
-              </div>
-            )}
 
             <button className="authflow-guest" onClick={onComplete}>
               Continue as guest <i className="ri-arrow-right-s-line" />

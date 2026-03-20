@@ -4,11 +4,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { Nav, Footer } from '../../components/Layout'
 import { getSupabase } from '../../lib/supabase'
-import { getCerts } from '../../lib/userStore'
 
-// ── States ────────────────────────────────────────────────────────────
-// loading | valid | invalid | local | error
-
+// ── States: loading | valid | invalid | error
 export default function VerifyPage() {
   const { query, isReady } = useRouter()
 
@@ -24,10 +21,9 @@ export default function VerifyPage() {
     if (!certId)  { setState('invalid'); return }
 
     async function verify() {
-
-      // ── 1. Supabase DB lookup (global accounts — authoritative) ───
-      // Always try this first. If Supabase is configured, the DB is
-      // the single source of truth. A cert in the DB is definitely real.
+      // Supabase DB is the single source of truth for all certificates.
+      // Certificates are always written to the DB on issuance (all accounts
+      // are cloud accounts — no more local-only certs).
       try {
         const sb = getSupabase()
         if (sb) {
@@ -43,56 +39,30 @@ export default function VerifyPage() {
             return
           }
         }
-      } catch (_) {}
-
-      // ── 2. Embedded base64 payload (local accounts) ───────────────
-      // QR for local accounts encodes cert data in ?d= so it can be
-      // verified on any device without a DB. Only reached if Supabase
-      // doesn't have the cert (i.e. it was issued to a local account).
-      if (query.d) {
-        try {
-          const decoded = JSON.parse(atob(query.d))
-          if (decoded && decoded.id === certId) {
-            setCert(decoded)
-            setState('local')
-            return
-          }
-        } catch (_) {}
+      } catch (_) {
+        setState('error')
+        return
       }
-
-      // ── 3. localStorage (same device, local account, no ?d=) ──────
-      try {
-        const stored = getCerts().find(c => c.id === certId)
-        if (stored) {
-          setCert(stored)
-          setState('local')
-          return
-        }
-      } catch (_) {}
 
       setState('invalid')
     }
 
     verify()
-  }, [isReady, certId, query.d])
+  }, [isReady, certId])
 
-  const rawDate = cert?.issued_at || cert?.issuedAt
-  const dateStr = rawDate
-    ? new Date(rawDate).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
-      })
+  const rawDate     = cert?.issued_at || cert?.issuedAt
+  const dateStr     = rawDate
+    ? new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
-
   const subjectName = cert?.subject_name || cert?.subjectName
   const programName = cert?.program_name || cert?.programName
   const userName    = cert?.user_name    || cert?.userName
-  const isVerified  = state === 'valid' || state === 'local'
 
   return (
     <>
       <Head>
         <title>
-          {isVerified
+          {state === 'valid'
             ? `Certificate · ${subjectName} — Feyn`
             : 'Verify Certificate — Feyn'}
         </title>
@@ -112,20 +82,12 @@ export default function VerifyPage() {
               </div>
             )}
 
-            {isVerified && cert && (
+            {state === 'valid' && cert && (
               <div className="verify-card verify-card--valid">
                 <div className="verify-badge verify-badge--valid">
                   <i className="ri-shield-check-fill" />
-                  {state === 'valid' ? 'Verified' : 'Verified (local account)'}
+                  Verified
                 </div>
-
-                {state === 'local' && (
-                  <p className="verify-local-note">
-                    <i className="ri-information-line" />
-                    This certificate belongs to a local account. It cannot be
-                    confirmed against Feyn's server records.
-                  </p>
-                )}
 
                 <div className="verify-details">
                   <div className="verify-details__row">
@@ -177,8 +139,7 @@ export default function VerifyPage() {
                   {certId
                     ? <>No certificate with ID{' '}
                         <code className="verify-id">{certId}</code>{' '}
-                        exists in Feyn&rsquo;s records. It may have been issued to
-                        a local account, or the link may be incorrect.</>
+                        exists in Feyn&rsquo;s records. The link may be incorrect or the certificate may have been deleted.</>
                     : <>No certificate ID was provided in the URL.</>}
                 </p>
                 <Link href="/" className="btn btn--accent" style={{ marginTop: 20 }}>
