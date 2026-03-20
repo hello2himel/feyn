@@ -2,7 +2,6 @@ import '../styles/globals.css'
 import { AuthProvider, useAuth } from '../components/Layout'
 import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import data from '../data/courses'
 import { getSupabase, setCurrentToken } from '../lib/supabase'
 import { attachAuthListener } from '../lib/userStore'
 
@@ -81,7 +80,6 @@ function AppInner({ Component, pageProps }) {
       <Component {...pageProps} />
       {mounted && showAuth && (
         <AuthFlow
-          programs={data.programs}
           onComplete={handleAuthComplete}
           initialMode="auth"
         />
