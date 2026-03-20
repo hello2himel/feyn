@@ -1,163 +1,73 @@
-// ============================================================
-// SearchPalette — command-palette style search modal
-// Triggered by nav Search button or Cmd/Ctrl+K
-// Replaces the old slide-in ExploreDrawer.
-// ============================================================
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
+import data from '../data/index.js'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
-import Link from 'next/link'
-import { getClassified, getTotalLessons, getCoachesFor } from '../data/courseHelpers'
+function buildIndex() {
+  const items = []
+  for (const prog of data.programs) {
+    items.push({ type: 'program', title: prog.name, sub: prog.description, icon: prog.icon, href: `/${prog.id}` })
+    for (const subj of prog.subjects) {
+      items.push({ type: 'subject', title: subj.name, sub: `${prog.name} · ${subj.description}`, icon: subj.icon, href: `/${prog.id}/${subj.id}` })
+      for (const topic of subj.topics) {
+        items.push({ type: 'topic', title: topic.name, sub: `${prog.name} › ${subj.name} · ${topic.description}`, icon: topic.icon, href: `/${prog.id}/${subj.id}/${topic.id}` })
+        for (const skill of topic.skills) {
+          items.push({ type: 'skill', title: skill.name, sub: `${subj.name} › ${topic.name} · ${skill.description}`, icon: skill.icon, href: `/${prog.id}/${subj.id}/${topic.id}` })
+        }
+      }
+    }
+  }
+  return items
+}
+
+const INDEX = buildIndex()
 
 export default function SearchPalette({ onClose }) {
-  const [query, setQuery]       = useState('')
-  const [activeIdx, setActiveIdx] = useState(0)
-  const inputRef  = useRef(null)
-  const listRef   = useRef(null)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState(INDEX.slice(0, 8))
+  const [cursor, setCursor] = useState(0)
+  const router = useRouter()
+  const inputRef = useRef(null)
 
-  const { classes, interests } = getClassified()
-  const allPrograms = [...classes, ...interests]
-
-  // All subjects flat — shown as "browse" when no query
-  const allSubjects = useMemo(() =>
-    allPrograms.flatMap(p => p.subjects.map(s => ({ program: p, subject: s })))
-  , [])
-
-  const results = useMemo(() => {
-    if (!query.trim()) return allSubjects
-    const q = query.toLowerCase()
-    return allSubjects.filter(({ program, subject }) =>
-      subject.name.toLowerCase().includes(q) ||
-      subject.description?.toLowerCase().includes(q) ||
-      program.name.toLowerCase().includes(q)
-    )
-  }, [query, allSubjects])
-
-  // Reset active index when results change
-  useEffect(() => { setActiveIdx(0) }, [query])
-
-  // Focus input on mount
   useEffect(() => { inputRef.current?.focus() }, [])
 
-  // Scroll active item into view
   useEffect(() => {
-    const el = listRef.current?.querySelector(`[data-idx="${activeIdx}"]`)
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [activeIdx])
+    if (!query.trim()) { setResults(INDEX.slice(0, 8)); return }
+    const q = query.toLowerCase()
+    setResults(INDEX.filter(item => item.title.toLowerCase().includes(q) || item.sub?.toLowerCase().includes(q)).slice(0, 10))
+    setCursor(0)
+  }, [query])
 
-  function handleKeyDown(e) {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveIdx(i => Math.min(i + 1, results.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveIdx(i => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      const hit = results[activeIdx]
-      if (hit) {
-        window.location.href = `/${hit.program.id}/${hit.subject.id}`
-        onClose()
-      }
-    } else if (e.key === 'Escape') {
-      onClose()
-    }
+  function handleSelect(item) { router.push(item.href); onClose() }
+
+  function handleKey(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(c + 1, results.length - 1)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setCursor(c => Math.max(c - 1, 0)) }
+    if (e.key === 'Enter')     { if (results[cursor]) handleSelect(results[cursor]) }
+    if (e.key === 'Escape')    { onClose() }
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div className="sp-backdrop" onClick={onClose} />
-
-      {/* Palette */}
-      <div className="sp-palette" role="dialog" aria-modal="true" aria-label="Search courses">
-
-        {/* Input row */}
-        <div className="sp-input-wrap">
-          <i className="ri-search-line sp-input-icon" />
-          <input
-            ref={inputRef}
-            className="sp-input"
-            placeholder="Search courses, topics, programs…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          {query && (
-            <button className="sp-clear" onClick={() => { setQuery(''); inputRef.current?.focus() }} tabIndex={-1}>
-              <i className="ri-close-line" />
+    <div className="search-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="search-modal">
+        <div className="search-input-wrap">
+          <i className="ri-search-line search-input-icon" />
+          <input ref={inputRef} className="search-input" placeholder="Search topics, skills, subjects…" value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey} />
+          <button className="search-close" onClick={onClose}><i className="ri-close-line" /></button>
+        </div>
+        <div className="search-results">
+          {results.length === 0 && <p className="search-empty">No results for "{query}"</p>}
+          {results.map((item, i) => (
+            <button key={`${item.href}-${item.title}-${i}`} className={`search-result ${i === cursor ? 'search-result--active' : ''}`} onClick={() => handleSelect(item)} onMouseEnter={() => setCursor(i)}>
+              <span className="search-result__icon"><i className={item.icon} /></span>
+              <span className="search-result__body">
+                <span className="search-result__title">{item.title}</span>
+                <span className="search-result__sub">{item.sub}</span>
+              </span>
+              <span className="search-result__type">{item.type}</span>
             </button>
-          )}
-          <button className="sp-esc" onClick={onClose} tabIndex={-1}>esc</button>
-        </div>
-
-        {/* Results */}
-        <div className="sp-body" ref={listRef}>
-          {/* Section label */}
-          <div className="sp-section-label">
-            {query
-              ? `${results.length} result${results.length !== 1 ? 's' : ''}`
-              : 'All courses'}
-          </div>
-
-          {results.length === 0 && (
-            <div className="sp-empty">
-              <i className="ri-search-line" />
-              <p>No courses match <strong>"{query}"</strong></p>
-            </div>
-          )}
-
-          {results.map(({ program, subject }, i) => {
-            const total   = getTotalLessons(subject)
-            const coaches = getCoachesFor(subject.coachIds || [])
-            const isActive = i === activeIdx
-            return (
-              <Link
-                key={`${program.id}/${subject.id}`}
-                href={`/${program.id}/${subject.id}`}
-                className={`sp-result ${isActive ? 'sp-result--active' : ''}`}
-                data-idx={i}
-                onClick={onClose}
-                onMouseEnter={() => setActiveIdx(i)}
-              >
-                <span className="sp-result__icon">
-                  <i className={subject.icon || 'ri-book-open-line'} />
-                </span>
-                <span className="sp-result__body">
-                  <span className="sp-result__name">{subject.name}</span>
-                  <span className="sp-result__meta">
-                    <span className={`sp-result__tag sp-result__tag--${program.type}`}>
-                      {program.name}
-                    </span>
-                    <span className="sp-result__dot">·</span>
-                    <span>{total} lesson{total !== 1 ? 's' : ''}</span>
-                    {coaches[0] && <>
-                      <span className="sp-result__dot">·</span>
-                      <span>{coaches[0].name}</span>
-                    </>}
-                  </span>
-                </span>
-                {subject.certificate && (
-                  <span className="sp-result__cert" title="Certificate available">
-                    <i className="ri-medal-line" />
-                  </span>
-                )}
-                <span className="sp-result__arrow">
-                  <i className="ri-arrow-right-s-line" />
-                </span>
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Footer hints */}
-        <div className="sp-footer">
-          <span className="sp-hint"><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-          <span className="sp-hint"><kbd>↵</kbd> open</span>
-          <span className="sp-hint"><kbd>esc</kbd> close</span>
+          ))}
         </div>
       </div>
-    </>
+    </div>
   )
 }

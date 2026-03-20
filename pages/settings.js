@@ -3,14 +3,9 @@ import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { Nav, Footer, useAuth, ProgressBar, YTThumb } from '../components/Layout'
 import {
-  getProfile, saveProfile, signOut,
-  getEnrolled, isEnrolled, enroll, unenroll, getFeedOrder, saveFeedOrder,
-  getSubjectProgress, getCerts, exportAccountData,
+  getProfile, saveProfile, signOut, deleteAccount,
 } from '../lib/userStore'
 import { isSupabaseAvailable } from '../lib/supabase'
-import { classifySubjects, getTotalLessons, getCoachesFor } from '../data/courseHelpers'
-import { downloadCertificate } from '../lib/certificate'
-import data from '../data/courses'
 
 // ── Tab definitions ───────────────────────────────────────────────────
 const TABS = [
@@ -18,9 +13,6 @@ const TABS = [
   { id: 'security',    label: 'Security',       icon: 'ri-shield-keyhole-line',  group: 'You' },
   { id: 'sync',        label: 'Sync & Data',    icon: 'ri-cloud-line',           group: 'You' },
   { id: 'appearance',  label: 'Appearance',     icon: 'ri-palette-line',         group: 'App' },
-  { id: 'classes',     label: 'My Classes',     icon: 'ri-graduation-cap-line',  group: 'Learning' },
-  { id: 'interests',   label: 'My Interests',   icon: 'ri-heart-line',           group: 'Learning' },
-  { id: 'feed',        label: 'Feed Order',     icon: 'ri-layout-masonry-line',  group: 'Learning' },
   { id: 'privacy',     label: 'Privacy & Data', icon: 'ri-lock-password-line',   group: 'Data' },
   { id: 'danger',      label: 'Delete Account', icon: 'ri-delete-bin-line',      group: 'Data' },
 ]
@@ -70,9 +62,6 @@ export default function SettingsPage() {
       case 'security':   return <SecurityTab   onRefresh={refresh} />
       case 'sync':       return <SyncTab       onRefresh={refresh} />
       case 'appearance': return <AppearanceTab />
-      case 'classes':    return <ClassesTab />
-      case 'interests':  return <InterestsTab />
-      case 'feed':       return <FeedTab />
       case 'privacy':    return <PrivacyTab />
       case 'danger':     return <DangerTab     onRefresh={refresh} />
       default:           return null
@@ -366,6 +355,18 @@ function AppearanceTab() {
     localStorage.setItem('ff_theme', t)
   }
 
+  // Sync system theme dynamically
+  useEffect(() => {
+    if (theme !== 'system') return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e) => {
+      const resolved = e.matches ? 'dark' : 'light'
+      document.documentElement.setAttribute('data-theme', resolved)
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [theme])
+
   return (
     <div className="settings-section">
       <SectionHeader title="Appearance" desc="Customise how Feyn looks." />
@@ -412,182 +413,14 @@ function AppearanceTab() {
   )
 }
 
-// ── CLASSES TAB ───────────────────────────────────────────────────────
-function ClassesTab() {
-  const { classes } = classifySubjects(data.programs)
-  const [enrolled, setEnrolled] = useState(getEnrolled())
-
-  function toggle(programId, subjectId) {
-    if (isEnrolled(programId, subjectId)) unenroll(programId, subjectId)
-    else enroll(programId, subjectId)
-    setEnrolled(getEnrolled())
-  }
-
-  const byProgram = {}
-  for (const { program, subject } of classes) {
-    if (!byProgram[program.id]) byProgram[program.id] = { program, subjects: [] }
-    byProgram[program.id].subjects.push(subject)
-  }
-
-  return (
-    <div className="settings-section">
-      <SectionHeader title="My Classes" desc="Which academic classes are you enrolled in? These appear at the top of your feed." />
-      {Object.values(byProgram).map(({ program, subjects }) => (
-        <div key={program.id} className="settings-program-group">
-          <Link href={`/${program.id}`} className="settings-program-label">
-            <i className="ri-stack-line" /> {program.name}
-            <i className="ri-arrow-right-s-line" style={{ marginLeft: 'auto' }} />
-          </Link>
-          <div className="settings-course-grid">
-            {subjects.map(subject => {
-              const isEnr  = enrolled.includes(`${program.id}/${subject.id}`)
-              const pct    = getSubjectProgress(program.id, subject.id, subject)
-              const total  = getTotalLessons(subject)
-              return (
-                <div key={subject.id} className={`settings-course-card ${isEnr ? 'settings-course-card--enrolled' : ''}`}>
-                  <div className="settings-course-card__thumb">
-                    <YTThumb videoId={subject.topics[0]?.lessons[0]?.videoId} alt={subject.name} />
-                  </div>
-                  <div className="settings-course-card__body">
-                    <i className={subject.icon || 'ri-book-open-line'} style={{ color: 'var(--accent)', marginBottom: 3, display: 'block' }} />
-                    <p className="settings-course-card__name">{subject.name}</p>
-                    <p className="settings-course-card__meta">{total} lessons</p>
-                    {isEnr && <ProgressBar pct={pct} label={`${pct}%`} />}
-                  </div>
-                  <div className="settings-course-card__actions">
-                    {isEnr && <Link href={`/${program.id}/${subject.id}`} className="btn btn--ghost btn--sm"><i className="ri-play-circle-line" /> Go</Link>}
-                    <button className={`btn btn--sm ${isEnr ? 'btn--danger' : 'btn--accent'}`} onClick={() => toggle(program.id, subject.id)}>
-                      <i className={isEnr ? 'ri-close-line' : 'ri-add-line'} /> {isEnr ? 'Leave' : 'Join'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── INTERESTS TAB ─────────────────────────────────────────────────────
-function InterestsTab() {
-  const { genres } = classifySubjects(data.programs)
-  const [enrolled, setEnrolled] = useState(getEnrolled())
-
-  function toggle(programId, subjectId) {
-    if (isEnrolled(programId, subjectId)) unenroll(programId, subjectId)
-    else enroll(programId, subjectId)
-    setEnrolled(getEnrolled())
-  }
-
-  const byProgram = {}
-  for (const { program, subject } of genres) {
-    if (!byProgram[program.id]) byProgram[program.id] = { program, subjects: [] }
-    byProgram[program.id].subjects.push(subject)
-  }
-
-  return (
-    <div className="settings-section">
-      <SectionHeader title="My Interests" desc="Non-academic topics you want to explore." />
-      {Object.values(byProgram).map(({ program, subjects }) => (
-        <div key={program.id} className="settings-program-group">
-          <Link href={`/${program.id}`} className="settings-program-label">
-            <i className="ri-compass-discover-line" /> {program.name}
-            <i className="ri-arrow-right-s-line" style={{ marginLeft: 'auto' }} />
-          </Link>
-          <div className="settings-course-grid">
-            {subjects.map(subject => {
-              const isEnr = enrolled.includes(`${program.id}/${subject.id}`)
-              const total = getTotalLessons(subject)
-              return (
-                <div key={subject.id} className={`settings-course-card ${isEnr ? 'settings-course-card--enrolled' : ''}`}>
-                  <div className="settings-course-card__thumb">
-                    <YTThumb videoId={subject.topics[0]?.lessons[0]?.videoId} alt={subject.name} />
-                  </div>
-                  <div className="settings-course-card__body">
-                    <i className={subject.icon || 'ri-compass-discover-line'} style={{ color: 'var(--accent)', marginBottom: 3, display: 'block' }} />
-                    <p className="settings-course-card__name">{subject.name}</p>
-                    <p className="settings-course-card__meta">{total} lessons</p>
-                  </div>
-                  <div className="settings-course-card__actions">
-                    <button className={`btn btn--sm ${isEnr ? 'btn--danger' : 'btn--accent'}`} onClick={() => toggle(program.id, subject.id)}>
-                      <i className={isEnr ? 'ri-close-line' : 'ri-add-line'} /> {isEnr ? 'Remove' : 'Add'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── FEED TAB ──────────────────────────────────────────────────────────
-function FeedTab() {
-  const [sections, setSections] = useState(() => {
-    const order    = getFeedOrder()
-    const enrolled = getEnrolled()
-    const { classes, genres } = classifySubjects(data.programs)
-    const all = [
-      ...classes.map(x => ({ ...x, type: 'class' })),
-      ...genres.map(x  => ({ ...x, type: 'genre' })),
-    ]
-    const result = []
-    const seen = new Set()
-    for (const item of order) {
-      if (seen.has(item.type)) continue
-      seen.add(item.type)
-      const items = all.filter(x => x.type === item.type && enrolled.includes(`${x.program.id}/${x.subject.id}`))
-      if (items.length) result.push({ type: item.type, label: item.type === 'class' ? 'My Classes' : 'My Interests', icon: item.type === 'class' ? 'ri-graduation-cap-line' : 'ri-heart-line', items })
-    }
-    return result
-  })
-
-  function move(idx, dir) {
-    const next = [...sections]
-    ;[next[idx], next[idx+dir]] = [next[idx+dir], next[idx]]
-    setSections(next)
-    saveFeedOrder(next.flatMap(s => s.items.map(({ program, subject }) => ({ type: s.type, programId: program.id, subjectId: subject.id }))))
-  }
-
-  return (
-    <div className="settings-section">
-      <SectionHeader title="Feed Order" desc="Control which sections appear first on your home feed." />
-      {sections.length === 0 ? (
-        <div className="settings-empty">
-          <i className="ri-inbox-line" />
-          <p>Enroll in some classes or interests first, then come back to reorder.</p>
-        </div>
-      ) : (
-        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 16 }}>
-          {sections.map((s, i) => (
-            <div key={s.type} className="feed-settings-row">
-              <i className={s.icon} />
-              <span>{s.label}</span>
-              <span className="feed-settings-row__count">{s.items.length}</span>
-              <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                <button className="feed-reorder-btn" disabled={i === 0} onClick={() => move(i, -1)}><i className="ri-arrow-up-s-line" /></button>
-                <button className="feed-reorder-btn" disabled={i === sections.length-1} onClick={() => move(i, 1)}><i className="ri-arrow-down-s-line" /></button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── PRIVACY TAB ───────────────────────────────────────────────────────
 function PrivacyTab() {
   const [downloading, setDownloading] = useState(false)
 
   function handleDownload() {
     setDownloading(true)
-    const data = exportAccountData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const exportData = exportAccountData()
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
@@ -659,9 +492,9 @@ function PrivacyTab() {
 function DangerTab({ onRefresh }) {
   const [confirmText, setConfirmText] = useState('')
 
-  function handleDelete() {
+  async function handleDelete() {
     if (confirmText !== 'delete my account') return
-    signOut()
+    await deleteAccount()
     window.location.href = '/'
   }
 
