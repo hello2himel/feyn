@@ -1,10 +1,6 @@
-// INTERESTS Programming (stub — topics coming)
-const subject = {
-  id: 'programming',
-  name: 'Programming',
-  icon: 'ri-code-line',
-  description: 'Logic, algorithms, and building things with code.',
-  coachIds: [],
-  topics: [],
+const programming = {
+  id: 'programming', name: 'Programming', icon: 'ri-code-s-slash-line',
+  description: 'From zero to building real things.',
+  coachIds: [], comingSoon: true, topics: [],
 }
-export default subject
+export default programming

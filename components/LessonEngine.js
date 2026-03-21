@@ -25,6 +25,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { recordAttempt, saveLessonProgress, clearLessonProgress, getLessonProgress } from '../lib/userStore'
 
+// ── Bilingual field resolver ──────────────────────────────────────────
+// Questions can have a `bn` object with Bangla overrides:
+//   { prompt, options, answer, explanation, pairs, categories, items }
+// If medium === 'bn' and the field exists in q.bn, use it. Else English.
+function useField(q, field, medium) {
+  if (medium === 'bn' && q.bn && q.bn[field] !== undefined) return q.bn[field]
+  return q[field]
+}
+
+
 const XP_CORRECT = 10
 const XP_STREAK  = 5
 const HEARTS_MAX = 3
@@ -50,9 +60,11 @@ function ProgressDots({ total, current, answers }) {
 
 // ── MCQ ──────────────────────────────────────────────────────────────
 // Keyed by question.id — always fresh state on question change
-function McqQuestion({ question, onAnswer }) {
+function McqQuestion({ question, onAnswer, medium }) {
   const [selected, setSelected] = useState(null)
   const [submitted, setSubmitted] = useState(false)
+  const prompt  = useField(question, 'prompt', medium)
+  const options = useField(question, 'options', medium)
 
   function pick(idx) {
     if (submitted) return
@@ -69,7 +81,7 @@ function McqQuestion({ question, onAnswer }) {
   return (
     <div className="le2-q-body">
       <div className="le2-options">
-        {question.options.map((opt, i) => {
+        {options.map((opt, i) => {
           let cls = 'le2-option'
           if (submitted) {
             if (i === question.correct) cls += ' le2-option--correct'
@@ -98,7 +110,10 @@ function McqQuestion({ question, onAnswer }) {
 }
 
 // ── FILL ─────────────────────────────────────────────────────────────
-function FillQuestion({ question, onAnswer }) {
+function FillQuestion({ question, onAnswer, medium }) {
+  const prompt = useField(question, 'prompt', medium)
+  const answer = useField(question, 'answer', medium)
+  const aliases = useField(question, 'aliases', medium) || question.aliases || []
   const [value, setValue] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [correct, setCorrect] = useState(null)
@@ -109,8 +124,8 @@ function FillQuestion({ question, onAnswer }) {
   function submit() {
     if (!value.trim() || submitted) return
     const ans = value.trim().toLowerCase()
-    const ok = ans === question.answer.toLowerCase()
-      || (question.aliases || []).map(a => a.toLowerCase()).includes(ans)
+    const ok = ans === answer.toLowerCase()
+      || aliases.map(a => a.toLowerCase()).includes(ans)
     setCorrect(ok)
     setSubmitted(true)
     onAnswer(ok, value.trim())
@@ -136,7 +151,7 @@ function FillQuestion({ question, onAnswer }) {
         )}
       </div>
       {submitted && !correct && (
-        <p className="le2-fill-hint">Correct: <strong>{question.answer}</strong></p>
+        <p className="le2-fill-hint">Correct: <strong>{answer}</strong></p>
       )}
       {!submitted && (
         <button className="le2-submit" onClick={submit} disabled={!value.trim()}>
@@ -148,11 +163,12 @@ function FillQuestion({ question, onAnswer }) {
 }
 
 // ── TAP-CORRECT ───────────────────────────────────────────────────────
-function TapCorrectQuestion({ question, onAnswer }) {
+function TapCorrectQuestion({ question, onAnswer, medium }) {
+  const options = useField(question, 'options', medium)
   const [selected, setSelected] = useState(new Set())
   const [submitted, setSubmitted] = useState(false)
   const correctSet = new Set(Array.isArray(question.correct) ? question.correct : [question.correct])
-
+  // Use resolved options
   function toggle(idx) {
     if (submitted) return
     setSelected(prev => { const n = new Set(prev); n.has(idx) ? n.delete(idx) : n.add(idx); return n })
@@ -169,7 +185,7 @@ function TapCorrectQuestion({ question, onAnswer }) {
     <div className="le2-q-body">
       <p className="le2-tap-hint">Select all that apply</p>
       <div className="le2-tap-options">
-        {question.options.map((opt, i) => {
+        {options.map((opt, i) => {
           let cls = 'le2-tap-option'
           if (submitted) {
             if (correctSet.has(i))   cls += ' le2-tap-option--correct'
@@ -190,8 +206,8 @@ function TapCorrectQuestion({ question, onAnswer }) {
 }
 
 // ── MATCH ─────────────────────────────────────────────────────────────
-function MatchQuestion({ question, onAnswer }) {
-  const pairs = question.pairs
+function MatchQuestion({ question, onAnswer, medium }) {
+  const pairs = useField(question, 'pairs', medium) || question.pairs
   const [leftSel, setLeftSel]   = useState(null)
   const [matched, setMatched]   = useState({})
   const [flash, setFlash]       = useState(null)  // { left, right } wrong flash
@@ -257,10 +273,11 @@ function MatchQuestion({ question, onAnswer }) {
 }
 
 // ── SORT ──────────────────────────────────────────────────────────────
-function SortQuestion({ question, onAnswer }) {
+function SortQuestion({ question, onAnswer, medium }) {
   const [assignments, setAssignments] = useState({})
   const [submitted, setSubmitted] = useState(false)
-  const { categories, items } = question
+  const categories = useField(question, 'categories', medium) || question.categories
+  const items      = useField(question, 'items', medium) || question.items
 
   function assign(item, cat) {
     if (submitted) return
@@ -327,7 +344,9 @@ function SortQuestion({ question, onAnswer }) {
 }
 
 // ── EXPLAIN ───────────────────────────────────────────────────────────
-function ExplainQuestion({ question, onAnswer }) {
+function ExplainQuestion({ question, onAnswer, medium }) {
+  const prompt = useField(question, 'prompt', medium)
+  const modelAnswer = useField(question, 'modelAnswer', medium) || question.modelAnswer
   const [value, setValue]       = useState('')
   const [submitted, setSubmitted] = useState(false)
 
@@ -350,7 +369,7 @@ function ExplainQuestion({ question, onAnswer }) {
       {submitted && (
         <div className="le2-model-answer">
           <p className="le2-model-answer__label"><i className="ri-lightbulb-flash-line" /> One way to think about it</p>
-          <p className="le2-model-answer__text">{question.modelAnswer}</p>
+          <p className="le2-model-answer__text">{modelAnswer}</p>
         </div>
       )}
       {!submitted && (
@@ -363,7 +382,7 @@ function ExplainQuestion({ question, onAnswer }) {
 }
 
 // ── Inline feedback ───────────────────────────────────────────────────
-function Feedback({ correct, explanation, onContinue, isLast }) {
+function Feedback({ correct, explanation, onContinue, isLast, medium }) {
   return (
     <div className={`le2-feedback ${correct ? 'le2-feedback--correct' : 'le2-feedback--wrong'}`}>
       <div className="le2-feedback__row">
@@ -488,6 +507,7 @@ export default function LessonEngine({
 }) {
   // Load saved progress once on mount
   const savedProgress = getLessonProgress(programId, subjectId, topicId, skillId, lessonIdx)
+  const medium = 'en'
 
   const [phase, setPhase]       = useState('intro')
   const [qIdx, setQIdx]         = useState(0)
@@ -665,26 +685,26 @@ export default function LessonEngine({
                 {q.type === 'explain' && 'Explain in your own words'}
               </span>
 
-              <p className="le2-prompt">{q.prompt}</p>
+              <p className="le2-prompt">{medium === 'bn' && q.bn?.prompt ? q.bn.prompt : q.prompt}</p>
 
               {/* BUG FIX: key={q.id} forces full remount on question change */}
               {q.type === 'mcq' && (
-                <McqQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <McqQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
               {q.type === 'fill' && (
-                <FillQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <FillQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
               {q.type === 'tap-correct' && (
-                <TapCorrectQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <TapCorrectQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
               {q.type === 'match' && (
-                <MatchQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <MatchQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
               {q.type === 'sort' && (
-                <SortQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <SortQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
               {q.type === 'explain' && (
-                <ExplainQuestion key={q.id} question={q} onAnswer={handleAnswer} />
+                <ExplainQuestion key={q.id} question={q} onAnswer={handleAnswer} medium={medium} />
               )}
             </div>
 
@@ -692,9 +712,10 @@ export default function LessonEngine({
             {showFeedback && (
               <Feedback
                 correct={answers[answers.length - 1]}
-                explanation={q.explanation}
+                explanation={medium === 'bn' && q.bn?.explanation ? q.bn.explanation : q.explanation}
                 onContinue={handleContinue}
                 isLast={isLast || hearts === 0}
+                medium={medium}
               />
             )}
 

@@ -1,10 +1,6 @@
-// INTERESTS Philosophy (stub — topics coming)
-const subject = {
-  id: 'philosophy',
-  name: 'Philosophy',
-  icon: 'ri-question-mark',
-  description: 'How to think, argue, and question everything.',
-  coachIds: [],
-  topics: [],
+const philosophy = {
+  id: 'philosophy', name: 'Philosophy', icon: 'ri-bubble-chart-line',
+  description: 'Thinking clearly about the hardest questions.',
+  coachIds: [], comingSoon: true, topics: [],
 }
-export default subject
+export default philosophy

@@ -1,10 +1,6 @@
-// INTERESTS Pure Mathematics (stub — topics coming)
-const subject = {
-  id: 'mathematics',
-  name: 'Pure Mathematics',
-  icon: 'ri-functions',
-  description: 'Mathematics for the love of it.',
-  coachIds: [],
-  topics: [],
+const mathematics = {
+  id: 'mathematics', name: 'Mathematics', icon: 'ri-infinity',
+  description: 'Beautiful mathematics beyond the curriculum.',
+  coachIds: [], comingSoon: true, topics: [],
 }
-export default subject
+export default mathematics

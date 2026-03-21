@@ -1,10 +1,2 @@
-// SSC Biology (stub — topics coming)
-const subject = {
-  id: 'biology',
-  name: 'Biology',
-  icon: 'ri-leaf-line',
-  description: 'Life and living organisms.',
-  coachIds: [],
-  topics: [],
-}
-export default subject
+const biology = { id: 'biology', name: 'Biology', icon: 'ri-microscope-line', description: 'Coming soon.', coachIds: [], comingSoon: true, topics: [] }
+export default biology

@@ -7,7 +7,7 @@ const hsc = {
   id: 'hsc',
   name: 'HSC',
   type: 'class',
-  description: 'Higher Secondary Certificate — in full. From foundations to exam-ready.',
+  description: 'Higher Secondary Certificate — full coverage coming soon.',
   icon: 'ri-graduation-cap-line',
   subjects: [physics, chemistry, mathematics, biology],
 }

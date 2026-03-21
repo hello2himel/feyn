@@ -1,5 +1,5 @@
 // ============================================================
-// FEYN — DATA INDEX
+// FEYN — DATA INDEX (v5 + video enrichment)
 //
 // Hierarchy:
 //   program (class | genre)
@@ -22,10 +22,11 @@
 import hsc       from './programs/hsc.js'
 import ssc       from './programs/ssc.js'
 import jsc       from './programs/jsc.js'
-import interests from './programs/interests.js'
+import interests  from './programs/interests.js'
+import feyntest   from './programs/feyntest.js'
 
 const data = {
-  programs: [hsc, ssc, jsc, interests],
+  programs: [hsc, ssc, jsc, interests, feyntest],
 }
 
 export default data

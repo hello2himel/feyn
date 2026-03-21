@@ -1,10 +1,2 @@
-// JSC Science (stub — topics coming)
-const subject = {
-  id: 'science',
-  name: 'Science',
-  icon: 'ri-flask-line',
-  description: 'Introduction to physics, chemistry, and biology.',
-  coachIds: [],
-  topics: [],
-}
-export default subject
+const science = { id: 'science', name: 'Science', icon: 'ri-flask-line', description: 'Coming soon.', coachIds: [], comingSoon: true, topics: [] }
+export default science
