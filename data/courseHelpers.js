@@ -1,21 +1,40 @@
 // ============================================================
-// FEYN — COURSE HELPERS (v5 adapted)
+// FEYN — COURSE HELPERS (v6)
 // Taxonomy:
 //   programs  = Classes (type:'class') or Interests (type:'interest')
 //   subjects  = Courses
 //   topics    = Topics/Chapters
 //   skills    = Skills (each with lessons)
 //   lessons   = Video lesson + questions
+//
+// ── VIDEO SOURCE MODEL ────────────────────────────────────
+// Each lesson carries an optional `source` field:
+//   source: { name, instructor, url }
+//
+// This separates three distinct roles:
+//   • coachIds (topic/subject)  → Feyn's own curating instructors
+//                                 who structure courses, write questions,
+//                                 and sign certificates.
+//   • source.instructor (lesson) → The person teaching in the primary video
+//                                  (e.g. Ratul Khan)
+//   • source.name (lesson)       → The platform that produced the video
+//                                  (e.g. OnnoRokom Pathshala)
+//
+// Feyn coaches are listed below for coach pages and certificates.
+// Video source platforms/instructors live only in lesson data and
+// are displayed as a read-only attribution badge — they do NOT get
+// coach profile pages and do NOT appear on certificates.
 // ============================================================
 
 import data from './index.js'
 
 export const coaches = [
+  // ── Feyn's own instructors ────────────────────────────────
   {
     id: 'himel',
     name: 'Himel',
     title: 'Founder & Lead Instructor',
-    bio: 'Builds every concept from the ground up using the Feynman technique. Teaches HSC Physics and Mathematics.',
+    bio: 'Builds every concept from the ground up using the Feynman technique. Curates and structures HSC Physics and Mathematics on Feyn.',
     avatar: null, signature: null,
     socials: { youtube: '', website: 'https://hello2himel.netlify.app' },
   },
@@ -44,6 +63,14 @@ export const coaches = [
     socials: { youtube: '', website: '' },
   },
 ]
+
+// ── Video source helpers ──────────────────────────────────────────────
+// getSource returns the source object for a lesson (or null).
+// Use this in UI to render attribution badges — never use it for
+// coach pages or certificate signing.
+export function getSource(lesson) {
+  return lesson?.source || null
+}
 
 // ── Taxonomy helpers ──────────────────────────────────────────────────
 

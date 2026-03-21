@@ -324,6 +324,35 @@ export function CoachChip({ coach }) {
   )
 }
 
+// ── SourceBadge ────────────────────────────────────────────────────────
+// Displays video source attribution (platform + instructor) per lesson.
+// This is purely informational — distinct from CoachChip which links to
+// Feyn's own instructor profile pages.
+export function SourceBadge({ source }) {
+  if (!source) return null
+  return (
+    <a
+      href={source.url || '#'}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="source-badge"
+      title={`Video by ${source.instructor || source.name} on ${source.name}`}
+    >
+      <span className="source-badge__platform-icon">
+        <i className="ri-youtube-line" />
+      </span>
+      <span className="source-badge__body">
+        <span className="source-badge__label">Video via</span>
+        <span className="source-badge__platform">{source.name}</span>
+        {source.instructor && (
+          <span className="source-badge__instructor">· {source.instructor}</span>
+        )}
+      </span>
+      <i className="ri-external-link-line source-badge__ext" />
+    </a>
+  )
+}
+
 // ── ProgressBar ────────────────────────────────────────────────────────
 export function ProgressBar({ pct, label }) {
   return (

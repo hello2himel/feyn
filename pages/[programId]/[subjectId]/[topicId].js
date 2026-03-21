@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import data from '../../../data/index.js'
 import { getProgram, getSubject, getTopic, getCoachesFor, getSubjectMaterials, getTopicLessonCount } from '../../../data/courseHelpers'
-import { Nav, Footer, Breadcrumb, CoachChip, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../../components/Layout'
+import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../../components/Layout'
 import { isWatched, getSubjectProgress } from '../../../lib/userStore'
 
 export default function TopicPage({ program, subject, topic, allMaterials }) {
@@ -52,6 +52,11 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
                   {coaches.map(c => <CoachChip key={c.id} coach={c} />)}
                 </div>
               )}
+              {topic.primarySource && (
+                <div style={{ marginTop: 10 }}>
+                  <SourceBadge source={topic.primarySource} />
+                </div>
+              )}
               {mounted && signedIn && allLessons.length > 0 && (
                 <div style={{ marginTop:14, maxWidth:300 }}>
                   <ProgressBar pct={topicPct} label={`${watchedCount} / ${allLessons.length} watched`} />
@@ -95,11 +100,20 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
                               {lesson.title}
                             </h3>
                             <p className="lesson-item__desc">{lesson.intro}</p>
-                            {lesson.questions?.length > 0 && (
-                              <p style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-3)', marginTop:4, display:'flex', alignItems:'center', gap:4 }}>
-                                <i className="ri-question-line" /> {lesson.questions.length} questions
-                              </p>
-                            )}
+                            <div className="lesson-item__meta-row">
+                              {lesson.questions?.length > 0 && (
+                                <p style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-3)', display:'flex', alignItems:'center', gap:4 }}>
+                                  <i className="ri-question-line" /> {lesson.questions.length} questions
+                                </p>
+                              )}
+                              {lesson.source && (
+                                <span className="lesson-item__source-tag">
+                                  <i className="ri-youtube-line" />
+                                  {lesson.source.name}
+                                  {lesson.source.instructor && <> · {lesson.source.instructor}</>}
+                                </span>
+                              )}
+                            </div>
                           </Link>
                         </div>
                         {lesson.duration && (

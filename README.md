@@ -115,13 +115,43 @@ Then reference coaches by their `id` in subjects and topics via `coachIds: ["coa
 
 ## Data Structure
 
-Everything lives in `data/courses.js`. Key fields:
+Everything lives in `data/` (programs, subjects, topics, each in their own file).
 
 ```
 Program
   └── Subject  (certificate: true/false, coachIds: [...])
-        └── Topic  (coachIds: [...])
-              └── Lesson  (videoId, duration, title, description)
+        └── Topic  (coachIds: [...], primarySource: {...})
+              └── Skill  (tier, prerequisiteIds: [...])
+                    └── Lesson  (videoId, duration, title, intro, source: {...}, questions: [...])
+```
+
+### The Three-Role Model for Video Attribution
+
+Feyn separates three distinct roles cleanly:
+
+| Field | What it represents | Where used |
+|---|---|---|
+| `subject.coachIds` / `topic.coachIds` | Feyn's own curating instructors | Coach profile pages, certificates |
+| `lesson.source.name` | Platform that produced the video (e.g. OnnoRokom Pathshala) | Attribution badge on lesson page |
+| `lesson.source.instructor` | Person teaching in the video (e.g. Ratul Khan) | Attribution badge on lesson page |
+
+**Coaches** (in `data/courseHelpers.js`) get profile pages at `/coaches/[id]` and sign certificates.
+**Sources** are display-only attribution — they never get profile pages and never appear on certificates.
+
+```js
+// In a lesson:
+source: {
+  name: 'OnnoRokom Pathshala',
+  instructor: 'Ratul Khan',
+  url: 'https://www.youtube.com/@onnorokompathshala',
+}
+```
+
+For supplementary (English) videos, attribution is embedded in the `materials` label:
+```js
+materials: [
+  { id: 'km-1', label: 'Khan Academy — Projectile Motion (English)', url: '...', type: 'link' }
+]
 ```
 
 ---

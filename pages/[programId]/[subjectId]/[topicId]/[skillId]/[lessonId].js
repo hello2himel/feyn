@@ -3,7 +3,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { getProgram, getSubject, getTopic, getSkill, getLessonNav, getCoachesFor, getSubjectMaterials, getTotalLessons, getAllLessonPaths } from '../../../../../data/courseHelpers'
-import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, MaterialsSidebar, LessonMaterials, useAuth } from '../../../../../components/Layout'
+import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, SourceBadge, MaterialsSidebar, LessonMaterials, useAuth } from '../../../../../components/Layout'
 import { isWatched, markWatched, unmarkWatched, getSubjectProgress, issueCert, hasCert, getProfile, getWatchProgress, saveLessonProgress, recordAttempt, clearLessonProgress, getLessonProgress } from '../../../../../lib/userStore'
 import { downloadCertificate } from '../../../../../lib/certificate'
 
@@ -628,6 +628,13 @@ export default function LessonPage({ program, subject, topic, skill, lesson, pre
               {coaches.length > 0 && (
                 <div className="lesson-coaches">
                   {coaches.map(c => <CoachChip key={c.id} coach={c} />)}
+                </div>
+              )}
+
+              {/* SOURCE ATTRIBUTION — platform + instructor of the primary video */}
+              {lesson.source && (
+                <div className="lesson-source-row">
+                  <SourceBadge source={lesson.source} />
                 </div>
               )}
 
