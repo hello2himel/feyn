@@ -1,21 +1,7 @@
-# Dependencies
 node_modules/
-
-# Next.js build output
 .next/
-out/
-
-# Environment
-.env
 .env.local
-.env.*.local
-
-# OS / Editor
-.DS_Store
-Thumbs.db
+.env*.local
 *.log
-.vscode/
-.idea/
-
-# Admin panel local data (stays on your machine)
-# (stored in browser localStorage, nothing to gitignore there)
+.DS_Store
+out/

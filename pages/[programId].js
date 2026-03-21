@@ -1,14 +1,33 @@
-// pages/[programId].js — Program page: shows all subjects
 import Head from 'next/head'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { Nav, Footer } from '../components/Layout'
-import data, { getProgram } from '../data/index.js'
+import { useState, useEffect } from 'react'
+import data from '../data/index.js'
+import { getProgram, getCoachesFor, getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
+import { Nav, Footer, YTThumb, CoachChip, ProgressBar } from '../components/Layout'
+import { isEnrolled, getSubjectProgress } from '../lib/userStore'
 
-export default function ProgramPage() {
-  const { query } = useRouter()
-  const program = getProgram(query.programId)
+export default function ProgramPage({ program }) {
+  const [progressMap, setProgressMap] = useState({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    if (!program) return
+    setMounted(true)
+    const map = {}
+    for (const subject of program.subjects) {
+      map[subject.id] = {
+        enrolled: isEnrolled(program.id, subject.id),
+        pct: getSubjectProgress(program.id, subject.id, subject),
+      }
+    }
+    setProgressMap(map)
+  }, [program?.id])
+
   if (!program) return null
+
+  const liveSubjects  = program.subjects.filter(s => !s.comingSoon)
+  const totalLessons  = liveSubjects.reduce((a, s) => a + getTotalLessons(s), 0)
+  const totalTopics   = liveSubjects.reduce((a, s) => a + s.topics.length, 0)
 
   return (
     <>
@@ -18,36 +37,91 @@ export default function ProgramPage() {
       </Head>
       <Nav />
       <main>
-        <div className="page-header">
-          <div className="container">
-            <p className="page-header__eyebrow">
-              <i className={program.icon} /> {program.type === 'class' ? 'Academic programme' : 'Interest area'}
-            </p>
-            <h1 className="page-header__title">{program.name}</h1>
-            <p className="page-header__desc">{program.description}</p>
-          </div>
-        </div>
-        <div className="container" style={{ padding: '40px 24px 80px' }}>
-          <p className="section-label"><i className="ri-stack-line" style={{ marginRight: 6 }} />Subjects</p>
-          <div className="subject-grid-new">
-            {program.subjects.map(subject => (
-              <Link key={subject.id} href={`/${program.id}/${subject.id}`} className="subject-card-new">
-                <div className="subject-card-new__icon"><i className={subject.icon} /></div>
-                <div className="subject-card-new__body">
-                  <p className="subject-card-new__name">{subject.name}</p>
-                  <p className="subject-card-new__desc">{subject.description}</p>
-                  <p className="subject-card-new__meta">
-                    {subject.topics.length} topics
-                    {subject.topics.length === 0 && <span className="subject-card-new__soon"> · Coming soon</span>}
-                  </p>
-                </div>
-                <i className="ri-arrow-right-s-line subject-card-new__arrow" />
-              </Link>
-            ))}
-          </div>
+        <div className="container">
+          <header className="program-page-header">
+            <div className="program-page-header__meta">
+              <Link href="/" className="program-page-header__back"><i className="ri-arrow-left-line" /> All Programs</Link>
+              <span className="program-page-header__badge">Program</span>
+            </div>
+            <h1 className="program-page-header__title">{program.name}</h1>
+            <p className="program-page-header__desc">{program.description}</p>
+            <div className="program-page-header__stats">
+              <span><i className="ri-book-2-line" /> {program.subjects.length} subjects</span>
+              {totalTopics > 0 && <span><i className="ri-folder-line" /> {totalTopics} topics</span>}
+              {totalLessons > 0 && <span><i className="ri-play-circle-line" /> {totalLessons} lessons</span>}
+            </div>
+          </header>
+
+          <section className="program-subjects">
+            <p className="section-label"><i className="ri-stack-line" style={{marginRight:6}}/>Subjects</p>
+            <div className="program-subject-grid">
+              {program.subjects.map(subject => {
+                const coaches  = getCoachesFor(subject.coachIds || [])
+                const firstVid = getSubjectFirstVideo(subject)
+                const total    = getTotalLessons(subject)
+                const info     = progressMap[subject.id] || {}
+                const isSoon   = subject.comingSoon
+
+                return (
+                  <div key={subject.id} className={`program-subject-card${isSoon ? ' program-subject-card--soon' : ''}`}>
+                    {!isSoon && (
+                      <Link href={`/${program.id}/${subject.id}`} className="program-subject-card__overlay-link" aria-label={subject.name} />
+                    )}
+                    <div className="program-subject-card__thumb">
+                      <YTThumb videoId={firstVid} alt={subject.name} />
+                      {subject.certificate && !isSoon && (
+                        <span className="program-subject-card__cert-badge"><i className="ri-medal-line" /> Certificate</span>
+                      )}
+                      {isSoon && (
+                        <span className="program-subject-card__soon-badge"><i className="ri-time-line" /> Coming soon</span>
+                      )}
+                    </div>
+                    <div className="program-subject-card__body">
+                      <div className="program-subject-card__icon-row">
+                        <i className={subject.icon || 'ri-book-open-line'} />
+                        <span className="program-subject-card__name">{subject.name}</span>
+                      </div>
+                      <p className="program-subject-card__desc">{subject.description}</p>
+                      {coaches.length > 0 && !isSoon && (
+                        <div className="program-subject-card__coaches">
+                          {coaches.map(c => <CoachChip key={c.id} coach={c} />)}
+                        </div>
+                      )}
+                      <div className="program-subject-card__footer">
+                        {isSoon ? (
+                          <span className="program-subject-card__meta" style={{color:'var(--text-3)',fontStyle:'italic'}}>
+                            Content in preparation
+                          </span>
+                        ) : (
+                          <span className="program-subject-card__meta">
+                            <i className="ri-folder-line" /> {subject.topics.length} topics &nbsp;·&nbsp;
+                            <i className="ri-play-line" /> {total} lessons
+                          </span>
+                        )}
+                        {mounted && info.enrolled && !isSoon && (
+                          <span className="program-subject-card__enrolled"><i className="ri-checkbox-circle-fill" /> Enrolled</span>
+                        )}
+                      </div>
+                      {mounted && info.enrolled && !isSoon && <ProgressBar pct={info.pct} label={`${info.pct}%`} />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
         </div>
       </main>
       <Footer />
     </>
   )
+}
+
+export async function getStaticPaths() {
+  return { paths: data.programs.map(p => ({ params: { programId: p.id } })), fallback: false }
+}
+
+export async function getStaticProps({ params }) {
+  const program = getProgram(params.programId)
+  if (!program) return { notFound: true }
+  return { props: { program } }
 }

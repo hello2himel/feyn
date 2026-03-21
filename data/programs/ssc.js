@@ -7,7 +7,7 @@ const ssc = {
   id: 'ssc',
   name: 'SSC',
   type: 'class',
-  description: 'Secondary School Certificate — built from scratch, one idea at a time.',
+  description: 'Secondary School Certificate — coming soon.',
   icon: 'ri-book-open-line',
   subjects: [physics, chemistry, mathematics, biology],
 }

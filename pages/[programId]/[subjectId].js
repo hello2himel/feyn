@@ -1,116 +1,134 @@
-// pages/[programId]/[subjectId].js — Subject page: shows all topics
 import Head from 'next/head'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
-import { Nav, Footer, useAuth } from '../../components/Layout'
-import { getProgram, getSubject, countSkills, countLessons } from '../../data/index.js'
-import { getAllSkillProgress } from '../../lib/userStore'
+import data from '../../data/index.js'
+import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTotalLessons, getTopicFirstVideo } from '../../data/courseHelpers'
+import { Nav, Footer, Breadcrumb, CoachChip, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../components/Layout'
+import { isEnrolled, enroll, unenroll, getSubjectProgress } from '../../lib/userStore'
 
-function TopicCard({ topic, programId, subjectId, skillProgress, mounted }) {
-  const totalSkills = countSkills(topic)
-  const doneSkills = mounted
-    ? topic.skills.filter(s => {
-        const sp = skillProgress[`${programId}/${subjectId}/${topic.id}/${s.id}`]
-        return sp?.status === 'complete' || sp?.status === 'mastered'
-      }).length
-    : 0
-  const pct = totalSkills ? Math.round(doneSkills / totalSkills * 100) : 0
-  const isComingSoon = totalSkills === 0
+export default function SubjectPage({ program, subject, allMaterials }) {
+  const { signedIn, setShowAuth, mounted } = useAuth()
+  const [enrolled, setEnrolled] = useState(false)
+  const [pct, setPct] = useState(0)
 
-  return (
-    <Link
-      href={isComingSoon ? '#' : `/${programId}/${subjectId}/${topic.id}`}
-      className={`topic-card ${isComingSoon ? 'topic-card--soon' : ''}`}
-      onClick={isComingSoon ? e => e.preventDefault() : undefined}
-    >
-      <div className="topic-card__icon"><i className={topic.icon} /></div>
-      <div className="topic-card__body">
-        <p className="topic-card__name">{topic.name}</p>
-        <p className="topic-card__desc">{topic.description}</p>
-        <div className="topic-card__meta">
-          {isComingSoon ? (
-            <span className="topic-card__soon-tag">Coming soon</span>
-          ) : (
-            <>
-              <span><i className="ri-node-tree" /> {totalSkills} skills</span>
-              <span><i className="ri-question-line" /> {countLessons(topic)} lessons</span>
-              {mounted && totalSkills > 0 && (
-                <span className="topic-card__pct">{pct}%</span>
-              )}
-            </>
-          )}
-        </div>
-        {mounted && !isComingSoon && totalSkills > 0 && (
-          <div className="topic-card__bar">
-            <div className="topic-card__bar-fill" style={{ width: `${pct}%` }} />
-          </div>
-        )}
-      </div>
-      {!isComingSoon && <i className="ri-arrow-right-s-line topic-card__arrow" />}
-    </Link>
-  )
-}
-
-export default function SubjectPage() {
-  const { query } = useRouter()
-  const { mounted } = useAuth()
-  const [skillProgress, setSP] = useState({})
-
-  const program = getProgram(query.programId)
-  const subject = getSubject(query.programId, query.subjectId)
+  const coaches = subject ? getCoachesFor(subject.coachIds || []) : []
 
   useEffect(() => {
-    if (mounted) setSP(getAllSkillProgress())
-  }, [mounted])
+    if (!signedIn || !program || !subject) return
+    setEnrolled(isEnrolled(program.id, subject.id))
+    setPct(getSubjectProgress(program.id, subject.id, subject))
+  }, [signedIn, program?.id, subject?.id])
 
   if (!program || !subject) return null
 
+  // Guard: coming-soon subjects have no content yet
+  if (subject.comingSoon) {
+    return (
+      <>
+        <Head><title>{subject.name} · Coming Soon · Feyn</title></Head>
+        <Nav />
+        <main>
+          <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}>
+            <i className="ri-time-line" style={{ fontSize: '3rem', color: 'var(--text-3)', display: 'block', marginBottom: 20 }} />
+            <h1 style={{ fontSize: '1.8rem', marginBottom: 12 }}>{subject.name}</h1>
+            <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>
+              This course is in preparation. Check back soon.
+            </p>
+            <Link href={`/${program.id}`} className="btn btn--ghost btn--sm">
+              <i className="ri-arrow-left-line" /> Back to {program.name}
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  function toggleEnroll() {
+    if (!signedIn) { setShowAuth(true); return }
+    if (enrolled) { unenroll(program.id, subject.id); setEnrolled(false) }
+    else          { enroll(program.id, subject.id);   setEnrolled(true)  }
+  }
+
   return (
     <>
-      <Head>
-        <title>{subject.name} · {program.name} · Feyn</title>
-        <meta name="description" content={subject.description} />
-      </Head>
+      <Head><title>{subject.name} · {program.name} · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="page-header">
-          <div className="container">
-            <p className="page-header__eyebrow">
-              <Link href={`/${program.id}`} style={{ color: 'var(--text-3)' }}>{program.name}</Link>
-              <span style={{ margin: '0 6px', color: 'var(--border-2)' }}>›</span>
-              <i className={subject.icon} /> {subject.name}
-            </p>
-            <h1 className="page-header__title">{subject.name}</h1>
-            <p className="page-header__desc">{subject.description}</p>
+        <div className="page-with-sidebar">
+          <div className="main-content">
+            <Breadcrumb crumbs={[
+              { label: program.name, href: `/${program.id}` },
+              { label: subject.name },
+            ]} />
+            <header className="page-header">
+              <p className="page-header__eyebrow"><i className="ri-graduation-cap-line" /> {program.name}</p>
+              <h1 className="page-header__title">{subject.name}</h1>
+              <p className="page-header__desc">{subject.description}</p>
+              {coaches.length > 0 && (
+                <div className="subject-coaches">{coaches.map(c => <CoachChip key={c.id} coach={c} />)}</div>
+              )}
+              {mounted && (
+                <div className="subject-enroll">
+                  <button className={`btn ${enrolled ? 'btn--ghost' : 'btn--accent'}`} onClick={toggleEnroll}>
+                    <i className={enrolled ? 'ri-checkbox-circle-fill' : 'ri-add-circle-line'} />
+                    {!signedIn ? 'Sign in to enroll' : enrolled ? 'Enrolled' : 'Enroll in this course'}
+                  </button>
+                  {signedIn && enrolled && <ProgressBar pct={pct} label={`${pct}% complete`} />}
+                </div>
+              )}
+              {subject.certificate && (
+                <p style={{ marginTop:12, fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--accent)', letterSpacing:'0.08em', display:'flex', alignItems:'center', gap:6 }}>
+                  <i className="ri-medal-line" /> Certificate available on completion
+                </p>
+              )}
+            </header>
+
+            <section className="topics-list">
+              <p className="section-label">{subject.topics.length} Topics</p>
+              {subject.topics.length === 0 && <p className="empty-state">Topics coming soon.</p>}
+              {subject.topics.map(topic => {
+                const firstVid   = getTopicFirstVideo(topic)
+                const skillCount = (topic.skills || []).length
+                const lessonCount = (topic.skills || []).reduce((a, s) => a + (s.lessons || []).length, 0)
+                return (
+                  <div key={topic.id} className="topic-item">
+                    <Link href={`/${program.id}/${subject.id}/${topic.id}`} className="topic-item__overlay-link" aria-label={topic.name} />
+                    <div className="topic-item__thumb">
+                      <YTThumb videoId={firstVid} alt={topic.name} />
+                    </div>
+                    <div className="topic-item__body">
+                      <h2 className="topic-item__name">{topic.name}</h2>
+                      <p className="topic-item__desc">{topic.description}</p>
+                      <p className="topic-item__meta">
+                        <i className="ri-book-open-line" /> {skillCount} skills &nbsp;·&nbsp; <i className="ri-play-circle-line" /> {lessonCount} lessons
+                      </p>
+                    </div>
+                    <span className="topic-item__arrow"><i className="ri-arrow-right-line" /></span>
+                  </div>
+                )
+              })}
+            </section>
           </div>
-        </div>
-        <div className="container" style={{ padding: '40px 24px 80px' }}>
-          <p className="section-label">
-            <i className="ri-map-2-line" style={{ marginRight: 6 }} />Topics
-          </p>
-          {subject.topics.length === 0 ? (
-            <div className="coming-soon-block">
-              <i className="ri-time-line" />
-              <p>Content for {subject.name} is being prepared. Check back soon.</p>
-            </div>
-          ) : (
-            <div className="topic-grid">
-              {subject.topics.map(topic => (
-                <TopicCard
-                  key={topic.id}
-                  topic={topic}
-                  programId={program.id}
-                  subjectId={subject.id}
-                  skillProgress={skillProgress}
-                  mounted={mounted}
-                />
-              ))}
-            </div>
-          )}
+          <MaterialsSidebar materials={allMaterials} subjectName={subject.name} />
         </div>
       </main>
       <Footer />
     </>
   )
+}
+
+export async function getStaticPaths() {
+  const paths = []
+  for (const program of data.programs)
+    for (const subject of program.subjects)
+      paths.push({ params: { programId: program.id, subjectId: subject.id } })
+  return { paths, fallback: false }
+}
+
+export async function getStaticProps({ params }) {
+  const program = getProgram(params.programId)
+  const subject = getSubject(params.programId, params.subjectId)
+  if (!program || !subject) return { notFound: true }
+  return { props: { program, subject, allMaterials: getSubjectMaterials(subject) } }
 }

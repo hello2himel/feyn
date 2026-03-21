@@ -321,7 +321,7 @@ export default function AdminPage() {
             {output && (
               <>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 24px',borderBottom:'1px solid #1e1e1e',background:'#0a0a0a',position:'sticky',top:57,zIndex:10}}>
-                  <span style={{fontFamily:'monospace',fontSize:12,color:'#c8a96e'}}>data/topics/{program}/{subject}/{topic}.js — copy into the right topic file</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,color:'#c8a96e'}}>data/index.js, copy this and save to your project</span>
                   <div style={{display:'flex',gap:8}}>
                     <button style={s.btnGhost} onClick={()=>{ const b=document.createElement('a');b.href='data:text/javascript,'+encodeURIComponent(output);b.download='courses.js';b.click() }}>⬇ Download</button>
                     <button style={s.btnAccent} onClick={copy}>{copied?'✓ Copied!':'Copy to clipboard'}</button>
@@ -329,7 +329,7 @@ export default function AdminPage() {
                 </div>
                 <textarea style={s.outputCode} value={output} readOnly rows={32} spellCheck={false} />
                 <p style={{padding:'10px 24px',color:'#5c5852',fontSize:11,fontFamily:'monospace'}}>
-                  Copy the skill/topic block into the relevant <code>data/topics/</code> file, then commit and push.
+                  Paste into <code>data/index.js</code>, then: git add . && git commit -m "update courses" && git push
                 </p>
               </>
             )}

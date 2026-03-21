@@ -29,7 +29,7 @@ export default function VerifyPage() {
         if (sb) {
           const { data, error } = await sb
             .from('certificates')
-            .select('id, unit_id, unit_name, user_name, issued_at')
+            .select('id, program_name, subject_name, user_name, issued_at')
             .eq('id', certId)
             .maybeSingle()
 
@@ -54,7 +54,8 @@ export default function VerifyPage() {
   const dateStr     = rawDate
     ? new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
-  const unitName = cert?.unit_name || cert?.unitName
+  const subjectName = cert?.subject_name || cert?.subjectName
+  const programName = cert?.program_name || cert?.programName
   const userName    = cert?.user_name    || cert?.userName
 
   return (
@@ -96,10 +97,15 @@ export default function VerifyPage() {
                     </span>
                   </div>
                   <div className="verify-details__row">
-                    <span className="verify-details__label">Unit</span>
-                    <span className="verify-details__value">{unitName}</span>
+                    <span className="verify-details__label">Course</span>
+                    <span className="verify-details__value">{subjectName}</span>
                   </div>
-
+                  {programName && (
+                    <div className="verify-details__row">
+                      <span className="verify-details__label">Program</span>
+                      <span className="verify-details__value">{programName}</span>
+                    </div>
+                  )}
                   {dateStr && (
                     <div className="verify-details__row">
                       <span className="verify-details__label">Issued</span>
