@@ -239,8 +239,8 @@ export default function ProfilePage() {
                   <div className="cert-card" key={cert.id}>
                     <div className="cert-card__icon"><i className="ri-award-fill" style={{ fontSize: '1.4rem', color: 'var(--accent)' }} /></div>
                     <div className="cert-card__info">
-                      <p className="cert-card__title">{cert.subjectName}</p>
-                      <p className="cert-card__meta">{cert.programName} · {new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p className="cert-card__title">{cert.subjectName || cert.subject_name}</p>
+                      <p className="cert-card__meta">{cert.programName || cert.program_name} · {new Date(cert.issuedAt || cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                       <p className="cert-card__id">{cert.id}</p>
                     </div>
                     <button className="btn btn--accent btn--sm" onClick={() => handleDownloadCert(cert)} disabled={certLoading === cert.id}>
