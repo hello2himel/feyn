@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import data from '../../data/index.js'
 import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTotalLessons, getTopicFirstVideo } from '../../data/courseHelpers'
-import { Nav, Footer, Breadcrumb, CoachChip, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../components/Layout'
+import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../components/Layout'
 import { isEnrolled, enroll, unenroll, getSubjectProgress } from '../../lib/userStore'
 
 export default function SubjectPage({ program, subject, allMaterials }) {

@@ -16,7 +16,7 @@ const MAT_TYPES = ['pdf', 'doc', 'link', 'video', 'other']
 function emptyProgram()  { return { id:'', name:'', description:'', subjects:[] } }
 function emptySubject()  { return { id:'', name:'', icon:'📘', description:'', coachIds:[], certificate:false, materials:[], topics:[] } }
 function emptyTopic()    { return { id:'', name:'', description:'', coachIds:[], lessons:[] } }
-function emptyLesson()   { return { id:'', title:'', videoId:'', duration:'', description:'', materials:[] } }
+function emptyLesson()   { return { id:'', title:'', videoId:'', duration:'', description:'', source:{ name:'', instructor:'', url:'' }, materials:[] } }
 function emptyCoach()    { return { id:'', name:'', title:'', bio:'', avatar:null, signature:null, socials:{ youtube:'', website:'' } } }
 function emptyMaterial() { return { id: uid(), label:'', url:'', type:'pdf' } }
 
@@ -28,12 +28,17 @@ function generateJS(coaches, programs) {
     const items = arr.map(m => `{ id:${j(m.id)}, label:${j(m.label)}, url:${j(m.url)}, type:${j(m.type)} }`)
     return `[\n            ${items.join(',\n            ')}\n          ]`
   }
+  const sourceStr = (s) => {
+    if (!s || (!s.name && !s.instructor && !s.url)) return 'null'
+    return `{ name:${j(s.name||'')}, instructor:${j(s.instructor||'')}, url:${j(s.url||'')} }`
+  }
   const lessonStr = (l, pad) => `${pad}{
 ${pad}  id: ${j(l.id)},
 ${pad}  title: ${j(l.title)},
 ${pad}  videoId: ${j(l.videoId || 'YOUTUBE_ID_HERE')},
 ${pad}  duration: ${j(l.duration)},
 ${pad}  description: ${j(l.description)},
+${pad}  source: ${sourceStr(l.source)},
 ${pad}  materials: ${matArr(l.materials)}
 ${pad}}`
   const topicStr = (t, pad) => `${pad}{
@@ -153,7 +158,7 @@ export default function AdminPage() {
       if (type==='program') setModalData({...programs[idx]})
       else if (type==='subject') setModalData({...selProgram.subjects[idx], coachIds:[...(selProgram.subjects[idx].coachIds||[])], materials:[...(selProgram.subjects[idx].materials||[])]})
       else if (type==='topic')   setModalData({...selSubject.topics[idx], coachIds:[...(selSubject.topics[idx].coachIds||[])]})
-      else if (type==='lesson')  setModalData({...selTopic.lessons[idx], materials:[...(selTopic.lessons[idx].materials||[])]})
+      else if (type==='lesson')  setModalData({...selTopic.lessons[idx], materials:[...(selTopic.lessons[idx].materials||[])], source:{...(selTopic.lessons[idx].source||{name:'',instructor:'',url:''})}})
       else if (type==='coach')   setModalData({...coaches[idx], socials:{...(coaches[idx].socials||{})}})
     } else {
       if (type==='program') setModalData(emptyProgram())
@@ -380,6 +385,12 @@ export default function AdminPage() {
               <F label="YouTube Video ID" placeholder="e.g. dQw4w9WgXcQ" value={modalData.videoId||''} onChange={v=>setModalData(d=>({...d,videoId:v.trim()}))} mono hint="The part after ?v= in the YouTube URL" />
               <F label="Duration" placeholder="e.g. 12:30" value={modalData.duration||''} onChange={v=>setModalData(d=>({...d,duration:v}))} />
               <F label="Description" value={modalData.description||''} onChange={v=>setModalData(d=>({...d,description:v}))} area />
+              <div style={{borderTop:'1px solid #2a2a2a',margin:'12px 0 8px',paddingTop:8}}>
+                <label style={{fontFamily:'monospace',fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.1em',color:'#888',display:'block',marginBottom:8}}>Video Source Attribution</label>
+                <F label="Platform name" placeholder="e.g. OnnoRokom Pathshala" value={(modalData.source||{}).name||''} onChange={v=>setModalData(d=>({...d,source:{...(d.source||{}),name:v}}))} />
+                <F label="Instructor name" placeholder="e.g. Ratul Khan" value={(modalData.source||{}).instructor||''} onChange={v=>setModalData(d=>({...d,source:{...(d.source||{}),instructor:v}}))} />
+                <F label="Channel / platform URL" placeholder="e.g. https://youtube.com/@..." value={(modalData.source||{}).url||''} onChange={v=>setModalData(d=>({...d,source:{...(d.source||{}),url:v}}))} mono />
+              </div>
               {modalData.videoId && modalData.videoId!=='YOUTUBE_ID_HERE' && (
                 <div style={{marginBottom:16}}>
                   <label style={s.fieldLabel}>Preview</label>

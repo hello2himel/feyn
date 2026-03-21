@@ -73,7 +73,16 @@ export default function CoachPage({ coach, subjects }) {
                           <div className="coach-lesson-row__thumb">
                             <YTThumb videoId={lesson.videoId} alt={lesson.title} />
                           </div>
-                          <span className="coach-lesson-row__title">{lesson.title}</span>
+                          <div className="coach-lesson-row__info">
+                            <span className="coach-lesson-row__title">{lesson.title}</span>
+                            {lesson.source && (
+                              <span className="lesson-item__source-tag" style={{ pointerEvents: 'none' }}>
+                                <i className="ri-youtube-line" />
+                                {lesson.source.name}
+                                {lesson.source.instructor && <> · {lesson.source.instructor}</>}
+                              </span>
+                            )}
+                          </div>
                           <span className="coach-lesson-row__dur"><i className="ri-time-line" /> {lesson.duration}</span>
                         </div>
                       ))}

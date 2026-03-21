@@ -387,6 +387,15 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 .lesson-item__link:hover .lesson-item__title { color: var(--accent); }
 .lesson-item__title { font-family: var(--font-serif); font-size: 1rem; color: var(--text); margin-bottom: 3px; transition: color var(--transition); }
 .lesson-item__desc { font-size: 0.8rem; color: var(--text-3); line-height: 1.5; }
+.lesson-item__meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 5px; }
+.lesson-item__source-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.05em;
+  color: var(--text-3); background: var(--bg-3);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 2px 7px 2px 5px; white-space: nowrap;
+}
+.lesson-item__source-tag i { font-size: 0.65rem; color: #ff0000; }
 .lesson-item__duration { font-family: var(--font-mono); font-size: 0.63rem; color: var(--text-3); letter-spacing: 0.06em; padding-top: 2px; white-space: nowrap; flex-shrink: 0; }
 
 /* =============================================
@@ -886,6 +895,78 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 .coach-chip__name { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.06em; color: var(--text-2); text-transform: uppercase; }
 
 /* =============================================
+   SOURCE BADGE
+   Attribution chip for lesson video source
+   (platform + instructor). Purely informational —
+   distinct from CoachChip which links to Feyn
+   instructor profile pages.
+   ============================================= */
+.lesson-source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  background: var(--bg-2);
+  transition: border-color var(--transition), background var(--transition);
+  max-width: 100%;
+}
+.source-badge:hover {
+  border-color: var(--accent-2);
+  background: var(--accent-glow);
+}
+.source-badge__platform-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #ff0000;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: #fff;
+}
+.source-badge__body {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+.source-badge__label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.source-badge__platform {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: var(--text-1);
+  font-weight: 600;
+}
+.source-badge__instructor {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+}
+.source-badge__ext {
+  font-size: 0.65rem;
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+/* =============================================
    FOOTER — full revamped
    ============================================= */
 .footer-full {
@@ -1073,8 +1154,9 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 .coach-lesson-row:hover .coach-lesson-row__title { color: var(--accent); }
 .coach-lesson-row__num { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-3); min-width: 22px; }
 .coach-lesson-row__thumb { width: 64px; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
-.coach-lesson-row__title { flex: 1; font-size: 0.85rem; color: var(--text); transition: color var(--transition); }
-.coach-lesson-row__dur { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-3); }
+.coach-lesson-row__info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.coach-lesson-row__title { font-size: 0.85rem; color: var(--text); transition: color var(--transition); }
+.coach-lesson-row__dur { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-3); white-space: nowrap; }
 
 /* =============================================
    TAG / BADGE
