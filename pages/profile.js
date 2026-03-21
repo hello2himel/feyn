@@ -50,6 +50,7 @@ export default function ProfilePage() {
 
   async function handleDownloadCert(cert) {
     const id = cert.id
+    if (certLoading === id) return   // already in progress — ignore double-click
     setCertLoading(id)
     const setStatus = s => setCertStatus(prev => ({ ...prev, [id]: s }))
 
@@ -65,32 +66,37 @@ export default function ProfilePage() {
       }
     }
 
-    setStatus('fetching')
+    try {
+      setStatus('fetching')
 
-    // Re-issue pushes to DB and returns whether it actually landed
-    const { cert: freshCert, dbOk, dbError } = await issueCert(
-      cert.programId || cert.program_id,
-      cert.subjectId || cert.subject_id,
-      cert.subjectName || cert.subject_name,
-      cert.programName || cert.program_name,
-      cert.userName    || cert.user_name,
-    )
+      // Re-issue pushes to DB and confirms it landed.
+      // issueCert is idempotent — safe to call every time.
+      const { cert: freshCert, dbOk, dbError } = await issueCert(
+        cert.programId || cert.program_id,
+        cert.subjectId || cert.subject_id,
+        cert.subjectName || cert.subject_name,
+        cert.programName || cert.program_name,
+        cert.userName    || cert.user_name,
+      )
 
-    const finalCert = freshCert || cert
+      const finalCert = freshCert || cert
 
-    if (!dbOk) {
-      console.error('[Feyn] profile cert not in DB after push:', dbError)
-      setStatus('failed')
-      await new Promise(r => setTimeout(r, 1500))
-    } else {
-      setStatus('verified')
-      await new Promise(r => setTimeout(r, 800))
+      if (!dbOk) {
+        console.error('[Feyn] profile cert not in DB after push:', dbError)
+        setStatus('failed')
+        await new Promise(r => setTimeout(r, 1500))
+      } else {
+        setStatus('verified')
+        await new Promise(r => setTimeout(r, 800))
+      }
+
+      await downloadCertificate({ cert: finalCert, coachName, coachTitle, coachSignatureUrl, isGlobal: true })
+    } catch (e) {
+      console.error('[Feyn] handleDownloadCert error:', e?.message)
+    } finally {
+      setCertLoading(null)
+      setCertStatus(prev => { const n = { ...prev }; delete n[id]; return n })
     }
-
-    await downloadCertificate({ cert: finalCert, coachName, coachTitle, coachSignatureUrl, isGlobal: true })
-
-    setCertLoading(null)
-    setCertStatus(prev => { const n = { ...prev }; delete n[id]; return n })
   }
 
   function handleSignOut() {

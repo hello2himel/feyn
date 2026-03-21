@@ -531,18 +531,26 @@ export default function LessonPage({ program, subject, topic, skill, lesson, pre
   }
 
   async function handleCert() {
+    if (certLoading) return  // ignore double-click
     const profile    = getProfile()
     const userName   = profile?.name || 'Student'
     const coachName  = coaches[0]?.name  || 'Instructor'
     const coachTitle = coaches[0]?.title || 'Instructor'
     const coachSig   = coaches[0]?.signature || null
-    setCertLoading(true); setCertStatus('fetching')
-    const { cert, dbOk } = await issueCert(program.id, subject.id, subject.name, program.name, userName)
-    if (!cert) { setCertLoading(false); setCertStatus(''); return }
-    if (!dbOk) { setCertStatus('failed'); await new Promise(r => setTimeout(r, 1500)) }
-    else       { setCertStatus('verified'); await new Promise(r => setTimeout(r, 800)) }
-    await downloadCertificate({ cert, coachName, coachTitle, totalLessons: subjectTotalLessons, subjectDesc: subject.description || '', coachSignatureUrl: coachSig, isGlobal: true })
-    setCertLoading(false); setCertStatus('')
+    setCertLoading(true)
+    setCertStatus('fetching')
+    try {
+      const { cert, dbOk } = await issueCert(program.id, subject.id, subject.name, program.name, userName)
+      if (!cert) return
+      if (!dbOk) { setCertStatus('failed'); await new Promise(r => setTimeout(r, 1500)) }
+      else       { setCertStatus('verified'); await new Promise(r => setTimeout(r, 800)) }
+      await downloadCertificate({ cert, coachName, coachTitle, totalLessons: subjectTotalLessons, subjectDesc: subject.description || '', coachSignatureUrl: coachSig, isGlobal: true })
+    } catch (e) {
+      console.error('[Feyn] handleCert error:', e?.message)
+    } finally {
+      setCertLoading(false)
+      setCertStatus('')
+    }
   }
 
   const hasQuestions = lesson.questions && lesson.questions.length > 0
