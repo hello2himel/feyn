@@ -19,6 +19,10 @@ function emptyTopic()    { return { id:'', name:'', description:'', coachIds:[],
 function emptyLesson()   { return { id:'', title:'', videoId:'', duration:'', description:'', source:{ name:'', instructor:'', url:'' }, materials:[] } }
 function emptyCoach()    { return { id:'', name:'', title:'', bio:'', avatar:null, signature:null, socials:{ youtube:'', website:'' } } }
 function emptyMaterial() { return { id: uid(), label:'', url:'', type:'pdf' } }
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+function isLocalHost(host = '') {
+  return LOCAL_HOSTS.has(host) || host.startsWith('192.168.')
+}
 
 // ── Code generator ────────────────────────────────────────────────────
 function generateJS(coaches, programs) {
@@ -125,9 +129,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     const h = window.location.hostname
-    if (h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.')) {
+    if (isLocalHost(h)) {
       setIsLocal(true)
-      const saved = localStorage.getItem('ff_admin_data')
+      let saved = null
+      try { saved = localStorage.getItem('ff_admin_data') } catch {}
       if (saved) {
         try { const d = JSON.parse(saved); setCoaches(d.coaches||[]); setPrograms(d.programs||[]) } catch {}
       }
@@ -137,7 +142,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isLocal) return
-    localStorage.setItem('ff_admin_data', JSON.stringify({ coaches, programs }))
+    try {
+      localStorage.setItem('ff_admin_data', JSON.stringify({ coaches, programs }))
+    } catch {}
   }, [coaches, programs, isLocal])
 
   if (checking) return null
@@ -547,4 +554,11 @@ const s = {
   input: { display:'block', width:'100%', background:'#0d0d0d', border:'1px solid #2a2a2a', color:'#e8e3d8', padding:'7px 10px', fontSize:13, borderRadius:2, outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btnAccent: { background:'#1a1308', border:'1px solid #8b6f3e', color:'#c8a96e', padding:'7px 18px', cursor:'pointer', fontSize:13, borderRadius:2, fontFamily:'inherit' },
   btnGhost:  { background:'none', border:'1px solid #2a2a2a', color:'#9a9488', padding:'7px 18px', cursor:'pointer', fontSize:13, borderRadius:2, fontFamily:'inherit' },
+}
+
+export async function getServerSideProps(ctx) {
+  const hostHeader = ctx.req.headers.host || ''
+  const hostname = hostHeader.split(':')[0]
+  if (!isLocalHost(hostname)) return { notFound: true }
+  return { props: {} }
 }
