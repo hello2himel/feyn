@@ -95,6 +95,7 @@ Then reference coaches by their `id` in subjects and topics via `coachIds: ["coa
 | **Certificate PDF** | Dark-styled A4 PDF with name, course, date, cert ID, coach signature |
 | **Coach pages** | `/coaches/[id]` — bio, socials, all courses and lessons listed |
 | **Admin panel** | `/admin` — GUI to build the full course tree, outputs `courses.js` |
+| **Role-based panel hub** | `/panels` — routes Admin / Coach / Editor / Publisher workflows |
 | **Donate prompts** | Subtle strips every 3rd lesson + topic pages + footer |
 
 ---
@@ -162,6 +163,38 @@ All user data logic is isolated in `lib/userStore.js`.
 To swap localStorage for Supabase/Firebase: reimplement the same exported functions — nothing else in the app needs to change.
 
 Functions to reimplement: `getProfile`, `saveProfile`, `clearProfile`, `getEnrolled`, `isEnrolled`, `enroll`, `unenroll`, `getProgress`, `markWatched`, `unmarkWatched`, `isWatched`, `getSubjectProgress`, `getTopicProgress`, `getCerts`, `hasCert`, `issueCert`
+
+---
+
+## Panel Architecture (Admin/Coach/Editor/Publisher)
+
+To avoid hardcoded-only content operations, Feyn now supports **4 operational panels**:
+
+1. **Admin Content Studio** (`/admin`)
+   - Full taxonomy control (programs/subjects/topics/lessons/coaches)
+   - JSON package generation
+2. **Coach Studio** (`/panels/coach`)
+   - Coach profile draft + lesson proposal draft
+3. **Editor Review Desk** (`/panels/editor`)
+   - Proposal review/notes/status drafting
+4. **Publisher Console** (`/panels/publisher`)
+   - Release packaging checklist and publication draft
+
+### Why 4 panels?
+- Admin should not be the only bottleneck.
+- Coach submission, editorial QA, and release operations are different responsibilities.
+- This separation scales better for teams and reduces accidental production edits.
+
+### Role assignment
+Panel access is determined by signed-in email and these environment variables:
+
+- `NEXT_PUBLIC_PANEL_ADMINS`
+- `NEXT_PUBLIC_PANEL_COACHES`
+- `NEXT_PUBLIC_PANEL_EDITORS`
+- `NEXT_PUBLIC_PANEL_PUBLISHERS`
+
+Each variable is a comma-separated email list.
+Admins automatically inherit editor + publisher access.
 
 ---
 

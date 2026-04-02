@@ -4652,6 +4652,41 @@ i[class*="ri-"] {
 .nav__user-menu__item--danger:hover { background: var(--danger-bg); }
 .nav__user-menu__item--danger i { color: var(--danger); }
 .nav__user-menu__item--theme { display: flex; justify-content: space-between; }
+
+/* =============================================
+   PANEL SYSTEM
+   ============================================= */
+.panel-hub { padding: 36px 0 52px; }
+.panel-hub__title { margin: 0 0 6px; font-family: var(--font-serif); font-size: clamp(1.5rem, 3.5vw, 2rem); color: var(--text); }
+.panel-hub__sub { margin: 0 0 18px; color: var(--text-2); max-width: 720px; }
+.panel-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.panel-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; background: var(--bg-2); text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.panel-card:hover { transform: translateY(-2px); border-color: var(--accent-2); }
+.panel-card__icon {
+  width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); flex-shrink: 0;
+}
+.panel-card__title { margin: 1px 0 4px; color: var(--text); font-size: .99rem; font-weight: 700; }
+.panel-card__body { margin: 0; color: var(--text-2); font-size: .9rem; line-height: 1.4; }
+.panel-gate {
+  border: 1px dashed var(--border); border-radius: 12px; padding: 14px;
+  background: var(--bg-2); color: var(--text-2); display: grid; gap: 8px; max-width: 620px;
+}
+.panel-page { padding: 30px 0 52px; display: grid; gap: 14px; }
+.panel-page__title { margin: 0; font-family: var(--font-serif); color: var(--text); font-size: clamp(1.4rem, 3.4vw, 1.9rem); }
+.panel-form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.panel-card-block {
+  border: 1px solid var(--border); border-radius: 12px; background: var(--bg-2);
+  padding: 14px; display: grid; gap: 8px;
+}
+.panel-card-block h2 { margin: 0 0 4px; color: var(--text); font-size: 1rem; }
+.panel-checks { display: grid; gap: 6px; margin-top: 4px; }
+.panel-check-row { display: flex; gap: 8px; align-items: center; color: var(--text-2); font-size: .92rem; text-transform: capitalize; }
 .nav__user-menu__theme-badge {
   font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.06em;
   color: var(--text-3); background: var(--bg-4); border: 1px solid var(--border);

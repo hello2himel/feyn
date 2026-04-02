@@ -1,6 +1,8 @@
 import Head from 'next/head'
 import IconPicker from '../components/IconPicker'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useAuth, Nav, Footer } from '../components/Layout'
+import { getPanelRoles } from '../lib/panelAccess'
 
 // ── Localhost-only guard ──────────────────────────────────────────────
 // This page renders nothing on any deployed URL.
@@ -19,25 +21,6 @@ function emptyTopic()    { return { id:'', name:'', description:'', coachIds:[],
 function emptyLesson()   { return { id:'', title:'', videoId:'', duration:'', description:'', source:{ name:'', instructor:'', url:'' }, materials:[] } }
 function emptyCoach()    { return { id:'', name:'', title:'', bio:'', avatar:null, signature:null, socials:{ youtube:'', website:'' } } }
 function emptyMaterial() { return { id: uid(), label:'', url:'', type:'pdf' } }
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
-function isLocalHost(host = '') {
-  const normalizedHost = (host || '').toLowerCase()
-  if (!normalizedHost) return false
-  if (normalizedHost.includes(':') && !normalizedHost.includes('.')) {
-    return LOCAL_HOSTS.has(normalizedHost) || normalizedHost.startsWith('fe80:')
-  }
-  if (normalizedHost.includes(':')) return false
-  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(normalizedHost) && !LOCAL_HOSTS.has(normalizedHost)) return false
-  if (LOCAL_HOSTS.has(normalizedHost)) return true
-  if (normalizedHost.startsWith('192.168.')) return true
-  if (normalizedHost.startsWith('10.')) return true
-  const rawOctets = normalizedHost.split('.')
-  const octets = rawOctets.map(o => /^\d+$/.test(o) ? Number(o) : NaN)
-  if (octets.length === 4 && octets.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
-    return octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31
-  }
-  return false
-}
 
 // ── Code generator ────────────────────────────────────────────────────
 function generateJS(coaches, programs) {
@@ -122,7 +105,8 @@ export default data
 
 // ── Main ──────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [isLocal, setIsLocal]   = useState(false)
+  const { signedIn, user, setShowAuth, mounted } = useAuth()
+  const roles = useMemo(() => getPanelRoles(user), [user])
   const [checking, setChecking] = useState(true)
 
   const [coaches, setCoaches]   = useState([])
@@ -143,27 +127,41 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('content') // 'content' | 'output'
 
   useEffect(() => {
-    const h = window.location.hostname
-    if (isLocalHost(h)) {
-      setIsLocal(true)
-      let saved = null
-      try { saved = localStorage.getItem('ff_admin_data') } catch {}
-      if (saved) {
-        try { const d = JSON.parse(saved); setCoaches(d.coaches||[]); setPrograms(d.programs||[]) } catch {}
-      }
+    let saved = null
+    try { saved = localStorage.getItem('ff_admin_data') } catch {}
+    if (saved) {
+      try { const d = JSON.parse(saved); setCoaches(d.coaches||[]); setPrograms(d.programs||[]) } catch {}
     }
     setChecking(false)
   }, [])
 
   useEffect(() => {
-    if (!isLocal) return
     try {
       localStorage.setItem('ff_admin_data', JSON.stringify({ coaches, programs }))
     } catch {}
-  }, [coaches, programs, isLocal])
+  }, [coaches, programs])
 
-  if (checking) return null
-  if (!isLocal) return <div style={{ display:'none' }} />
+  if (!mounted || checking) return null
+  if (!signedIn) {
+    return (
+      <>
+        <Head><title>Admin · Feyn</title></Head>
+        <Nav />
+        <main><div className="container"><div className="panel-gate" style={{ marginTop: 24 }}><p>Sign in to access Admin Content Studio.</p><button className="btn btn--accent" onClick={() => setShowAuth(true)}><i className="ri-user-line" /> Sign in</button></div></div></main>
+        <Footer />
+      </>
+    )
+  }
+  if (!roles.admin) {
+    return (
+      <>
+        <Head><title>Admin · Feyn</title></Head>
+        <Nav />
+        <main><div className="container"><div className="panel-gate" style={{ marginTop: 24 }}><p>Access denied: admin role required.</p></div></div></main>
+        <Footer />
+      </>
+    )
+  }
 
   // ── Derived ──
   const selProgram = selP !== null ? programs[selP] : null
@@ -248,7 +246,7 @@ export default function AdminPage() {
 
         {/* Header */}
         <div style={s.header}>
-          <span style={s.logo}>Feyn, Admin <span style={{fontSize:11,color:'#5c5852',fontStyle:'normal'}}>localhost only</span></span>
+          <span style={s.logo}>Feyn, Admin <span style={{fontSize:11,color:'#5c5852',fontStyle:'normal'}}>role: admin</span></span>
           <div style={{display:'flex',gap:10,alignItems:'center'}}>
             <a href="/" target="_blank" style={s.btnGhost}>↗ View Site</a>
             <div style={{display:'flex',borderRadius:3,overflow:'hidden',border:'1px solid #2a2a2a'}}>
@@ -569,11 +567,4 @@ const s = {
   input: { display:'block', width:'100%', background:'#0d0d0d', border:'1px solid #2a2a2a', color:'#e8e3d8', padding:'7px 10px', fontSize:13, borderRadius:2, outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btnAccent: { background:'#1a1308', border:'1px solid #8b6f3e', color:'#c8a96e', padding:'7px 18px', cursor:'pointer', fontSize:13, borderRadius:2, fontFamily:'inherit' },
   btnGhost:  { background:'none', border:'1px solid #2a2a2a', color:'#9a9488', padding:'7px 18px', cursor:'pointer', fontSize:13, borderRadius:2, fontFamily:'inherit' },
-}
-
-export async function getServerSideProps(ctx) {
-  const hostHeader = ctx.req.headers.host || ''
-  const hostname = hostHeader.split(':')[0]
-  if (!isLocalHost(hostname)) return { notFound: true }
-  return { props: {} }
 }
