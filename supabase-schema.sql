@@ -36,6 +36,9 @@ create table public.profiles (
   updated_at  timestamptz default now()
 );
 
+create unique index if not exists profiles_username_norm_uq
+  on public.profiles ((lower(trim(username))));
+
 alter table public.profiles enable row level security;
 
 -- Own row: authenticated users can read their own full profile.
@@ -254,7 +257,7 @@ as $$
   select exists(
     select 1
     from public.profiles p
-    where p.username = lower(trim(candidate_username))
+    where lower(p.username) = lower(trim(candidate_username))
   )
 $$;
 
