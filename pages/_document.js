@@ -19,10 +19,12 @@ export default function Document() {
         {/* Inline theme script, runs before paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            var stored = localStorage.getItem('ff_theme');
-            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            var theme = stored || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
+            try {
+              var stored = localStorage.getItem('ff_theme');
+              var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              var theme = stored || (prefersDark ? 'dark' : 'light');
+              document.documentElement.setAttribute('data-theme', theme);
+            } catch (_) {}
           })();
         `}} />
       </Head>
