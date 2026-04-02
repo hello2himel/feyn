@@ -37,9 +37,7 @@ export default function VerifyPage() {
         const sb = getSupabase()
         if (sb) {
           const { data, error } = await sb
-            .from('certificates')
-            .select('id, program_name, subject_name, user_name, issued_at')
-            .eq('id', certId)
+            .rpc('get_certificate_public', { cert_id: certId })
             .maybeSingle()
 
           if (!error && data) {

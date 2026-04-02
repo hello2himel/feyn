@@ -16,9 +16,12 @@
 drop table if exists public.user_preferences  cascade;
 drop table if exists public.certificates      cascade;
 drop table if exists public.watch_positions   cascade;
+drop table if exists public.lesson_attempts   cascade;
 drop table if exists public.lesson_progress   cascade;
 drop table if exists public.enrollments       cascade;
 drop table if exists public.profiles          cascade;
+drop function if exists public.is_username_taken(text) cascade;
+drop function if exists public.get_certificate_public(text) cascade;
 
 
 -- ============================================================
@@ -38,11 +41,6 @@ alter table public.profiles enable row level security;
 -- Own row: authenticated users can read their own full profile.
 create policy "profiles_select_own" on public.profiles
   for select using (auth.uid() = id);
-
--- Public username check: allows unauthenticated sign-up flow to verify
--- if a username is already taken (only id is queried, no PII exposed).
-create policy "profiles_select_username_check" on public.profiles
-  for select using (true);
 
 create policy "profiles_insert" on public.profiles
   for insert with check (auth.uid() = id);
@@ -186,15 +184,34 @@ alter table public.certificates enable row level security;
 create policy "certificates_select_owner" on public.certificates
   for select using (auth.uid() = user_id);
 
-create policy "certificates_select_public" on public.certificates
-  for select using (true);
-
 create policy "certificates_insert" on public.certificates
   for insert with check (auth.uid() = user_id);
 
 create policy "certificates_update" on public.certificates
   for update using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Public certificate lookup (limited fields only, no user_id exposure)
+create or replace function public.get_certificate_public(cert_id text)
+returns table (
+  id text,
+  program_name text,
+  subject_name text,
+  user_name text,
+  issued_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select c.id, c.program_name, c.subject_name, c.user_name, c.issued_at
+  from public.certificates c
+  where c.id = cert_id
+  limit 1
+$$;
+
+grant execute on function public.get_certificate_public(text) to anon, authenticated;
 
 
 -- ============================================================
@@ -225,6 +242,23 @@ create policy "user_preferences_update" on public.user_preferences
 
 create policy "user_preferences_delete" on public.user_preferences
   for delete using (auth.uid() = user_id);
+
+-- Public username availability check (returns boolean only)
+create or replace function public.is_username_taken(candidate_username text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists(
+    select 1
+    from public.profiles p
+    where p.username = lower(trim(candidate_username))
+  )
+$$;
+
+grant execute on function public.is_username_taken(text) to anon, authenticated;
 
 
 -- ============================================================
