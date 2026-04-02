@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import dynamic from 'next/dynamic'
 const SearchPalette = dynamic(() => import('./SearchPalette'), { ssr: false })
 import { isSignedIn, getProfile, signOut } from '../lib/userStore'
+import { hasAnyPanelAccess } from '../lib/panelAccess'
 
 const DONATE_BASE = 'https://hello2himel.netlify.app/donate'
 
@@ -150,6 +151,11 @@ export function Nav() {
                       <Link href="/settings" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
                         <i className="ri-settings-3-line" /> Settings
                       </Link>
+                      {hasAnyPanelAccess(user) && (
+                        <Link href="/panels" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                          <i className="ri-dashboard-line" /> Panels
+                        </Link>
+                      )}
 
                       {/* Theme toggle — lives here, not as a standalone nav button */}
                       <button className="nav__user-menu__item nav__user-menu__item--theme" onClick={toggle}>

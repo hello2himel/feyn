@@ -1,6 +1,8 @@
 import Head from 'next/head'
 import IconPicker from '../components/IconPicker'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useAuth, Nav, Footer } from '../components/Layout'
+import { getPanelRoles } from '../lib/panelAccess'
 
 // ── Localhost-only guard ──────────────────────────────────────────────
 // This page renders nothing on any deployed URL.
@@ -103,7 +105,8 @@ export default data
 
 // ── Main ──────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [isLocal, setIsLocal]   = useState(false)
+  const { signedIn, user, setShowAuth, mounted } = useAuth()
+  const roles = useMemo(() => getPanelRoles(user), [user])
   const [checking, setChecking] = useState(true)
 
   const [coaches, setCoaches]   = useState([])
@@ -124,24 +127,41 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('content') // 'content' | 'output'
 
   useEffect(() => {
-    const h = window.location.hostname
-    if (h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.')) {
-      setIsLocal(true)
-      const saved = localStorage.getItem('ff_admin_data')
-      if (saved) {
-        try { const d = JSON.parse(saved); setCoaches(d.coaches||[]); setPrograms(d.programs||[]) } catch {}
-      }
+    let saved = null
+    try { saved = localStorage.getItem('ff_admin_data') } catch {}
+    if (saved) {
+      try { const d = JSON.parse(saved); setCoaches(d.coaches||[]); setPrograms(d.programs||[]) } catch {}
     }
     setChecking(false)
   }, [])
 
   useEffect(() => {
-    if (!isLocal) return
-    localStorage.setItem('ff_admin_data', JSON.stringify({ coaches, programs }))
-  }, [coaches, programs, isLocal])
+    try {
+      localStorage.setItem('ff_admin_data', JSON.stringify({ coaches, programs }))
+    } catch {}
+  }, [coaches, programs])
 
-  if (checking) return null
-  if (!isLocal) return <div style={{ display:'none' }} />
+  if (!mounted || checking) return null
+  if (!signedIn) {
+    return (
+      <>
+        <Head><title>Admin · Feyn</title></Head>
+        <Nav />
+        <main><div className="container"><div className="panel-gate" style={{ marginTop: 24 }}><p>Sign in to access Admin Content Studio.</p><button className="btn btn--accent" onClick={() => setShowAuth(true)}><i className="ri-user-line" /> Sign in</button></div></div></main>
+        <Footer />
+      </>
+    )
+  }
+  if (!roles.admin) {
+    return (
+      <>
+        <Head><title>Admin · Feyn</title></Head>
+        <Nav />
+        <main><div className="container"><div className="panel-gate" style={{ marginTop: 24 }}><p>Access denied: admin role required.</p></div></div></main>
+        <Footer />
+      </>
+    )
+  }
 
   // ── Derived ──
   const selProgram = selP !== null ? programs[selP] : null
@@ -226,7 +246,7 @@ export default function AdminPage() {
 
         {/* Header */}
         <div style={s.header}>
-          <span style={s.logo}>Feyn, Admin <span style={{fontSize:11,color:'#5c5852',fontStyle:'normal'}}>localhost only</span></span>
+          <span style={s.logo}>Feyn, Admin <span style={{fontSize:11,color:'#5c5852',fontStyle:'normal'}}>role: admin</span></span>
           <div style={{display:'flex',gap:10,alignItems:'center'}}>
             <a href="/" target="_blank" style={s.btnGhost}>↗ View Site</a>
             <div style={{display:'flex',borderRadius:3,overflow:'hidden',border:'1px solid #2a2a2a'}}>
