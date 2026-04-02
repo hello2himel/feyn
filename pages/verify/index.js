@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import { Nav, Footer } from '../../components/Layout'
 import { getSupabase } from '../../lib/supabase'
 
-const CERT_ID_PATTERN = /^FEYN-[A-Z0-9-]{8,64}$/
+const CERT_ID_SUFFIX_LENGTH = 16
+const CERT_ID_PATTERN = new RegExp(`^FEYN-[A-Z0-9]{${CERT_ID_SUFFIX_LENGTH}}$`)
 function normalizeCertId(raw) {
   if (Array.isArray(raw)) return normalizeCertId(raw[0] || '')
   if (!raw || typeof raw !== 'string') return null

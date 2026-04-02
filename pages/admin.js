@@ -21,7 +21,22 @@ function emptyCoach()    { return { id:'', name:'', title:'', bio:'', avatar:nul
 function emptyMaterial() { return { id: uid(), label:'', url:'', type:'pdf' } }
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
 function isLocalHost(host = '') {
-  return LOCAL_HOSTS.has(host) || host.startsWith('192.168.')
+  const normalizedHost = (host || '').toLowerCase()
+  if (!normalizedHost) return false
+  if (normalizedHost.includes(':') && !normalizedHost.includes('.')) {
+    return LOCAL_HOSTS.has(normalizedHost) || normalizedHost.startsWith('fe80:')
+  }
+  if (normalizedHost.includes(':')) return false
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(normalizedHost) && !LOCAL_HOSTS.has(normalizedHost)) return false
+  if (LOCAL_HOSTS.has(normalizedHost)) return true
+  if (normalizedHost.startsWith('192.168.')) return true
+  if (normalizedHost.startsWith('10.')) return true
+  const rawOctets = normalizedHost.split('.')
+  const octets = rawOctets.map(o => /^\d+$/.test(o) ? Number(o) : NaN)
+  if (octets.length === 4 && octets.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
+    return octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31
+  }
+  return false
 }
 
 // ── Code generator ────────────────────────────────────────────────────
