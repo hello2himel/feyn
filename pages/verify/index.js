@@ -5,13 +5,21 @@ import { useEffect, useState } from 'react'
 import { Nav, Footer } from '../../components/Layout'
 import { getSupabase } from '../../lib/supabase'
 
+const CERT_ID_PATTERN = /^FEYN-[A-Z0-9-]{8,64}$/
+function normalizeCertId(raw) {
+  if (Array.isArray(raw)) return normalizeCertId(raw[0] || '')
+  if (!raw || typeof raw !== 'string') return null
+  const candidate = raw.trim().toUpperCase()
+  return CERT_ID_PATTERN.test(candidate) ? candidate : null
+}
+
 // ── States: loading | valid | invalid | error
 export default function VerifyPage() {
   const { query, isReady } = useRouter()
 
   // /verify/FEYN-xxx   → Netlify rewrites to /verify/?id=FEYN-xxx
   // /verify?id=FEYN-xxx (direct)
-  const certId = query.id || query.certId
+  const certId = normalizeCertId(query.id || query.certId)
 
   const [state, setState] = useState('loading')
   const [cert,  setCert]  = useState(null)
