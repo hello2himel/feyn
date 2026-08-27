@@ -694,7 +694,7 @@ language sql immutable as $$
     'admin','api','settings','profile','about','contact','coaches','panels',
     'verify','terms','privacy','login','signin','signup','signout','logout',
     'm','p','www','support','help','feyn','studio','apply','register',
-    'dashboard','docs','static','_next','public','null','undefined'
+    'dashboard','docs','static','_next','public','null','undefined','teach'
   ])
 $$;
 

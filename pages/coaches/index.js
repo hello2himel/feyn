@@ -8,7 +8,7 @@
 
 import Head from 'next/head'
 import Link from 'next/link'
-import { Nav, Footer } from '../../components/Layout'
+import { Nav, Footer, TeachCallout } from '../../components/Layout'
 import { getMentors, getMentorCourses, getTotalLessons } from '../../data/courseHelpers'
 
 export default function MentorDirectory({ mentors }) {
@@ -53,6 +53,10 @@ export default function MentorDirectory({ mentors }) {
               </div>
             ))}
           </div>
+
+          {/* Directory is where people come to see who teaches here —
+              also the most natural place to ask them to join. */}
+          <TeachCallout compact />
         </div>
       </main>
       <Footer />

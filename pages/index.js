@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { getCoachesFor, getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
 import { useCatalog } from '../lib/catalog'
-import { Nav, Footer, DonateStrip, YTThumb, ProgressBar, useAuth } from '../components/Layout'
+import { Nav, Footer, DonateStrip, TeachCallout, YTThumb, ProgressBar, useAuth } from '../components/Layout'
 import { getEnrolled, getSubjectProgress, getLastActivity } from '../lib/userStore'
 
 // The progress key is 4 segments (no skill), so the skill slug and the
@@ -177,6 +177,9 @@ export default function Home() {
                   <a href="#courses" className="btn btn--ghost landing-btn">
                     <i className="ri-play-circle-line" /> Browse courses
                   </a>
+                  <Link href="/teach" className="btn btn--ghost landing-btn">
+                    <i className="ri-quill-pen-line" /> Teach on Feyn
+                  </Link>
                 </div>
               </div>
               <div className="landing-pills">
@@ -208,6 +211,10 @@ export default function Home() {
                     <i className="ri-user-add-line" /> Join the community
                   </button>
                 )}
+                <p className="landing-sidebar__text" style={{ marginTop:20, marginBottom:0 }}>
+                  Can you explain something well? <Link href="/teach" style={{ color:'var(--accent)' }}>Teach on Feyn</Link> —
+                  as yourself or as a school.
+                </p>
               </aside>
               <div className="landing-courses">
                 <p className="section-label" style={{ marginBottom:18 }}><i className="ri-stack-line" style={{ marginRight:6 }} />Courses</p>
@@ -323,6 +330,7 @@ export default function Home() {
               </section>
             )}
 
+            <TeachCallout />
             <DonateStrip />
           </div>
         )}
