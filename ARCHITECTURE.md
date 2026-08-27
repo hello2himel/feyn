@@ -178,6 +178,10 @@ Mapping in the query layer rather than renaming fields across every component ke
 
 **Rendering.** All five content routes use ISR: `revalidate: 60` plus `fallback: 'blocking'`. An edit appears within a minute with no redeploy; a URL that did not exist at build time is rendered on first request and cached. This is the reason for moving off `fallback: false`.
 
+**Publishing.** A course going live is a `status` flip on the `subjects` row, but it is not a free one. [`lib/courseReadiness.js`](lib/courseReadiness.js) turns "is this shippable" into an explicit checklist the builder shows while you work: five **blocking** checks (name, description, program, at least one lesson, at least one *published* lesson) and four quality nudges (every lesson has a video, every lesson asks a question, no empty groups, an icon). The Publish button is disabled until the blocking set passes, so an empty course cannot reach the public site — the old editor exposed `status` as a bare dropdown and the only feedback was a broken live page.
+
+Per-lesson `status` matters independently: a draft lesson stays hidden even when its course is live, which is why "at least one published lesson" is its own check rather than being implied by "has lessons".
+
 Build-time reads use the **anon key with RLS on**, so a draft course cannot leak into a cached page even by mistake. Dashboards are client-fetched and never statically generated — they are behind auth and always need fresh data.
 
 Netlify needs `@netlify/plugin-nextjs` for any of this to work; without it the output is served as static files and every regenerating route 404s.
@@ -202,8 +206,9 @@ Netlify needs `@netlify/plugin-nextjs` for any of this to work; without it the o
 | `pages/api/rpc/[fn].js` | Allowlisted RPC gateway. Runs as the caller, never the service role. |
 | `pages/apply/*` | Mentor application, platform registration. |
 | `pages/m/[username].js`, `pages/p/[slug]/` | Public profiles and publisher pages. |
-| `pages/studio/` | Mentor studio: memberships, invitations, handle settings. |
-| `pages/panels/` | Course editor and credits/publishing. |
+| `pages/studio/` | Creator surface: course list, guided course creation (`new.js`), and the course builder (`course/[id].js`) with its publish checklist. |
+| `lib/courseReadiness.js` | The publish gate: which checks a course must pass before its status may become `published`. |
+| `pages/panels/` | Course credits (`publisher.js`). `index.js` and `editor.js` are redirects to `/studio` kept for old links. |
 | `pages/admin.js` | App-admin queues and global override. |
 
 Mutations go through `/api/rpc/[fn]`, an **allowlist** — adding a function to the schema never accidentally publishes an endpoint. It runs with the caller's bearer token, so RLS and every internal `auth.uid()` check still apply. It is a gateway, not a bypass. Direct table writes are used where an RLS policy already governs the column: course content, `join_policy`.

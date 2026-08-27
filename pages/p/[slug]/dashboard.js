@@ -188,7 +188,7 @@ export default function PublisherDashboard() {
                 <span className="course-row__meta">{s.programs?.name} · {s.status}</span>
               </div>
               {canEditSubject(perms, s) && (
-                <Link href={`/panels/editor?subject=${s.id}`} className="btn btn--ghost btn--sm">
+                <Link href={`/studio/course/${s.id}`} className="btn btn--ghost btn--sm">
                   <i className="ri-edit-line" /> Edit
                 </Link>
               )}
@@ -197,7 +197,7 @@ export default function PublisherDashboard() {
         </div>
         {canCreateSubject(perms, publisher.id) && (
           <p style={{ marginTop: 14 }}>
-            <Link href={`/panels/editor?publisher=${publisher.id}`} className="btn btn--accent btn--sm">
+            <Link href="/studio/new" className="btn btn--accent btn--sm">
               <i className="ri-add-line" /> New course
             </Link>
           </p>

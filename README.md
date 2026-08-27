@@ -64,7 +64,7 @@ Then:
    select id from auth.users where email = 'you@example.com';
    ```
 
-4. Sign up in your app, apply as a mentor at `/apply/mentor`, approve yourself at `/admin`, and create your first course from `/studio`.
+4. Sign up in your app, apply as a mentor at `/apply/mentor` (or start from `/teach`), approve yourself at `/admin`, and create your first course from `/studio`.
 
 The full walkthrough — including Netlify deployment and auth redirect URLs — is in **[docs/self-hosting.md](docs/self-hosting.md)**.
 
