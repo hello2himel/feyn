@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import data from '../data/index.js'
-import { getProgram, getCoachesFor, getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
+import { getProgram, getCoachesFor, getTotalLessons, getTopicCount, getSubjectFirstVideo, getAllProgramPaths } from '../data/courseHelpers'
 import { Nav, Footer, YTThumb, CoachChip, ProgressBar } from '../components/Layout'
 import { isEnrolled, getSubjectProgress } from '../lib/userStore'
 
@@ -27,7 +26,7 @@ export default function ProgramPage({ program }) {
 
   const liveSubjects  = program.subjects.filter(s => !s.comingSoon)
   const totalLessons  = liveSubjects.reduce((a, s) => a + getTotalLessons(s), 0)
-  const totalTopics   = liveSubjects.reduce((a, s) => a + s.topics.length, 0)
+  const totalTopics   = liveSubjects.reduce((a, s) => a + getTopicCount(s), 0)
 
   return (
     <>
@@ -56,7 +55,7 @@ export default function ProgramPage({ program }) {
             <p className="section-label"><i className="ri-stack-line" style={{marginRight:6}}/>Subjects</p>
             <div className="program-subject-grid">
               {program.subjects.map(subject => {
-                const coaches  = getCoachesFor(subject.coachIds || [])
+                const coaches  = getCoachesFor(subject)
                 const firstVid = getSubjectFirstVideo(subject)
                 const total    = getTotalLessons(subject)
                 const info     = progressMap[subject.id] || {}
@@ -94,7 +93,7 @@ export default function ProgramPage({ program }) {
                           </span>
                         ) : (
                           <span className="program-subject-card__meta">
-                            <i className="ri-folder-line" /> {subject.topics.length} topics &nbsp;·&nbsp;
+                            <i className="ri-folder-line" /> {getTopicCount(subject)} topics &nbsp;·&nbsp;
                             <i className="ri-play-line" /> {total} lessons
                           </span>
                         )}
@@ -116,12 +115,17 @@ export default function ProgramPage({ program }) {
   )
 }
 
+// ── ISR (spec §6) ─────────────────────────────────────────────────────
+// fallback:'blocking' so a program added after the last deploy renders
+// on first request instead of 404ing; revalidate keeps it fresh
+// afterwards without a redeploy.
 export async function getStaticPaths() {
-  return { paths: data.programs.map(p => ({ params: { programId: p.id } })), fallback: false }
+  const paths = (await getAllProgramPaths()).map(params => ({ params }))
+  return { paths, fallback: 'blocking' }
 }
 
 export async function getStaticProps({ params }) {
-  const program = getProgram(params.programId)
-  if (!program) return { notFound: true }
-  return { props: { program } }
+  const program = await getProgram(params.programId)
+  if (!program) return { notFound: true, revalidate: 60 }
+  return { props: { program }, revalidate: 60 }
 }

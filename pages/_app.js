@@ -3,9 +3,9 @@ import '../styles/qa.css'
 import { AuthProvider, useAuth } from '../components/Layout'
 import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import data from '../data/index.js'
 import { getSupabase, setCurrentToken } from '../lib/supabase'
 import { attachAuthListener } from '../lib/userStore'
+import { useCatalog } from '../lib/catalog'
 
 const AuthFlow = dynamic(() => import('../components/AuthFlow'), { ssr: false })
 
@@ -50,6 +50,9 @@ if (typeof window !== 'undefined') {
 
 function AppInner({ Component, pageProps }) {
   const { showAuth, setShowAuth, refresh, mounted } = useAuth()
+  // AuthFlow's onboarding step needs the course catalogue. It is fetched
+  // lazily rather than imported, since the modal is code-split anyway.
+  const { programs } = useCatalog()
 
   function handleAuthComplete() {
     setShowAuth(false)
@@ -82,7 +85,7 @@ function AppInner({ Component, pageProps }) {
       <Component {...pageProps} />
       {mounted && showAuth && (
         <AuthFlow
-          programs={data.programs}
+          programs={programs}
           onComplete={handleAuthComplete}
           initialMode="auth"
         />

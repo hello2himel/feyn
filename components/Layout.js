@@ -3,7 +3,8 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import dynamic from 'next/dynamic'
 const SearchPalette = dynamic(() => import('./SearchPalette'), { ssr: false })
 import { isSignedIn, getProfile, signOut } from '../lib/userStore'
-import { hasAnyPanelAccess } from '../lib/panelAccess'
+import { usePermissions } from '../lib/usePermissions'
+import { hasStudioAccess } from '../lib/permissions'
 
 const DONATE_BASE = 'https://hello2himel.netlify.app/donate'
 
@@ -78,6 +79,8 @@ export function FeynLogo({ className = '' }) {
 export function Nav() {
   const { theme, toggle } = useTheme()
   const { user, signedIn, setShowAuth, refresh, mounted } = useAuth()
+  // Studio/admin links come from real DB permissions, cached per session.
+  const { perms } = usePermissions()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen]     = useState(false)
 
@@ -151,9 +154,16 @@ export function Nav() {
                       <Link href="/settings" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
                         <i className="ri-settings-3-line" /> Settings
                       </Link>
-                      {hasAnyPanelAccess(user) && (
-                        <Link href="/panels" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                          <i className="ri-dashboard-line" /> Panels
+                      {/* Studio link appears from real memberships, not an
+                          env-var email list — see lib/permissions.js. */}
+                      {hasStudioAccess(perms) && (
+                        <Link href="/studio" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                          <i className="ri-dashboard-line" /> My studio
+                        </Link>
+                      )}
+                      {perms.isAppAdmin && (
+                        <Link href="/admin" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                          <i className="ri-shield-user-line" /> Admin console
                         </Link>
                       )}
 
@@ -321,7 +331,7 @@ export function DonateStrip() {
 // ── CoachChip ──────────────────────────────────────────────────────────
 export function CoachChip({ coach }) {
   return (
-    <Link href={`/coaches/${coach.id}`} className="coach-chip">
+    <Link href={`/m/${coach.id}`} className="coach-chip">
       <span className="coach-chip__avatar" aria-label={coach.name}>
         {coach.avatar ? <img src={coach.avatar} alt={coach.name} /> : <span aria-hidden="true">{coach.name[0]}</span>}
       </span>

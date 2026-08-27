@@ -1,10 +1,19 @@
 [build]
   command = "npm run build"
-  publish = ".next"
+
+# The Next.js runtime plugin owns the publish directory and wires up
+# ISR, API routes and on-demand rendering. Without it Netlify would
+# serve `.next` as static files, and every `revalidate` / `fallback:
+# 'blocking'` route in this app would 404 after the first deploy.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # NEXT_PUBLIC_ vars are intentionally bundled into the client — that's the whole
 # point of the prefix. Netlify's secrets scanner doesn't know this, so we tell it
 # to skip them explicitly.
+#
+# SUPABASE_SERVICE_ROLE_KEY is deliberately NOT listed here: it must never
+# reach the client bundle, so the scanner should keep watching for it.
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_SUPABASE_ANON_KEY"
 

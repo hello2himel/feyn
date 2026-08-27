@@ -1,233 +1,141 @@
 # Feyn
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-c8a96e.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000.svg)](https://nextjs.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ecf8e.svg)](https://supabase.com)
+
 > *"If you can't explain it simply, you don't understand it well enough."* — Richard Feynman
 
-**Feyn** is a free, video-first learning platform built on the Feynman principle: watch a lesson that builds an idea from scratch, then answer questions that test whether you genuinely understood it — not just whether you watched. No memorisation. No skipped steps. No fluff.
+**Feyn** is a free, video-first learning platform built on the Feynman principle: watch a lesson that builds an idea from scratch, then answer questions that test whether you genuinely understood it — not just whether you watched.
 
-Feyn is the educational platform of **STΛRGZR**, a community for students who believe learning should be driven by curiosity, not compliance. It grew out of *Feynman Files*, a peer-teaching series where students explained things the way they wished someone had explained them — the human way, not the textbook way.
+It is also **multi-tenant**. Course content is owned by Publishers — either an organisation or an independent mentor's own space — and mentors can teach under several Publishers at once with a different role in each. Anyone can fork this repository and run their own instance.
 
----
-
-## What Feyn Is
-
-- **Video-first, understanding-first.** Every lesson starts from zero, assumes nothing, and earns your understanding before moving on.
-- **Questions after every video.** Each lesson ends with questions that test real comprehension, not recall.
-- **Completely free.** No paywalls, no ads, no hidden costs. Ever.
-- **Curriculum + curiosity.** Full HSC, SSC and JSC coverage, plus interest courses in astronomy, programming, philosophy, mathematics and more.
-- **Certificates.** Earn a verifiable PDF certificate (with QR code and coach signature) upon completing a subject.
+Feyn is the educational platform of **STΛRGZR**, a community for students who believe learning should be driven by curiosity, not compliance.
 
 ---
 
-## Features
+## What it does
 
-| Feature | Details |
-|---|---|
-| **Lesson engine** | Video player with comprehension questions after each lesson |
-| **Progress tracking** | Per-lesson "mark as watched", progress bars on all subject and topic pages |
-| **Enrollment** | Enroll in any subject; your feed shows only your courses |
-| **Continue watching** | Home screen resumes from your last-watched lesson |
-| **Certificates** | Auto-issued PDF (A4, dark-styled) at 100% subject completion |
-| **Certificate verification** | Public `/verify/:certId` page with QR code |
-| **Coach pages** | `/coaches/[id]` — bio, socials, full course listing |
-| **Profile page** | `/profile` — username, enrolled courses, progress overview |
-| **Admin panel** | `/admin` — GUI to build the full content tree, exports `data/` files |
-| **Role-based panels** | `/panels` — separate workflows for Admin, Coach, Editor, Publisher |
-| **Search palette** | Global keyboard-driven course and lesson search |
-| **Dark / light theme** | User-selectable in Settings |
-| **Donate prompts** | Subtle strips every 3rd lesson, topic pages and footer |
+**For learners**
 
----
+- Video lessons with comprehension questions after each one — five question types: multiple choice, fill-in, tap-all-correct, explain, and match
+- Enrollment, per-lesson progress, resume-where-you-left-off
+- Verifiable PDF certificates at 100% course completion, with a QR code and the mentor's signature
+- Public certificate verification at `/verify`
+- Keyboard-driven search (⌘K), dark and light themes
+- Completely free. No paywalls, no ads.
 
-## Content Catalogue
+**For mentors and publishers**
 
-| Program | Type | Subjects |
-|---|---|---|
-| **HSC** | Academic | Physics, Chemistry, Mathematics, Biology |
-| **SSC** | Academic | *(in preparation)* |
-| **JSC** | Academic | *(in preparation)* |
-| **Interests** | Curiosity | Astronomy, Mathematics, Philosophy, Programming |
+- Apply as a mentor at `/apply/mentor` — approval creates your own publishing space automatically
+- Register an organisation at `/apply/platform` — you become its first admin
+- Public profile at `/m/{username}` listing every course you teach, across every publisher
+- Public publisher page at `/p/{slug}` with branding, members and courses
+- A course editor that writes straight to the database — topics, skills, lessons, questions
+- Google-Drive-style join policies: open, approval-required, or invite-only
+- Handle changes keep old links alive with 301 redirects
 
-Content lives entirely in `data/` — no CMS, no database round-trips at read time.
+**For operators**
+
+- Approval queues for mentor applications and platform registrations
+- Global override into any publisher without needing a membership row
+- 53 row-level-security policies, verified by 173 automated assertions against a real Postgres
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 14](https://nextjs.org/) (React 18) |
-| Hosting | [Netlify](https://netlify.com) (SSR mode) |
-| Auth & DB | [Supabase](https://supabase.com) — email OTP, Postgres, RLS |
-| PDF generation | [jsPDF](https://github.com/parallax/jsPDF) |
-| QR codes | [qrcode](https://github.com/soldair/node-qrcode) |
-| Icons | [Remix Icon](https://remixicon.com/) (CDN) |
-| Styling | Plain CSS custom properties — no CSS framework |
-
----
-
-## Data Hierarchy
-
-All content is structured as a five-level tree:
-
-```
-Program  (e.g. HSC, Interests)
-  └── Subject  (e.g. Physics)          certificate: true/false, coachIds: [...]
-        └── Topic  (e.g. Mechanics)    coachIds: [...], primarySource: {...}
-              └── Skill  (e.g. Kinematics)   tier, prerequisiteIds: [...]
-                    └── Lesson               videoId, duration, title, intro,
-                                             source: {...}, questions: [...]
-```
-
-### Video Attribution — Three Roles
-
-Feyn cleanly separates three distinct roles:
-
-| Field | What it represents | Where used |
-|---|---|---|
-| `subject.coachIds` / `topic.coachIds` | Feyn's curating instructors | Coach profile pages, certificates |
-| `lesson.source.name` | Platform that produced the video (e.g. OnnoRokom Pathshala) | Attribution badge on lesson page |
-| `lesson.source.instructor` | Person teaching in the video (e.g. Ratul Khan) | Attribution badge on lesson page |
-
-**Coaches** get profile pages at `/coaches/[id]` and sign certificates. **Sources** are display-only attribution — no profile pages, no certificates.
-
----
-
-## URL Structure
-
-```
-/                                                    → Home / feed
-/profile                                             → User profile & progress
-/coaches/[id]                                        → Coach bio and courses
-/[programId]/[subjectId]                             → Subject page
-/[programId]/[subjectId]/[topicId]                   → Topic page
-/[programId]/[subjectId]/[topicId]/[skillId]/[lessonId] → Lesson + video + questions
-/verify/[certId]                                     → Certificate verification
-/admin                                               → Admin content studio
-/panels                                              → Role-based panel hub
-```
-
----
-
-## File Map
-
-```
-feyn/
-├── data/
-│   ├── index.js             ← Data entry point; exports merged program tree
-│   ├── courseHelpers.js     ← Coach lookup, lesson counts, progress helpers
-│   ├── programs/            ← hsc.js, ssc.js, jsc.js, interests.js, feyntest.js
-│   ├── subjects/            ← One file per subject, grouped by program
-│   └── topics/              ← One file per topic, grouped by program/subject
-├── lib/
-│   ├── userStore.js         ← All user state (Supabase-backed, localStorage cache)
-│   ├── certificate.js       ← PDF certificate generator (jsPDF + QR)
-│   ├── supabase.js          ← Supabase client singleton
-│   ├── panelAccess.js       ← Role-based panel access control
-│   └── panelStore.js        ← Panel draft state
-├── components/
-│   ├── Layout.js            ← Nav, Footer, Breadcrumb, CoachChip, ProgressBar, DonateStrip, AuthFlow
-│   ├── LessonEngine.js      ← Video player + question flow
-│   ├── SmartPlayer.js       ← YouTube embed with watch-position tracking
-│   ├── SearchPalette.js     ← Global keyboard search
-│   └── AuthFlow.js          ← Sign-up / sign-in / OTP / onboarding modal
-├── pages/
-│   ├── index.js             ← Home (guest landing + signed-in feed)
-│   ├── profile.js           ← User profile
-│   ├── settings.js          ← Account settings, theme, grade picker
-│   ├── about.js             ← About Feyn / STΛRGZR
-│   ├── admin.js             ← Admin content studio
-│   ├── coaches/[coachId].js ← Coach profile page
-│   ├── panels/              ← coach.js, editor.js, publisher.js
-│   ├── verify/              ← Certificate verification
-│   └── [programId]/
-│       ├── [subjectId].js
-│       └── [subjectId]/
-│           ├── [topicId].js
-│           └── [topicId]/[skillId]/[lessonId].js
-├── styles/globals.css       ← Full design system (CSS custom properties)
-├── supabase-schema.sql      ← Postgres schema + RLS policies
-└── netlify.toml             ← Netlify build config
-```
-
----
-
-## Local Development
+## Quickstart
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/hello2himel/feyn.git
+cd feyn
 npm install
-
-# 2. Copy and fill in environment variables
-cp .env.local.example .env.local
-# Edit .env.local — see below
-
-# 3. Start the dev server
+cp .env.example .env.local     # add your Supabase URL + publishable key
 npm run dev
-# → http://localhost:3000
 ```
 
-### Environment Variables
+Then:
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key_here
+1. Create a free [Supabase](https://database.new) project.
+2. Run [`docs/schema.sql`](docs/schema.sql) in its SQL editor.
+3. Make yourself the first App Admin — one SQL statement, since nobody starts as one:
+
+   ```sql
+   insert into public.app_admins (user_id)
+   select id from auth.users where email = 'you@example.com';
+   ```
+
+4. Sign up in your app, apply as a mentor at `/apply/mentor`, approve yourself at `/admin`, and create your first course from `/studio`.
+
+The full walkthrough — including Netlify deployment and auth redirect URLs — is in **[docs/self-hosting.md](docs/self-hosting.md)**.
+
+The catalogue starts empty. That is deliberate: there is no sample course in the schema because every course needs a real owner.
+
+---
+
+## Deploying
+
+Push to GitHub, import the repository on Netlify, and add the same two environment variables. Build settings come from `netlify.toml`, which enables `@netlify/plugin-nextjs` — required for the incremental static regeneration and API routes this app depends on.
+
+Course pages revalidate every 60 seconds, so published edits appear without a redeploy.
+
+---
+
+## How it fits together
+
+```
+programs → subjects → topics → skills → lessons → questions
+              ↑
+          publishers ← publisher_memberships → mentors
 ```
 
-Get these from **Supabase → Project Settings → API Keys**.  
-Never commit `.env.local` — it is gitignored.
+A **Publisher** owns courses and has members with roles (`admin`, `editor`, `mentor`). A **Mentor** is a person, independent of any membership, who can belong to many Publishers at once. Permissions are computed per request as `isAppAdmin OR membership.role for that publisher_id` — never stored as a flat role.
 
-Optional panel access controls (comma-separated email lists):
+| Actor | Can edit |
+|---|---|
+| App Admin | Everything, everywhere |
+| Publisher `admin` | That publisher's settings, members and all its courses |
+| Publisher `editor` | All courses under that publisher |
+| Publisher `mentor` | Only courses they are credited on |
+| Regular user | Nothing — browse, enroll, track progress |
 
-```env
-NEXT_PUBLIC_PANEL_ADMINS=admin@example.com
-NEXT_PUBLIC_PANEL_COACHES=coach1@example.com,coach2@example.com
-NEXT_PUBLIC_PANEL_EDITORS=editor@example.com
-NEXT_PUBLIC_PANEL_PUBLISHERS=publisher@example.com
+Read **[ARCHITECTURE.md](ARCHITECTURE.md)** for the model in full, with an ERD and a diagram per approval flow.
+
+---
+
+## Tech
+
+Next.js 14 (Pages Router) · React 18 · Supabase (Postgres + Auth) · jsPDF for certificates · plain CSS, no framework · Netlify
+
+## Documentation
+
+| Document | What's in it |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | The Publisher/Mentor model, ERD, permission matrix, approval flows, code layout |
+| [docs/schema.sql](docs/schema.sql) | Canonical schema — the single source of truth |
+| [docs/permissions.md](docs/permissions.md) | All 53 RLS policies in plain English plus SQL |
+| [docs/self-hosting.md](docs/self-hosting.md) | Fork → Supabase → first admin → Netlify |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Local setup, conventions, how to propose a schema change |
+
+## Verifying a change
+
+```bash
+npm run build          # must pass
+npm run pg:start       # throwaway Postgres 18 — no Docker, no sudo
+npm run schema:apply   # → "schema: APPLIED CLEAN"
+npm run test:schema    # → "173 passed, 0 failed"
+npm run pg:stop
 ```
 
-Admins automatically inherit editor and publisher access.
+The schema tests need a real Postgres because they assert on RLS evaluation, `security definer` semantics and trigger side effects. **Never point them at a real Supabase project** — `docs/schema.sql` begins by dropping every Feyn table.
 
----
+## Contributing
 
-## Adding Content
-
-To add a new topic:
-
-1. Create `data/topics/{program}/{subject}/{topic}.js`
-2. Import it in `data/subjects/{program}/{subject}.js`
-3. Done — it flows up the tree automatically.
-
-To add a new coach, create an entry in `data/courseHelpers.js` and reference their `id` via `coachIds` in the relevant subjects or topics.
-
----
-
-## Panel Architecture
-
-Feyn separates content operations across four role-based panels to avoid admin bottlenecks:
-
-| Panel | Route | Responsibility |
-|---|---|---|
-| **Admin Content Studio** | `/admin` | Full taxonomy control — programs, subjects, topics, lessons, coaches |
-| **Coach Studio** | `/panels/coach` | Coach profile drafts and lesson proposals |
-| **Editor Review Desk** | `/panels/editor` | Proposal review, notes, status |
-| **Publisher Console** | `/panels/publisher` | Release packaging checklist and publication |
-
----
-
-## Database
-
-The Supabase schema (`supabase-schema.sql`) creates four tables with row-level security:
-
-- `profiles` — name, username, grade, onboarding state
-- `enrollments` — which subjects a user is enrolled in
-- `lesson_progress` — watched lessons per user
-- `certificates` — issued certificates with verifiable IDs
-
-User authentication uses email OTP (6-digit code). The custom email template is in `supabase-otp-email-template.html`.
-
----
+Pull requests welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — especially the two schema rules that exist because breaking them cost real debugging time.
 
 ## License
 
-Feyn is free and open source, released under the [GNU Affero General Public License v3.0](LICENSE).  
-You are free to use, study, modify and distribute it — provided derivative works are also released under AGPL-3.0.
+[AGPL-3.0](LICENSE). If you run a modified version as a network service, you must make your source available to its users.
+
+---
+
+Built with love by [STΛRGZR](https://hello2himel.netlify.app).

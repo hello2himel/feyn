@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import data from '../../../data/index.js'
-import { getProgram, getSubject, getTopic, getCoachesFor, getSubjectMaterials, getTopicLessonCount } from '../../../data/courseHelpers'
+import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTopicLessonCount, getAllTopicPaths } from '../../../data/courseHelpers'
 import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../../components/Layout'
 import { isWatched, getSubjectProgress } from '../../../lib/userStore'
 
@@ -11,7 +10,7 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
   const [watchedMap, setWatchedMap] = useState({})
   const [topicPct, setTopicPct]     = useState(0)
 
-  const coaches = (topic && subject) ? getCoachesFor(topic.coachIds || subject.coachIds || []) : []
+  const coaches = getCoachesFor(subject)
 
   useEffect(() => {
     if (!topic || !subject || !program) return
@@ -141,18 +140,21 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
 }
 
 export async function getStaticPaths() {
-  const paths = []
-  for (const program of data.programs)
-    for (const subject of program.subjects)
-      for (const topic of subject.topics)
-        paths.push({ params: { programId: program.id, subjectId: subject.id, topicId: topic.id } })
-  return { paths, fallback: false }
+  const paths = (await getAllTopicPaths()).map(params => ({ params }))
+  return { paths, fallback: 'blocking' }
 }
 
 export async function getStaticProps({ params }) {
-  const program = getProgram(params.programId)
-  const subject = getSubject(params.programId, params.subjectId)
-  const topic   = getTopic(params.programId, params.subjectId, params.topicId)
-  if (!program || !subject || !topic) return { notFound: true }
-  return { props: { program, subject, topic, allMaterials: getSubjectMaterials(subject) } }
+  // One getSubject call, then the topic is picked out of the tree it
+  // already returned — avoids a second identical round-trip.
+  const [program, subject] = await Promise.all([
+    getProgram(params.programId),
+    getSubject(params.programId, params.subjectId),
+  ])
+  const topic = subject?.topics.find(t => t.id === params.topicId) || null
+  if (!program || !subject || !topic) return { notFound: true, revalidate: 60 }
+  return {
+    props: { program, subject, topic, allMaterials: getSubjectMaterials(subject) },
+    revalidate: 60,
+  }
 }

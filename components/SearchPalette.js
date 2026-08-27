@@ -6,7 +6,8 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { getClassified, getTotalLessons, getCoachesFor } from '../data/courseHelpers'
+import { getTotalLessons, getCoachesFor } from '../data/courseHelpers'
+import { useCatalog } from '../lib/catalog'
 
 export default function SearchPalette({ onClose }) {
   const [query, setQuery]       = useState('')
@@ -14,13 +15,12 @@ export default function SearchPalette({ onClose }) {
   const inputRef  = useRef(null)
   const listRef   = useRef(null)
 
-  const { classes, interests } = getClassified()
-  const allPrograms = [...classes, ...interests]
+  const { programs } = useCatalog()
 
   // All subjects flat — shown as "browse" when no query
   const allSubjects = useMemo(() =>
-    allPrograms.flatMap(p => p.subjects.map(s => ({ program: p, subject: s })))
-  , [])
+    programs.flatMap(p => p.subjects.map(s => ({ program: p, subject: s })))
+  , [programs])
 
   const results = useMemo(() => {
     if (!query.trim()) return allSubjects
@@ -110,7 +110,7 @@ export default function SearchPalette({ onClose }) {
 
           {results.map(({ program, subject }, i) => {
             const total   = getTotalLessons(subject)
-            const coaches = getCoachesFor(subject.coachIds || [])
+            const coaches = getCoachesFor(subject)
             const isActive = i === activeIdx
             return (
               <Link

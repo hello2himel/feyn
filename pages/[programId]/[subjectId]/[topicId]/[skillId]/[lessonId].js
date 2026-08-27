@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { getProgram, getSubject, getTopic, getSkill, getLessonNav, getCoachesFor, getSubjectMaterials, getTotalLessons, getAllLessonPaths } from '../../../../../data/courseHelpers'
+import { getProgram, getSubject, getLessonNav, getCoachesFor, getSubjectMaterials, getTotalLessons, getAllLessonPaths } from '../../../../../data/courseHelpers'
 import { Nav, Footer, Breadcrumb, DonateStrip, CoachChip, SourceBadge, MaterialsSidebar, LessonMaterials, useAuth } from '../../../../../components/Layout'
 import { isWatched, markWatched, unmarkWatched, getSubjectProgress, issueCert, hasCert, getProfile, getWatchProgress, saveLessonProgress, recordAttempt, clearLessonProgress, getLessonProgress } from '../../../../../lib/userStore'
 import { downloadCertificate } from '../../../../../lib/certificate'
@@ -481,8 +481,8 @@ export default function LessonPage({ program, subject, topic, skill, lesson, pre
   const [savedProgress, setSavedProgress] = useState(null)
 
   const coaches = useMemo(
-    () => getCoachesFor(topic.coachIds || subject.coachIds || []),
-    [topic.coachIds, subject.coachIds]
+    () => getCoachesFor(subject),
+    [subject]
   )
 
   const lessonKey = `${program.id}/${subject.id}/${topic.id}/${lessonId}`
@@ -793,19 +793,24 @@ export default function LessonPage({ program, subject, topic, skill, lesson, pre
 }
 
 export async function getStaticPaths() {
-  return { paths: getAllLessonPaths().map(p => ({ params: p })), fallback: false }
+  const paths = (await getAllLessonPaths()).map(params => ({ params }))
+  return { paths, fallback: 'blocking' }
 }
 
 export async function getStaticProps({ params }) {
   const { programId, subjectId, topicId, skillId, lessonId } = params
-  const program = getProgram(programId)
-  const subject = getSubject(programId, subjectId)
-  const topic   = getTopic(programId, subjectId, topicId)
-  const skill   = getSkill(programId, subjectId, topicId, skillId)
-  const lesson  = skill?.lessons?.find(l => l.id === lessonId)
-  if (!program || !subject || !topic || !skill || !lesson) return { notFound: true }
+  // The whole subject tree arrives in one query; topic/skill/lesson are
+  // then picked out of it rather than re-fetched four times.
+  const [program, subject] = await Promise.all([
+    getProgram(programId),
+    getSubject(programId, subjectId),
+  ])
+  const topic  = subject?.topics.find(t => t.id === topicId) || null
+  const skill  = topic?.skills.find(s => s.id === skillId) || null
+  const lesson = skill?.lessons?.find(l => l.id === lessonId) || null
+  if (!program || !subject || !topic || !skill || !lesson) return { notFound: true, revalidate: 60 }
 
-  const { prev, next } = getLessonNav(programId, subjectId, topicId, skillId, lessonId)
+  const { prev, next } = getLessonNav(subject, topicId, skillId, lessonId)
 
   let idx = 0, found = false
   for (const s of topic.skills) {
@@ -833,6 +838,7 @@ export async function getStaticProps({ params }) {
       totalLessons: totalTopicLessons,
       subjectTotalLessons,
       allMaterials: getSubjectMaterials(subject),
-    }
+    },
+    revalidate: 60,
   }
 }

@@ -8,9 +8,8 @@ import {
   getSubjectProgress, getCerts, issueCert,
 } from '../lib/userStore'
 import { downloadCertificate } from '../lib/certificate'
-import data from '../data/index.js'
-import { coaches } from '../data/courseHelpers'
 import { getCoachesFor, getTotalLessons } from '../data/courseHelpers'
+import { useCatalog } from '../lib/catalog'
 
 export default function ProfilePage() {
   const { signedIn, setShowAuth, refresh, mounted } = useAuth()
@@ -54,11 +53,14 @@ export default function ProfilePage() {
     setCertLoading(id)
     const setStatus = s => setCertStatus(prev => ({ ...prev, [id]: s }))
 
+    // The signing mentor comes from the live catalogue: certificates
+    // store denormalized names, but the signature image belongs to the
+    // mentor record and is looked up fresh.
     let coachName = 'Instructor', coachTitle = 'Instructor', coachSignatureUrl = null
-    for (const program of data.programs) {
+    for (const program of programs) {
       const subj = program.subjects.find(s => s.id === (cert.subjectId || cert.subject_id))
       if (subj) {
-        const coach = getCoachesFor(subj.coachIds || [])[0]
+        const coach = getCoachesFor(subj)[0]
         coachName         = coach?.name      || coachName
         coachTitle        = coach?.title     || coachTitle
         coachSignatureUrl = coach?.signature || null
@@ -133,7 +135,7 @@ export default function ProfilePage() {
 
   // Enrolled subject details
   const enrolledSubjects = []
-  for (const program of data.programs)
+  for (const program of programs)
     for (const subject of program.subjects)
       if (isEnrolled(program.id, subject.id))
         enrolledSubjects.push({ program, subject, pct: getSubjectProgress(program.id, subject.id, subject) })
@@ -209,7 +211,7 @@ export default function ProfilePage() {
           <section className="profile-section">
             <h2 className="profile-section__title">All Courses</h2>
             <div className="all-courses-list">
-              {data.programs.map(program =>
+              {programs.map(program =>
                 program.subjects.map(subject => {
                   const isEnr = isEnrolled(program.id, subject.id)
                   const pct   = getSubjectProgress(program.id, subject.id, subject)
