@@ -1,22 +1,22 @@
 // ============================================================
-// pages/panels/publisher.js — course credits & publishing
+// pages/panels/publisher.js — course credits
 //
-// REPLACES the `user_preferences` release-checklist shell, which
-// tracked nothing real.
+// This is the one surface for the publisher-admin act that is not
+// content editing: crediting mentors on a course (`subject_mentors`).
 //
-// This is the one surface for the two publisher-admin acts that are not
-// content editing:
+// Credit is a permission grant, not a label: a `mentor`-role member can
+// only edit courses they are credited on. The schema enforces both
+// halves — only a publisher admin may write credits, and only mentors
+// with an approved membership in that publisher may be credited (see
+// subject_mentors_write in docs/schema.sql).
 //
-//   1. Crediting mentors on a course (`subject_mentors`). Credit is a
-//      permission grant, not a label: a `mentor`-role member can only
-//      edit courses they are credited on. The schema enforces both
-//      halves — only a publisher admin may write credits, and only
-//      mentors with an approved membership in that publisher may be
-//      credited (see subject_mentors_write in docs/schema.sql).
-//   2. Flipping a course between draft and published, which is what
-//      makes it appear on the public site at the next ISR revalidate.
+// Publishing used to live here as a bare draft/published toggle. It
+// moved into the course builder, where lib/courseReadiness.js can
+// refuse to publish an empty course; a button here had no way to know
+// whether the course had any content.
 //
-// Course text, topics and lessons live in /panels/editor.
+// Course text, topics and lessons live in the course builder
+// (/studio/course/[id]).
 // ============================================================
 
 import Head from 'next/head'
@@ -133,20 +133,8 @@ export default function PublisherPanel() {
     }, 'Credits updated.')
   }
 
-  async function setStatus(subjectId, status) {
-    await run(`st-${subjectId}`, async () => {
-      const sb = await authedClient()
-      if (!sb) throw new Error('Sign in to do that.')
-      const { data, error: e } = await sb
-        .from('subjects')
-        .update({ status })
-        .eq('id', subjectId)
-        .select('id')
-      if (e) throw new Error(e.message)
-      // RLS refuses an update by matching zero rows rather than raising.
-      if (!data || data.length === 0) throw new Error('You do not have permission to change that.')
-    }, status === 'published' ? 'Course published. It appears publicly within a minute.' : 'Course set to draft.')
-  }
+  // Publishing moved to the course builder, where the readiness checks
+  // live — a bare "Publish" button here could ship an empty course.
 
   if (!mounted) return null
 
@@ -206,30 +194,13 @@ export default function PublisherPanel() {
                 </h2>
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                  <Link href={`/panels/editor?subject=${s.id}`} className="btn btn--ghost btn--sm">
-                    <i className="ri-edit-line" /> Edit content
+                  <Link href={`/studio/course/${s.id}`} className="btn btn--ghost btn--sm">
+                    <i className="ri-edit-line" /> Open in builder
                   </Link>
-                  {s.status === 'published' ? (
-                    <>
-                      <Link href={`/${s.programs?.slug}/${s.slug}`} className="btn btn--ghost btn--sm">
-                        <i className="ri-external-link-line" /> View live
-                      </Link>
-                      <button
-                        className="btn btn--ghost btn--sm"
-                        disabled={busy === `st-${s.id}`}
-                        onClick={() => setStatus(s.id, 'draft')}
-                      >
-                        <i className="ri-eye-off-line" /> Unpublish
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="btn btn--accent btn--sm"
-                      disabled={busy === `st-${s.id}`}
-                      onClick={() => setStatus(s.id, 'published')}
-                    >
-                      <i className="ri-rocket-line" /> Publish
-                    </button>
+                  {s.status === 'published' && (
+                    <Link href={`/${s.programs?.slug}/${s.slug}`} className="btn btn--ghost btn--sm">
+                      <i className="ri-external-link-line" /> View live
+                    </Link>
                   )}
                 </div>
 
@@ -268,13 +239,15 @@ export default function PublisherPanel() {
 function Shell({ children }) {
   return (
     <>
-      <Head><title>Credits & publishing · Feyn</title></Head>
+      <Head><title>Course credits · Feyn</title></Head>
       <Nav />
       <main>
         <div className="container panel-page">
-          <h1 className="panel-page__title">Credits &amp; publishing</h1>
+          <h1 className="panel-page__title">Course credits</h1>
           <p style={{ color: 'var(--text-2)', margin: 0 }}>
-            Decide who is credited on each course and when it goes live.
+            Who is credited on each course. Credit is also permission: a member with the{' '}
+            <code>mentor</code> role can edit exactly the courses they are credited on.
+            Publishing now happens in the course builder, next to the readiness checks.
           </p>
           <div>{children}</div>
         </div>

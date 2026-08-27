@@ -93,7 +93,7 @@ App admins can also manage programs from the app; SQL is just faster for the fir
 
 2. Become a mentor: go to `/apply/mentor`, submit the form, then approve yourself at `/admin`. Approval auto-creates your solo publisher with you as its only admin.
 
-3. Create the course: `/studio` → your publisher → **Manage** → **New course**. Add topics, skills, lessons and questions, then set the course status to **published**.
+3. Create the course: `/studio` → **New course**. The wizard asks four things, then drops you in the builder. Add a topic, a skill inside it, and a lesson — paste a YouTube link and the title, thumbnail and runtime fill themselves in. The **Publish** button unlocks once the required readiness checks pass.
 
 4. It appears on the public site within a minute (see ISR below).
 

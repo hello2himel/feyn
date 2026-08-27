@@ -75,7 +75,10 @@ const ALL_ICONS = Object.entries(ICON_CATEGORIES).flatMap(([cat, icons]) =>
 )
 
 // ── Component ──────────────────────────────────────────────────────────
-export default function IconPicker({ value, onChange }) {
+// `label` is optional: the course builder already labels the field from
+// its own inspector, and the old hardcoded "Subject Icon" caption was
+// wrong there (it is also used for topics and skills).
+export default function IconPicker({ value, onChange, label }) {
   const [query, setQuery]   = useState('')
   const [open, setOpen]     = useState(false)
   const [activeCat, setActiveCat] = useState('all')
@@ -92,7 +95,7 @@ export default function IconPicker({ value, onChange }) {
 
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={s.label}>Subject Icon</label>
+      {label && <label style={s.label}>{label}</label>}
 
       {/* Trigger button */}
       <button type="button" style={s.trigger} onClick={() => setOpen(o => !o)}>
