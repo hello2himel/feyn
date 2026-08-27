@@ -65,6 +65,18 @@ export default function AboutPage() {
                 <li><strong>Completely free.</strong> No paywalls, no ads, no hidden costs. Ever.</li>
               </ul>
 
+              <h2>Teach with us</h2>
+              <p>
+                Feyn is built by the people who teach on it. If you can explain something from
+                first principles, you can publish here — on your own, or with your school or
+                coaching centre behind you. It is free, there are no ads, and we take no cut.
+              </p>
+              <p>
+                <Link href="/teach">See how teaching on Feyn works</Link> — or go straight to
+                the <Link href="/apply/mentor">mentor application</Link> or{' '}
+                <Link href="/apply/platform">platform registration</Link>.
+              </p>
+
               <h2>Contact</h2>
               <p>
                 Questions, feedback, or want to contribute a course?{' '}

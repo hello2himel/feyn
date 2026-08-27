@@ -120,6 +120,20 @@ export function Nav() {
             <span className="nav__search-btn__kbd">⌘K</span>
           </button>
 
+          {/* Teach — the recruitment entry point. Mirrors YouTube's
+              "Create" affordance: always visible, but it becomes the
+              studio shortcut once you actually have somewhere to
+              publish, so it is never a dead end. */}
+          {mounted && hasStudioAccess(perms) ? (
+            <Link href="/studio" className="nav__teach nav__teach--studio" title="Open your studio">
+              <i className="ri-add-circle-line" /><span>Create</span>
+            </Link>
+          ) : (
+            <Link href="/teach" className="nav__teach" title="Teach on Feyn">
+              <i className="ri-quill-pen-line" /><span>Teach</span>
+            </Link>
+          )}
+
           {/* Support */}
           <a href={getDonateUrl(user, mounted)} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
             <i className="ri-heart-fill" /><span>Support</span>
@@ -159,6 +173,13 @@ export function Nav() {
                       {hasStudioAccess(perms) && (
                         <Link href="/studio" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
                           <i className="ri-dashboard-line" /> My studio
+                        </Link>
+                      )}
+                      {/* Signed in but nothing to publish with yet — this is
+                          the only place a learner is told mentoring exists. */}
+                      {!hasStudioAccess(perms) && (
+                        <Link href="/teach" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                          <i className="ri-quill-pen-line" /> Teach on Feyn
                         </Link>
                       )}
                       {perms.isAppAdmin && (
@@ -242,9 +263,16 @@ export function Footer() {
               <Link href="/about" className="footer-full__link">About Feyn</Link>
             </div>
             <div className="footer-full__col">
+              <p className="footer-full__col-label">Teach</p>
+              <Link href="/teach" className="footer-full__link">Teach on Feyn</Link>
+              <Link href="/apply/mentor" className="footer-full__link">Become a mentor</Link>
+              <Link href="/apply/platform" className="footer-full__link">Register a platform</Link>
+            </div>
+            <div className="footer-full__col">
               <p className="footer-full__col-label">Account</p>
               <Link href="/profile" className="footer-full__link">Profile</Link>
               <Link href="/settings" className="footer-full__link">Settings</Link>
+              <Link href="/studio" className="footer-full__link">My studio</Link>
             </div>
             <div className="footer-full__col">
               <p className="footer-full__col-label">Company</p>
@@ -325,6 +353,31 @@ export function DonateStrip() {
         <i className="ri-heart-fill" /> Support
       </a>
     </div>
+  )
+}
+
+// ── TeachCallout ───────────────────────────────────────────────────────
+// Recruitment banner for the learner feed and course pages. Hidden for
+// anyone who already has publishing access — they get /studio in the nav
+// instead, so this never nags an existing mentor.
+export function TeachCallout({ compact = false }) {
+  const { mounted } = useAuth()
+  const { perms, loading } = usePermissions()
+  if (!mounted || loading || hasStudioAccess(perms)) return null
+  return (
+    <aside className={`teach-callout${compact ? ' teach-callout--compact' : ''}`}>
+      <span className="teach-callout__mark"><i className="ri-quill-pen-line" /></span>
+      <div className="teach-callout__body">
+        <p className="teach-callout__kicker">Teach on Feyn</p>
+        <p className="teach-callout__text">
+          Know a topic well enough to explain it from scratch? Publish your own course — as
+          yourself, or under your school. Free, no ads, no revenue cut.
+        </p>
+      </div>
+      <Link href="/teach" className="teach-callout__btn">
+        <i className="ri-arrow-right-line" /> Start teaching
+      </Link>
+    </aside>
   )
 }
 
