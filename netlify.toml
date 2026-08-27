@@ -1,5 +1,10 @@
 [build]
   command = "npm run build"
+  # Pinned here on purpose: the Netlify UI had this set to `out`, which only
+  # exists for `next export` static builds. This app is a server-rendered /
+  # ISR Next.js app, so the build output is `.next`. netlify.toml wins over
+  # the UI setting, which keeps the deploy config reproducible in git.
+  publish = ".next"
 
 # The Next.js runtime plugin owns the publish directory and wires up
 # ISR, API routes and on-demand rendering. Without it Netlify would
