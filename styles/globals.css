@@ -4879,3 +4879,16 @@ i[class*="ri-"] {
   background: var(--bg-3);
 }
 .settings-course-card--soon:hover { transform: none; border-color: var(--border-2); }
+
+/* ── Screen-reader-only utility ───────────────────────────────────────
+   Used by dashboard controls whose visual label is carried by an
+   adjacent element but which still need an accessible name. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

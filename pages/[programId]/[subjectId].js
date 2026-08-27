@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import data from '../../data/index.js'
-import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTotalLessons, getTopicFirstVideo } from '../../data/courseHelpers'
+import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTotalLessons, getTopicFirstVideo, getAllSubjectPaths } from '../../data/courseHelpers'
 import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../components/Layout'
 import { isEnrolled, enroll, unenroll, getSubjectProgress } from '../../lib/userStore'
 
@@ -11,7 +10,7 @@ export default function SubjectPage({ program, subject, allMaterials }) {
   const [enrolled, setEnrolled] = useState(false)
   const [pct, setPct] = useState(0)
 
-  const coaches = subject ? getCoachesFor(subject.coachIds || []) : []
+  const coaches = getCoachesFor(subject)
 
   useEffect(() => {
     if (!signedIn || !program || !subject) return
@@ -118,17 +117,21 @@ export default function SubjectPage({ program, subject, allMaterials }) {
   )
 }
 
+// ISR — see spec §6. Draft courses are invisible to the anon client
+// used by getStaticProps, so they can never be baked into a cached page.
 export async function getStaticPaths() {
-  const paths = []
-  for (const program of data.programs)
-    for (const subject of program.subjects)
-      paths.push({ params: { programId: program.id, subjectId: subject.id } })
-  return { paths, fallback: false }
+  const paths = (await getAllSubjectPaths()).map(params => ({ params }))
+  return { paths, fallback: 'blocking' }
 }
 
 export async function getStaticProps({ params }) {
-  const program = getProgram(params.programId)
-  const subject = getSubject(params.programId, params.subjectId)
-  if (!program || !subject) return { notFound: true }
-  return { props: { program, subject, allMaterials: getSubjectMaterials(subject) } }
+  const [program, subject] = await Promise.all([
+    getProgram(params.programId),
+    getSubject(params.programId, params.subjectId),
+  ])
+  if (!program || !subject) return { notFound: true, revalidate: 60 }
+  return {
+    props: { program, subject, allMaterials: getSubjectMaterials(subject) },
+    revalidate: 60,
+  }
 }

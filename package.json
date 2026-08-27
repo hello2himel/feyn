@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "export": "next build"
+    "export": "next build",
+    "lint": "next lint",
+    "pg:start": "./scripts/local-pg.sh start",
+    "pg:stop": "./scripts/local-pg.sh stop",
+    "pg:destroy": "./scripts/local-pg.sh destroy",
+    "schema:apply": "node tests/apply-schema.js",
+    "test:schema": "node tests/schema.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
@@ -17,7 +23,10 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "5.14.5",
+    "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.2.3"
+    "eslint-config-next": "14.2.3",
+    "pg": "^8.16.3"
   }
 }

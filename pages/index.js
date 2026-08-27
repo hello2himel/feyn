@@ -1,34 +1,33 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import data from '../data/index.js'
-import { getClasses, getInterests, getCoachesFor, getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
+import { getCoachesFor, getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
+import { useCatalog } from '../lib/catalog'
 import { Nav, Footer, DonateStrip, YTThumb, ProgressBar, useAuth } from '../components/Layout'
 import { getEnrolled, getSubjectProgress, getLastActivity } from '../lib/userStore'
 
-function resolveLastActivity(activity) {
-  if (!activity) return null
-  const { programId, subjectId, topicId, lessonId } = activity
-  const program = data.programs.find(p => p.id === programId)
-  const subject = program?.subjects.find(s => s.id === subjectId)
-  const topic   = subject?.topics.find(t => t.id === topicId)
-  if (!program || !subject || !topic) return null
-  let foundSkill = null, foundLesson = null
-  for (const skill of (topic.skills || [])) {
-    const lesson = skill.lessons?.find(l => l.id === lessonId)
-    if (lesson) { foundSkill = skill; foundLesson = lesson; break }
-  }
-  if (!foundLesson) return null
-  return { program, subject, topic, skill: foundSkill, lesson: foundLesson, programId, subjectId, topicId, lessonId }
-}
+// The progress key is 4 segments (no skill), so the skill slug and the
+// display titles come from /api/lesson-resolve rather than a local tree.
+function ContinueCard({ activity, subjectCard }) {
+  const [resolved, setResolved] = useState(null)
 
-function ContinueCard({ activity }) {
-  const resolved = resolveLastActivity(activity)
+  useEffect(() => {
+    if (!activity) return
+    let alive = true
+    const qs = new URLSearchParams(activity).toString()
+    fetch(`/api/lesson-resolve?${qs}`)
+      .then(r => r.json())
+      .then(j => { if (alive) setResolved(j.resolved || null) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [activity?.programId, activity?.subjectId, activity?.topicId, activity?.lessonId])
+
   if (!resolved) return null
-  const { program, subject, topic, skill, lesson, programId, subjectId, topicId, lessonId } = resolved
+  const { program, subject, topic, skill, lesson } = resolved
+  const { programId, subjectId, topicId, lessonId } = activity
   const href = `/${programId}/${subjectId}/${topicId}/${skill.id}/${lessonId}`
-  const pct  = getSubjectProgress(programId, subjectId, subject)
-  const hasThumb = lesson.videoId && lesson.videoId !== 'YOUTUBE_ID_HERE'
+  const pct  = getSubjectProgress(programId, subjectId, subjectCard)
+  const hasThumb = !!lesson.videoId
   return (
     <div className="continue-card">
       <Link href={href} className="continue-card__overlay-link" aria-label={`Continue: ${lesson.title}`} />
@@ -64,7 +63,7 @@ function ContinueCard({ activity }) {
 }
 
 function FeedCard({ program, subject, enrolled, pct, mounted }) {
-  const coaches  = getCoachesFor(subject.coachIds || [])
+  const coaches  = getCoachesFor(subject)
   const firstVid = getSubjectFirstVideo(subject)
   const total    = getTotalLessons(subject)
   const isSoon   = subject.comingSoon
@@ -117,9 +116,11 @@ export default function Home() {
   const [progressMap, setProgressMap] = useState({})
   const [lastActivity, setLastActivity] = useState(null)
 
+  const { programs, classes, interests } = useCatalog()
+
   const buildMaps = useCallback(() => {
     const eMap = {}, pMap = {}
-    for (const program of data.programs)
+    for (const program of programs)
       for (const subject of program.subjects) {
         const k = `${program.id}/${subject.id}`
         eMap[k] = getEnrolled().includes(k)
@@ -128,12 +129,9 @@ export default function Home() {
     setEnrolledMap(eMap)
     setProgressMap(pMap)
     setLastActivity(getLastActivity())
-  }, [])
+  }, [programs])
 
   useEffect(() => { if (mounted) buildMaps() }, [mounted, signedIn, buildMaps])
-
-  const classes   = getClasses()
-  const interests = getInterests()
 
   // Split every subject into enrolled vs unenrolled
   const allSubjects = [...classes, ...interests].flatMap(p =>
@@ -251,7 +249,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="home-hero__continue">
-                {lastActivity ? <ContinueCard activity={lastActivity} /> : (
+                {lastActivity ? <ContinueCard activity={lastActivity} subjectCard={allSubjects.find(x => x.program.id === lastActivity.programId && x.subject.id === lastActivity.subjectId)?.subject} /> : (
                   <div className="continue-card-empty">
                     <i className="ri-play-circle-line" />
                     <p>Start your first lesson to track progress here.</p>

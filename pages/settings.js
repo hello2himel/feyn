@@ -9,8 +9,8 @@ import {
 } from '../lib/userStore'
 import { isSupabaseAvailable } from '../lib/supabase'
 import { classifySubjects, getTotalLessons, getCoachesFor } from '../data/courseHelpers'
+import { useCatalog } from '../lib/catalog'
 import { downloadCertificate } from '../lib/certificate'
-import data from '../data/index.js'
 
 // ── Tab definitions ───────────────────────────────────────────────────
 const TABS = [
@@ -414,7 +414,8 @@ function AppearanceTab() {
 
 // ── CLASSES TAB ───────────────────────────────────────────────────────
 function ClassesTab() {
-  const { classes } = classifySubjects(data.programs)
+  const { programs } = useCatalog()
+  const { classes } = classifySubjects(programs)
   const [enrolled, setEnrolled] = useState(getEnrolled())
 
   function toggle(programId, subjectId) {
@@ -483,7 +484,8 @@ function ClassesTab() {
 
 // ── INTERESTS TAB ─────────────────────────────────────────────────────
 function InterestsTab() {
-  const { genres } = classifySubjects(data.programs)
+  const { programs } = useCatalog()
+  const { genres } = classifySubjects(programs)
   const [enrolled, setEnrolled] = useState(getEnrolled())
 
   function toggle(programId, subjectId) {
@@ -549,10 +551,15 @@ function InterestsTab() {
 
 // ── FEED TAB ──────────────────────────────────────────────────────────
 function FeedTab() {
-  const [sections, setSections] = useState(() => {
+  // The catalogue arrives asynchronously now, so sections are derived in
+  // an effect rather than a useState initializer.
+  const { programs } = useCatalog()
+  const [sections, setSections] = useState([])
+
+  useEffect(() => {
     const order    = getFeedOrder()
     const enrolled = getEnrolled()
-    const { classes, genres } = classifySubjects(data.programs)
+    const { classes, genres } = classifySubjects(programs)
     const all = [
       ...classes.map(x => ({ ...x, type: 'class' })),
       ...genres.map(x  => ({ ...x, type: 'genre' })),
@@ -565,8 +572,8 @@ function FeedTab() {
       const items = all.filter(x => x.type === item.type && enrolled.includes(`${x.program.id}/${x.subject.id}`))
       if (items.length) result.push({ type: item.type, label: item.type === 'class' ? 'My Classes' : 'My Interests', icon: item.type === 'class' ? 'ri-graduation-cap-line' : 'ri-heart-line', items })
     }
-    return result
-  })
+    setSections(result)
+  }, [programs])
 
   function move(idx, dir) {
     const next = [...sections]

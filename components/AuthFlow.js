@@ -16,7 +16,6 @@ import {
   signUpGlobal, signInGlobal, verifyOtp, resendOtp,
   setOnboarded, enroll, saveFeedOrder,
 } from '../lib/userStore'
-import { getClasses, getInterests } from '../data/courseHelpers'
 
 const GRADE_ORDER = ['primary', 'jsc', 'ssc', 'hsc']
 const GRADE_ICONS = { primary: 'ri-seedling-line', jsc: 'ri-school-line', ssc: 'ri-building-4-line', hsc: 'ri-graduation-cap-line' }
@@ -113,7 +112,7 @@ function OtpInput({ value, onChange, disabled }) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────
-export default function AuthFlow({ programs, onComplete, initialMode = 'auth' }) {
+export default function AuthFlow({ programs = [], onComplete, initialMode = 'auth' }) {
   const [mode, setMode]         = useState(initialMode)
   const [authTab, setAuthTab]   = useState('signup')
   const [animOut, setAnimOut]   = useState(false)
@@ -141,15 +140,17 @@ export default function AuthFlow({ programs, onComplete, initialMode = 'auth' })
   const [selectedInterests, setSelectedInterests] = useState(new Set())
   const [interestFilter, setInterestFilter]       = useState('all')
 
-  const classes   = getClasses()
-  const interests = getInterests()
+  // `programs` is passed in from _app.js (fetched from /api/catalog),
+  // so onboarding no longer depends on a build-time content import.
+  const classes   = useMemo(() => programs.filter(p => p.type === 'class'), [programs])
+  const interests = useMemo(() => programs.filter(p => p.type !== 'class'), [programs])
 
   const sortedClasses = useMemo(() =>
     [...classes].sort((a, b) => {
       const ai = GRADE_ORDER.indexOf(a.id), bi = GRADE_ORDER.indexOf(b.id)
       return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi)
     })
-  , [])
+  , [classes])
 
   const gradeProgram = selectedGrade && selectedGrade !== 'none'
     ? classes.find(p => p.id === selectedGrade) : null
