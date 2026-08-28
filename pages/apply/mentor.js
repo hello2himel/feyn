@@ -13,7 +13,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Nav, Footer, useAuth } from '../../components/Layout'
+import { Nav, Footer, useAuth, PageHeader } from '../../components/Layout'
 import HandleField from '../../components/HandleField'
 import { callRpc, authedClient } from '../../lib/api'
 import { invalidatePermissions } from '../../lib/usePermissions'
@@ -224,17 +224,13 @@ function Shell({ children }) {
       <Head><title>Apply as a mentor · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container" style={{ paddingBottom: 80 }}>
-          <header className="page-header">
-            <p className="page-header__eyebrow"><i className="ri-user-star-line" /> Mentor application</p>
-            <h1 className="page-header__title">Teach on Feyn</h1>
-            <p className="page-header__desc">
-              Mentors own their own publishing space and can also join platforms. An app admin
-              reviews every application. Approval creates your personal publisher automatically.
-            </p>
-          </header>
-          <div style={{ paddingTop: 32 }}>{children}</div>
-        </div>
+        <PageHeader
+          eyebrow="Mentor application"
+          icon="ri-user-star-line"
+          title="Teach on Feyn"
+          desc="Mentors own their own publishing space and can also join platforms. An app admin reviews every application. Approval creates your personal publisher automatically."
+        />
+        <div className="container page-body">{children}</div>
       </main>
       <Footer />
     </>

@@ -22,7 +22,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import { Nav, Footer, useAuth } from '../../components/Layout'
+import { Nav, Footer, useAuth, PageHeader } from '../../components/Layout'
 import { usePermissions } from '../../lib/usePermissions'
 import { approvedMemberships, canManagePublisher } from '../../lib/permissions'
 import { authedClient } from '../../lib/api'
@@ -242,13 +242,13 @@ function Shell({ children }) {
       <Head><title>Course credits · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container panel-page">
-          <h1 className="panel-page__title">Course credits</h1>
-          <p style={{ color: 'var(--text-2)', margin: 0 }}>
-            Who is credited on each course. Credit is also permission: a member with the{' '}
-            <code>mentor</code> role can edit exactly the courses they are credited on.
-            Publishing now happens in the course builder, next to the readiness checks.
-          </p>
+        <PageHeader
+          eyebrow="Credits"
+          icon="ri-team-line"
+          title="Course credits"
+          desc="Who is credited on each course. Credit is also permission: a member with the mentor role can edit exactly the courses they are credited on. Publishing happens in the course builder, next to the readiness checks."
+        />
+        <div className="container page-body">
           <div>{children}</div>
         </div>
       </main>

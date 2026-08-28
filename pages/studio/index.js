@@ -23,7 +23,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import { Nav, Footer, useAuth } from '../../components/Layout'
+import { Nav, Footer, useAuth, Plate } from '../../components/Layout'
 import HandleField from '../../components/HandleField'
 import { usePermissions } from '../../lib/usePermissions'
 import {
@@ -514,7 +514,7 @@ function Shell({ identity, right, children }) {
       <Head><title>Studio · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container studio">
+        <Plate>
           <header className="studio-head">
             <div>
               <p className="studio-head__eyebrow"><i className="ri-quill-pen-line" /> Studio</p>
@@ -527,6 +527,8 @@ function Shell({ identity, right, children }) {
             </div>
             {right}
           </header>
+        </Plate>
+        <div className="container studio">
           {children}
         </div>
       </main>

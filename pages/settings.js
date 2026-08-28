@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
-import { Nav, Footer, useAuth, ProgressBar, YTThumb } from '../components/Layout'
+import { Nav, Footer, useAuth, ProgressBar, YTThumb, Plate } from '../components/Layout'
 import {
   getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll, getFeedOrder, saveFeedOrder,
@@ -84,11 +84,13 @@ export default function SettingsPage() {
       <Head><title>Settings - Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container">
+        <Plate>
           <header className="settings-header">
             <h1 className="settings-header__title">Settings</h1>
           </header>
+        </Plate>
 
+        <div className="container page-body">
           <div className="settings-layout">
 
             {/* ── Desktop sidebar nav (always visible on desktop) ── */}

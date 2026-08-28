@@ -34,7 +34,7 @@ import {
   getTotalLessons, getTopicFirstVideo, getAllSubjectPaths,
 } from '../../data/courseHelpers'
 import {
-  Nav, Footer, Breadcrumb, CoachChip, MaterialsSidebar, YTThumb, useAuth,
+  Nav, Footer, Breadcrumb, CoachChip, MaterialsSidebar, YTThumb, useAuth, Plate,
 } from '../../components/Layout'
 import {
   isEnrolled, enroll, unenroll, getSubjectProgress, getProgress, hasCert,
@@ -96,16 +96,22 @@ export default function SubjectPage({ program, subject, allMaterials }) {
         <Head><title>{subject.name} · Coming soon · Feyn</title></Head>
         <Nav />
         <main>
-          <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}>
-            <i className="ri-time-line" style={{ fontSize: '3rem', color: 'var(--text-3)', display: 'block', marginBottom: 20 }} />
-            <h1 style={{ fontSize: '1.8rem', marginBottom: 12 }}>{subject.name}</h1>
-            <p style={{ color: 'var(--text-2)', marginBottom: 24 }}>
-              This course is in preparation. Check back soon.
-            </p>
-            <Link href={`/${program.id}`} className="btn btn--ghost btn--sm">
-              <i className="ri-arrow-left-line" /> Back to {program.name}
-            </Link>
-          </div>
+          <Plate variant="quiet">
+            <div className="dead-end">
+              <p className="dead-end__code">In preparation</p>
+              <h1 className="dead-end__title">{subject.name}</h1>
+              <p className="dead-end__desc">
+                This course has been announced but has no published lessons yet.
+                Nothing to watch here today.
+              </p>
+              <div className="dead-end__actions">
+                <Link href={`/${program.id}`} className="btn btn--accent">
+                  <i className="ri-arrow-left-line" /> Back to {program.name}
+                </Link>
+                <Link href="/#courses" className="btn btn--ghost">Browse all courses</Link>
+              </div>
+            </div>
+          </Plate>
         </main>
         <Footer />
       </>
@@ -151,6 +157,7 @@ export default function SubjectPage({ program, subject, allMaterials }) {
             ]} />
 
             {/* ── Hero: one obvious action ─────────────────── */}
+            <Plate variant="inset">
             <header className="crs-hero">
               <div className="crs-hero__main">
                 <p className="crs-hero__eyebrow">
@@ -237,6 +244,7 @@ export default function SubjectPage({ program, subject, allMaterials }) {
                 )}
               </aside>
             </header>
+            </Plate>
 
             {/* ── Topic list with real progress ───────────── */}
             <section className="crs-topics">

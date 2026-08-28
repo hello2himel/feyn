@@ -21,7 +21,7 @@ import {
   getTopicCount,
 } from '../../data/courseHelpers'
 import { getPublicServerClient } from '../../lib/supabaseServer'
-import { Nav, Footer, YTThumb } from '../../components/Layout'
+import { Nav, Footer, YTThumb, Plate } from '../../components/Layout'
 
 const SOCIAL_ICONS = {
   website: 'ri-global-line',
@@ -48,7 +48,7 @@ export default function MentorProfile({ mentor, courses }) {
       </Head>
       <Nav />
       <main>
-        <div className="container">
+        <Plate>
           <section className="coach-hero">
             <div className="coach-hero__avatar">
               {mentor.avatar ? <img src={mentor.avatar} alt={mentor.name} /> : <span>{mentor.name[0]}</span>}
@@ -76,10 +76,10 @@ export default function MentorProfile({ mentor, courses }) {
               )}
             </div>
           </section>
+        </Plate>
 
-          <div className="divider" />
-
-          <section style={{ paddingBottom: 60 }}>
+        <div className="container page-body">
+          <section>
             <p className="section-label"><i className="ri-stack-line" style={{ marginRight: 6 }} />Courses by {mentor.name}</p>
 
             {courses.length === 0 && <p className="empty-state">No published courses yet.</p>}

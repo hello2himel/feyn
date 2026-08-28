@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Nav, Footer, ProgressBar, useAuth } from '../components/Layout'
+import { Nav, Footer, ProgressBar, useAuth, Plate } from '../components/Layout'
 import {
   getProfile, saveProfile, signOut,
   getEnrolled, isEnrolled, enroll, unenroll,
@@ -145,8 +145,7 @@ export default function ProfilePage() {
       <Head><title>My Profile · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container">
-
+        <Plate>
           {/* Profile header */}
           <section className="profile-header">
             <div className="profile-avatar">{profile?.name ? profile.name[0].toUpperCase() : '?'}</div>
@@ -173,9 +172,9 @@ export default function ProfilePage() {
               )}
             </div>
           </section>
+        </Plate>
 
-          <div className="divider" />
-
+        <div className="container page-body">
           {/* Enrolled courses */}
           <section className="profile-section">
             <h2 className="profile-section__title">Enrolled Courses</h2>

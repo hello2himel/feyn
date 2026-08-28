@@ -285,7 +285,7 @@ export default function Home() {
         ) : (
           /* ══════════════ GUEST ══════════════ */
           <>
-            <section className="lp-hero">
+            <section className="lp-hero plate">
               <div className="container lp-hero__inner">
                 <h1 className="lp-hero__title">
                   Learn it well enough<br />
@@ -362,7 +362,7 @@ export default function Home() {
               )}
             </section>
 
-            <section className="lp-close">
+            <section className="lp-close plate plate--close">
               <div className="container lp-close__inner">
                 <div>
                   <h2 className="lp-close__title">Free, and staying that way.</h2>

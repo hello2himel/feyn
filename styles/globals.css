@@ -67,6 +67,9 @@
   --font-mono:  'JetBrains Mono', monospace;
   --radius:     2px;
   --radius-md:  6px;
+  /* Every interactive target in the nav bar is exactly this tall, so
+     search, the theme toggle and Sign in line up on one baseline. */
+  --control-h:  40px;
   --max-w:      860px;
   --max-w-wide: 1100px;
   --transition: 180ms ease;
@@ -76,6 +79,19 @@
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+/* The nav is sticky, so an anchor target must stop below it rather than
+   under it. */
+[id] { scroll-margin-top: 76px; }
+/* Motion is decoration here — never load-bearing. Honour the OS switch. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 body {
   background: var(--bg);
   color: var(--text);
@@ -158,7 +174,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   align-items: center;
   gap: 8px;
   min-width: 210px;
-  padding: 8px 12px;
+  height: var(--control-h);
+  padding: 0 12px;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-md);
   background: var(--bg-2);
@@ -185,7 +202,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 .nav__icon-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px;
+  width: var(--control-h); height: var(--control-h);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-md);
   color: var(--text-2);
@@ -200,7 +217,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   font-family: var(--font-sans);
   font-size: 0.88rem;
   font-weight: 500;
-  padding: 9px 18px;
+  height: var(--control-h);
+  padding: 0 18px;
   border-radius: var(--radius-md);
   background: var(--accent);
   border: 1px solid var(--accent);
@@ -214,7 +232,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 /* ── Account menu ── */
 .nav__user-wrap { position: relative; }
 .nav__avatar {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: var(--control-h); height: var(--control-h); border-radius: 50%;
   background: var(--accent-glow); border: 1px solid var(--accent-2);
   color: var(--accent); font-family: var(--font-serif); font-size: 1rem;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -259,7 +277,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 @media (max-width: 600px) {
   .nav { padding: 0 16px; height: 56px; }
-  .nav__search-btn { min-width: 0; padding: 8px 11px; }
+  .nav__search-btn { min-width: 0; padding: 0 11px; }
   .nav__search-btn__label,
   .nav__search-btn__kbd { display: none; }
 }
@@ -288,7 +306,10 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 /* =============================================
    PAGE HEADER
    ============================================= */
-.page-header { padding: 32px 0 40px; border-bottom: 1px solid var(--border); }
+.page-header { padding: 32px 0 40px; }
+/* Body of a page whose header is a plate band: the band supplies the
+   top rule, so the body only needs to breathe under it. */
+.page-body { padding: 36px 0 80px; }
 .page-header__eyebrow {
   font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
@@ -754,15 +775,6 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
   justify-content: space-between; gap: 20px; background: var(--bg-2); margin: 36px 0; flex-wrap: wrap;
 }
 .donate-strip__text { font-size: 0.85rem; color: var(--text-2); font-style: italic; font-family: var(--font-serif); }
-.donate-strip__btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--accent); border: 1px solid var(--accent-2); padding: 8px 18px;
-  border-radius: var(--radius); transition: all var(--transition); background: var(--accent-glow);
-  text-decoration: none;
-}
-.donate-strip__btn i { color: var(--accent); font-size: 0.9rem; }
-.donate-strip__btn:hover { background: var(--accent-hover); border-color: var(--accent); }
 
 /* =============================================
    COACH CHIP
@@ -854,113 +866,83 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
 }
 
 /* =============================================
-   FOOTER — full revamped
+   FOOTER
+   The complete site map, on a closing plate. It
+   carries every secondary journey the nav gave up,
+   so it uses the same primitives as the rest of the
+   site: mono small-caps labels like every eyebrow,
+   and the shared outline button for support.
    ============================================= */
-.footer-full {
-  border-top: 1px solid var(--border);
-  background: var(--bg-2);
-  padding: 56px 0 32px;
-  margin-top: 64px;
+.footer {
+  margin-top: 80px;
+  padding: 64px 0 28px;
 }
-.footer-full__inner {
+.footer__inner { display: flex; flex-direction: column; }
+.footer__top {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-.footer-full__top {
-  display: flex;
-  gap: 56px;
-  margin-bottom: 44px;
+  gap: 64px;
   flex-wrap: wrap;
   align-items: flex-start;
+  margin-bottom: 48px;
 }
-.footer-full__brand {
-  flex: 0 0 220px;
-}
-.footer-full__logo {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 12px;
-  text-decoration: none;
+.footer__brand { flex: 0 0 232px; }
+.footer__logo {
+  display: inline-flex; align-items: center;
+  margin-bottom: 14px;
   transition: opacity var(--transition);
 }
-.footer-full__logo:hover { opacity: 0.75; }
-.footer-full__tagline {
+.footer__logo:hover { opacity: 0.75; }
+.footer__logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius); }
+.footer__tagline {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 0.83rem;
+  font-size: 0.86rem;
   color: var(--text-3);
-  line-height: 1.65;
-  margin-bottom: 18px;
+  line-height: 1.7;
+  margin-bottom: 20px;
 }
-.footer-full__support {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid var(--accent-2);
-  background: var(--accent-glow);
-  padding: 7px 14px;
-  border-radius: var(--radius);
-  text-decoration: none;
-  transition: all var(--transition);
-}
-.footer-full__support i { font-size: 0.85rem; color: var(--accent); }
-.footer-full__support:hover { background: var(--accent-hover); border-color: var(--accent); }
 
-.footer-full__links {
-  display: flex;
-  gap: 48px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-.footer-full__col {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  min-width: 100px;
-}
-.footer-full__col-label {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+.footer__links { display: flex; gap: 48px; flex-wrap: wrap; flex: 1; }
+.footer__col { display: flex; flex-direction: column; gap: 10px; min-width: 104px; }
+.footer__col-label {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
-.footer-full__link {
+.footer__link {
   font-size: 0.875rem;
   color: var(--text-2);
-  text-decoration: none;
-  transition: color var(--transition);
   line-height: 1.4;
+  transition: color var(--transition);
+  width: fit-content;
 }
-.footer-full__link:hover { color: var(--accent); }
-.footer-full__bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.footer-full__copy {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
-  color: var(--text-3);
-}
-.footer-full__copy strong { color: var(--text-2); font-weight: 400; }
+.footer__link:hover { color: var(--accent); }
+.footer__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius); }
 
-/* Keep old .footer class as fallback for any missed usages */
-.footer {
-  border-top: 1px solid var(--border); padding: 36px 24px;
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+.footer__bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.footer__copy {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.06em; color: var(--text-3);
+}
+.footer__copy strong { color: var(--text-2); font-weight: 400; }
+.footer__copy--quiet { opacity: 0.6; }
+
+@media (max-width: 860px) {
+  .footer { margin-top: 56px; padding-top: 48px; }
+  .footer__top { flex-direction: column; gap: 36px; }
+  .footer__brand { flex: none; width: 100%; }
+  .footer__links { gap: 28px 36px; }
+  .footer__bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+@media (max-width: 600px) {
+  .footer__links { gap: 24px 32px; }
+  .footer__col { min-width: calc(50% - 16px); }
 }
 
 /* =============================================
@@ -1064,9 +1046,8 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
   .lesson-item { flex-wrap: wrap; }
   .lesson-item__thumb { display: none; }
   .donate-strip { flex-direction: column; align-items: flex-start; }
-  .footer { flex-direction: column; align-items: flex-start; }
-  .footer-full__links { flex-direction: row; flex-wrap: wrap; gap: 20px 32px; }
-  .footer-full__col { min-width: calc(50% - 16px); }
+  .footer__links { flex-direction: row; flex-wrap: wrap; gap: 20px 32px; }
+  .footer__col { min-width: calc(50% - 16px); }
   .profile-header { flex-direction: column; align-items: flex-start; gap: 14px; }
   .coach-hero { flex-direction: column; }
   .enrolled-grid { grid-template-columns: 1fr; }
@@ -1079,7 +1060,6 @@ h1,h2,h3,h4 { font-family: var(--font-serif); font-weight: 400; line-height: 1.2
    ============================================= */
 .program-page-header {
   padding: 36px 0 40px;
-  border-bottom: 1px solid var(--border);
 }
 .program-page-header__meta {
   display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
@@ -1618,20 +1598,20 @@ i[class*="ri-"] {
   
   
   
-  .footer-full__top { flex-direction: column; gap: 36px; }
-  .footer-full__brand { flex: none; width: 100%; }
-  .footer-full__links { gap: 28px; }
-  .footer-full__bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
 
 /* =============================================
    STATIC PAGES (about, contact, terms, privacy)
+   The header sits on a plate band, the prose sits
+   in its own measure below it — so a legal page
+   arrives the same way /teach does.
    ============================================= */
 .static-page {
   max-width: 680px;
   padding: 48px 0 80px;
 }
-.static-page__header { margin-bottom: 36px; }
+.static-page__header { max-width: 680px; padding: 52px 0 44px; }
+.static-page__body-wrap { max-width: 680px; padding: 44px 0 88px; }
 .static-page__eyebrow {
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -1671,6 +1651,63 @@ i[class*="ri-"] {
 .static-page__body strong { color: var(--text); font-weight: 500; }
 .static-page__body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .static-page__body a:hover { opacity: 0.8; }
+.static-page__lede {
+  font-size: 0.98rem; color: var(--text-2); line-height: 1.75;
+  max-width: 58ch; margin-top: 14px;
+}
+
+/* ── Contact routes ──
+   One row per reason to write, so the inbox stops being a single
+   undifferentiated mailto. Same card language as the rest of the site. */
+.contact-routes { display: flex; flex-direction: column; gap: 14px; }
+.contact-route {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  transition: border-color var(--transition), transform var(--transition);
+}
+.contact-route:hover { border-color: var(--border-2); transform: translateY(-2px); }
+.contact-route__icon {
+  width: 38px; height: 38px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-2);
+  color: var(--accent); font-size: 1.05rem;
+}
+.contact-route__label {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 6px;
+}
+.contact-route__title { font-family: var(--font-serif); font-size: 1.08rem; margin-bottom: 6px; }
+.contact-route__desc { font-size: 0.88rem; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; }
+.contact-route__action {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.86rem; color: var(--accent);
+  transition: gap var(--transition);
+}
+.contact-route__action:hover { gap: 10px; }
+.contact-route__action i { font-size: 0.95rem; }
+
+/* ── Dead end (404) ──
+   A missing page is still a page: same plate, same buttons, two real
+   ways out instead of one underlined mono link. */
+.dead-end { padding: clamp(72px, 12vw, 128px) 0; max-width: 46ch; }
+.dead-end__code {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.dead-end__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  line-height: 1.15; margin-bottom: 14px;
+}
+.dead-end__desc { font-size: 0.96rem; color: var(--text-2); line-height: 1.75; margin-bottom: 28px; }
+.dead-end__actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
 /* =============================================
    COACHES INDEX PAGE
@@ -1713,8 +1750,6 @@ i[class*="ri-"] {
 .coach-card:hover .coach-card__arrow { color: var(--accent); transform: translateX(3px); }
 
 @media (max-width: 600px) {
-  .footer-full__top { flex-direction: column; gap: 28px; }
-  .footer-full__links { gap: 24px; }
   .coaches-grid { grid-template-columns: 1fr; }
 }
 
@@ -2580,27 +2615,8 @@ i[class*="ri-"] {
    Editorial-serif variant of the landing language:
    same tokens, wider rhythm, numbered plates.
    ============================================= */
-.teach-hero {
-  position: relative;
-  overflow: hidden;
-  border-bottom: 1px solid var(--border);
-  background:
-    radial-gradient(120% 90% at 88% -10%, var(--accent-glow) 0%, transparent 60%),
-    var(--bg);
-}
-/* Faint rule grid — texture without an image request. */
-.teach-hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 72px 72px;
-  opacity: 0.28;
-  mask-image: radial-gradient(90% 70% at 50% 0%, #000 0%, transparent 75%);
-  -webkit-mask-image: radial-gradient(90% 70% at 50% 0%, #000 0%, transparent 75%);
-  pointer-events: none;
-}
+.teach-hero { position: relative; overflow: hidden; }
+
 .teach-hero__inner {
   position: relative;
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -2795,8 +2811,7 @@ i[class*="ri-"] {
 }
 .teach-rail__more {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 18px;
-  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--accent);
+  font-size: 0.86rem; color: var(--accent);
   transition: gap var(--transition);
 }
 .teach-rail__more:hover { gap: 10px; }
@@ -2825,10 +2840,6 @@ i[class*="ri-"] {
 
 /* ── Closing CTA ── */
 .teach-close {
-  border-top: 1px solid var(--border);
-  background:
-    radial-gradient(90% 120% at 50% 120%, var(--accent-glow) 0%, transparent 65%),
-    var(--bg);
   padding: 72px 0 84px;
   text-align: center;
 }
@@ -2895,15 +2906,7 @@ i[class*="ri-"] {
 .teach-callout__text {
   margin: 0; font-size: 0.86rem; color: var(--text-2); line-height: 1.6; max-width: 68ch;
 }
-.teach-callout__btn {
-  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
-  font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--accent);
-  background: var(--accent-glow); border: 1px solid var(--accent-2);
-  padding: 9px 16px; border-radius: var(--radius);
-  transition: all var(--transition); white-space: nowrap;
-}
-.teach-callout__btn:hover { background: var(--accent-hover); border-color: var(--accent); }
+.teach-callout__btn { flex-shrink: 0; white-space: nowrap; }
 @media (max-width: 700px) {
   .teach-callout { flex-direction: column; align-items: flex-start; gap: 14px; }
   .teach-callout__btn { width: 100%; justify-content: center; }
@@ -3828,6 +3831,88 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
 }
 
 /* =============================================
+   PLATE — the shared page-top backdrop
+   A soft accent bloom in one corner plus a faint
+   rule grid that fades out downward. Both are
+   painted from theme tokens, so there is no image
+   request and it inverts with the theme.
+
+   Built first for the /teach hero. It is now the
+   standard treatment for the top of every page, in
+   two forms:
+
+     .plate           full-bleed band, for a header
+                      that is a direct child of main
+     .plate--inset    the same texture clipped to a
+                      rounded panel, for a header
+                      that sits inside a column
+                      (sidebar pages, settings)
+
+   The header inside keeps its own padding, so a
+   plate never changes a page's vertical rhythm.
+   ============================================= */
+.plate {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 88% -10%, var(--accent-glow) 0%, transparent 60%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Faint rule grid — texture without an image request. The mask fades it
+   out downward so the band never ends on a hard line of squares. */
+.plate::before {
+  content: '';
+  position: absolute; inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: 0.28;
+  mask-image: radial-gradient(90% 70% at 50% 0%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(90% 70% at 50% 0%, #000 0%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Inset form: a panel, not a band. Used where the page is a column
+   inside a wider layout, so a full-bleed band is not available. */
+.plate--inset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0 26px;
+  margin: 20px 0 0;
+}
+.plate--inset::before {
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 80%);
+}
+
+/* Closing form: same texture, bloom rising from the bottom instead.
+   For the last band on a page, where the eye is leaving rather than
+   arriving. */
+.plate--close {
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  background:
+    radial-gradient(90% 120% at 50% 120%, var(--accent-glow) 0%, transparent 65%),
+    var(--bg);
+}
+.plate--close::before {
+  mask-image: radial-gradient(90% 80% at 50% 100%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(90% 80% at 50% 100%, #000 0%, transparent 75%);
+}
+
+/* Quiet form: texture, no rule. For a band followed by another band. */
+.plate--quiet { border-bottom: none; }
+
+@media (max-width: 600px) {
+  .plate--inset { padding: 0 18px; }
+}
+
+/* =============================================
    SHARED PATTERNS
    One row header, one course card, one segmented
    control — reused by the home page, the landing
@@ -4039,7 +4124,6 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
    then the catalogue. No metric panels, no
    feature pills, no sidebar of claims.
    ============================================= */
-.lp-hero { border-bottom: 1px solid var(--border); }
 .lp-hero__inner {
   padding: clamp(56px, 9vw, 92px) 24px clamp(48px, 7vw, 72px);
   max-width: 720px;
@@ -4096,7 +4180,7 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
 
 .lp-courses { padding: 56px 24px 72px; }
 
-.lp-close { border-top: 1px solid var(--border); background: var(--bg-2); }
+.lp-close { }
 .lp-close__inner {
   display: flex; align-items: center; justify-content: space-between;
   gap: 28px; flex-wrap: wrap;

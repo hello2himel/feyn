@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getProgram, getCoachesFor, getTotalLessons, getTopicCount, getSubjectFirstVideo, getAllProgramPaths } from '../data/courseHelpers'
-import { Nav, Footer, YTThumb, CoachChip, ProgressBar } from '../components/Layout'
+import { Nav, Footer, YTThumb, CoachChip, ProgressBar, Plate } from '../components/Layout'
 import { isEnrolled, getSubjectProgress } from '../lib/userStore'
 
 export default function ProgramPage({ program }) {
@@ -36,7 +36,7 @@ export default function ProgramPage({ program }) {
       </Head>
       <Nav />
       <main>
-        <div className="container">
+        <Plate>
           <header className="program-page-header">
             <div className="program-page-header__meta">
               <Link href="/" className="program-page-header__back"><i className="ri-arrow-left-line" /> All Programs</Link>
@@ -50,7 +50,9 @@ export default function ProgramPage({ program }) {
               {totalLessons > 0 && <span><i className="ri-play-circle-line" /> {totalLessons} lessons</span>}
             </div>
           </header>
+        </Plate>
 
+        <div className="container page-body">
           <section className="program-subjects">
             <p className="section-label"><i className="ri-stack-line" style={{marginRight:6}}/>Subjects</p>
             <div className="program-subject-grid">

@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { Nav, Footer } from '../components/Layout'
+import { Nav, Footer, Plate } from '../components/Layout'
 
 export default function AboutPage() {
   return (
@@ -11,12 +11,14 @@ export default function AboutPage() {
       </Head>
       <Nav />
       <main>
+        <Plate>
+          <header className="static-page__header">
+            <p className="static-page__eyebrow">About</p>
+            <h1 className="static-page__title">What is Feyn?</h1>
+          </header>
+        </Plate>
         <div className="container">
-          <div className="static-page">
-            <header className="static-page__header">
-              <p className="static-page__eyebrow">About</p>
-              <h1 className="static-page__title">What is Feyn?</h1>
-            </header>
+          <div className="static-page__body-wrap">
             <div className="static-page__body">
               <p>
                 Feyn is the educational video platform of <strong>STΛRGZR</strong>, a community

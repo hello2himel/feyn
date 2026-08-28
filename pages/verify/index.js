@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { Nav, Footer } from '../../components/Layout'
+import { Nav, Footer, Plate } from '../../components/Layout'
 import { getSupabase } from '../../lib/supabase'
 
 const CERT_ID_SUFFIX_LENGTH = 16
@@ -77,7 +77,7 @@ export default function VerifyPage() {
       </Head>
       <Nav />
       <main>
-        <div className="container">
+        <Plate variant="quiet">
           <div className="verify-page">
 
             {state === 'loading' && (
@@ -168,7 +168,7 @@ export default function VerifyPage() {
             )}
 
           </div>
-        </div>
+        </Plate>
       </main>
       <Footer />
     </>
