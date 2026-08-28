@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getProgram, getSubject, getCoachesFor, getSubjectMaterials, getTopicLessonCount, getAllTopicPaths } from '../../../data/courseHelpers'
-import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth } from '../../../components/Layout'
+import { Nav, Footer, Breadcrumb, CoachChip, SourceBadge, ProgressBar, MaterialsSidebar, YTThumb, useAuth, Plate } from '../../../components/Layout'
 import { isWatched, getSubjectProgress } from '../../../lib/userStore'
 
 export default function TopicPage({ program, subject, topic, allMaterials }) {
@@ -42,26 +42,28 @@ export default function TopicPage({ program, subject, topic, allMaterials }) {
               { label: topic.name },
             ]} />
 
-            <header className="page-header">
-              <p className="page-header__eyebrow"><i className="ri-book-open-line" /> {subject.name}</p>
-              <h1 className="page-header__title">{topic.name}</h1>
-              <p className="page-header__desc">{topic.description}</p>
-              {coaches.length > 0 && (
-                <div className="subject-coaches" style={{ marginTop:14 }}>
-                  {coaches.map(c => <CoachChip key={c.id} coach={c} />)}
-                </div>
-              )}
-              {topic.primarySource && (
-                <div style={{ marginTop: 10 }}>
-                  <SourceBadge source={topic.primarySource} />
-                </div>
-              )}
-              {mounted && signedIn && allLessons.length > 0 && (
-                <div style={{ marginTop:14, maxWidth:300 }}>
-                  <ProgressBar pct={topicPct} label={`${watchedCount} / ${allLessons.length} watched`} />
-                </div>
-              )}
-            </header>
+            <Plate variant="inset">
+              <header className="page-header">
+                <p className="page-header__eyebrow"><i className="ri-book-open-line" /> {subject.name}</p>
+                <h1 className="page-header__title">{topic.name}</h1>
+                <p className="page-header__desc">{topic.description}</p>
+                {coaches.length > 0 && (
+                  <div className="subject-coaches" style={{ marginTop:14 }}>
+                    {coaches.map(c => <CoachChip key={c.id} coach={c} />)}
+                  </div>
+                )}
+                {topic.primarySource && (
+                  <div style={{ marginTop: 10 }}>
+                    <SourceBadge source={topic.primarySource} />
+                  </div>
+                )}
+                {mounted && signedIn && allLessons.length > 0 && (
+                  <div style={{ marginTop:14, maxWidth:300 }}>
+                    <ProgressBar pct={topicPct} label={`${watchedCount} / ${allLessons.length} watched`} />
+                  </div>
+                )}
+              </header>
+            </Plate>
 
             {/* Skills with lessons */}
             {(topic.skills || []).map((skill, si) => (

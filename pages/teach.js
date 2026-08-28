@@ -153,7 +153,7 @@ export default function TeachPage({ stats, mentors }) {
       <main>
 
         {/* ══ HERO ══ */}
-        <section className="teach-hero">
+        <section className="teach-hero plate">
           <div className="teach-hero__inner container">
             <div className="teach-hero__content">
               <span className="teach-hero__badge">
@@ -331,7 +331,7 @@ export default function TeachPage({ stats, mentors }) {
         </section>
 
         {/* ══ CLOSING CTA ══ */}
-        <section className="teach-close">
+        <section className="teach-close plate plate--close">
           <div className="container teach-close__inner">
             <p className="teach-close__quote">
               <i className="ri-double-quotes-l" /> If you can&rsquo;t explain it simply, you don&rsquo;t

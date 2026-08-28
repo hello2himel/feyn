@@ -8,7 +8,7 @@
 
 import Head from 'next/head'
 import Link from 'next/link'
-import { Nav, Footer, TeachCallout } from '../../components/Layout'
+import { Nav, Footer, TeachCallout, PageHeader } from '../../components/Layout'
 import { getMentors, getMentorCourses, getTotalLessons } from '../../data/courseHelpers'
 
 export default function MentorDirectory({ mentors }) {
@@ -20,15 +20,14 @@ export default function MentorDirectory({ mentors }) {
       </Head>
       <Nav />
       <main>
-        <div className="container">
-          <header className="page-header">
-            <p className="page-header__eyebrow"><i className="ri-user-star-line" /> Mentors</p>
-            <h1 className="page-header__title">The people who teach here</h1>
-            <p className="page-header__desc">
-              Educators and community members who believe in explaining things properly.
-            </p>
-          </header>
+        <PageHeader
+          eyebrow="Mentors"
+          icon="ri-user-star-line"
+          title="The people who teach here"
+          desc="Educators and community members who believe in explaining things properly."
+        />
 
+        <div className="container page-body">
           {mentors.length === 0 && <p className="empty-state">No mentors yet.</p>}
 
           <div className="coaches-grid">

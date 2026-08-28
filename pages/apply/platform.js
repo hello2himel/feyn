@@ -12,7 +12,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Nav, Footer, useAuth } from '../../components/Layout'
+import { Nav, Footer, useAuth, PageHeader } from '../../components/Layout'
 import HandleField from '../../components/HandleField'
 import { callRpc, authedClient } from '../../lib/api'
 import { invalidatePermissions } from '../../lib/usePermissions'
@@ -202,17 +202,13 @@ function Shell({ children }) {
       <Head><title>Register a platform · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container" style={{ paddingBottom: 80 }}>
-          <header className="page-header">
-            <p className="page-header__eyebrow"><i className="ri-building-line" /> Platform registration</p>
-            <h1 className="page-header__title">Publish as an organisation</h1>
-            <p className="page-header__desc">
-              A platform owns its courses and can invite mentors to teach under it. An app admin
-              reviews every registration; on approval you become its first admin.
-            </p>
-          </header>
-          <div style={{ paddingTop: 32 }}>{children}</div>
-        </div>
+        <PageHeader
+          eyebrow="Platform registration"
+          icon="ri-building-line"
+          title="Publish as an organisation"
+          desc="A platform owns its courses and can invite mentors to teach under it. An app admin reviews every registration; on approval you become its first admin."
+        />
+        <div className="container page-body">{children}</div>
       </main>
       <Footer />
     </>

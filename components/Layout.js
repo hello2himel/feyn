@@ -227,74 +227,141 @@ export function Nav() {
   )
 }
 
+// ── Plate ──────────────────────────────────────────────────────────────
+// The shared page-top band: a soft accent bloom in one corner over a
+// faint rule grid, both painted from theme tokens so there is no image
+// request and it inverts with the theme.
+//
+// This was built for the /teach hero. It is now the standard treatment
+// for the top of every page, so arriving anywhere on Feyn reads as the
+// same site rather than a set of separately-designed screens.
+//
+//   variant 'quiet'  no hairline — for a band followed by another band
+//           'close'  bloom rises from the bottom — for a closing band
+//           'inset'  texture clipped to a rounded panel, for a header
+//                    that lives inside a column rather than the page
+//                    (sidebar layouts, settings). Renders no container,
+//                    since the column already supplies the measure.
+//   wide            use the 1100px measure instead of 860px
+export function Plate({ children, variant, wide = false, className = '', ...rest }) {
+  const cls = ['plate', variant && `plate--${variant}`, className].filter(Boolean).join(' ')
+  const inset = variant === 'inset'
+  return (
+    <section className={cls} {...rest}>
+      {inset ? children : <div className={wide ? 'container--wide' : 'container'}>{children}</div>}
+    </section>
+  )
+}
+
+// ── PageHeader ─────────────────────────────────────────────────────────
+// Eyebrow, title, optional lede — on a plate. Every page-top heading
+// that is not a bespoke hero goes through this, which is what keeps the
+// eyebrow size, the title clamp and the band texture identical across
+// /coaches, /admin, /apply/*, the topic page and the publisher pages.
+//
+// Anything extra (progress bars, chips, actions) is passed as children
+// and lands under the lede, inside the same band.
+export function PageHeader({ eyebrow, icon, title, desc, children, variant, wide, actions }) {
+  return (
+    <Plate variant={variant} wide={wide}>
+      <header className="page-header">
+        {eyebrow && (
+          <p className="page-header__eyebrow">
+            {icon && <i className={icon} aria-hidden="true" />}
+            {eyebrow}
+          </p>
+        )}
+        <div className="page-header__row">
+          <div className="page-header__text">
+            <h1 className="page-header__title">{title}</h1>
+            {desc && <p className="page-header__desc">{desc}</p>}
+          </div>
+          {actions && <div className="page-header__actions">{actions}</div>}
+        </div>
+        {children}
+      </header>
+    </Plate>
+  )
+}
+
 // ── Footer ─────────────────────────────────────────────────────────────
+// The footer carries every secondary journey the nav gave up: teaching,
+// support, legal, the mentor directory. It is the one place on the site
+// with a complete map, so it is worth reading rather than skipping.
+//
+// Same design language as the rest of the site: it sits on a closing
+// plate, column labels are mono small-caps like every other eyebrow,
+// and "Support the project" is the shared outline button instead of a
+// one-off uppercase pill.
 export function Footer() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const year    = new Date().getFullYear()
   const profile = typeof window !== 'undefined' ? getProfile() : null
   const donate  = getDonateUrl(profile, mounted)
+
   return (
-    <footer className="footer-full">
-      <div className="footer-full__inner container--wide">
+    <footer className="footer plate plate--close">
+      <div className="footer__inner container--wide">
 
-        {/* Top row: brand + link columns */}
-        <div className="footer-full__top">
-
-          {/* Brand */}
-          <div className="footer-full__brand">
-            <Link href="/" className="footer-full__logo">
+        {/* Brand + the map */}
+        <div className="footer__top">
+          <div className="footer__brand">
+            <Link href="/" className="footer__logo" aria-label="Feyn home">
               <FeynLogo />
             </Link>
-            <p className="footer-full__tagline">
+            <p className="footer__tagline">
               Learn the way Feynman would.<br />
               First principles. No fluff.
             </p>
-            <a href={donate} className="footer-full__support" target="_blank" rel="noopener noreferrer">
-              <i className="ri-heart-fill" /> Support the project
+            <a
+              href={donate}
+              className="btn btn--ghost btn--sm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="ri-heart-line" aria-hidden="true" /> Support the project
             </a>
           </div>
 
-          {/* Link columns */}
-          <div className="footer-full__links">
-            <div className="footer-full__col">
-              <p className="footer-full__col-label">Learn</p>
-              <Link href="/#courses" className="footer-full__link">All courses</Link>
-              <Link href="/coaches" className="footer-full__link">Coaches</Link>
-              <Link href="/about" className="footer-full__link">About Feyn</Link>
+          <nav className="footer__links" aria-label="Footer">
+            <div className="footer__col">
+              <p className="footer__col-label">Learn</p>
+              <Link href="/#courses" className="footer__link">All courses</Link>
+              <Link href="/coaches" className="footer__link">Mentors</Link>
+              <Link href="/verify" className="footer__link">Verify a certificate</Link>
             </div>
-            <div className="footer-full__col">
-              <p className="footer-full__col-label">Teach</p>
-              <Link href="/teach" className="footer-full__link">Teach on Feyn</Link>
-              <Link href="/apply/mentor" className="footer-full__link">Become a mentor</Link>
-              <Link href="/apply/platform" className="footer-full__link">Register a platform</Link>
+            <div className="footer__col">
+              <p className="footer__col-label">Teach</p>
+              <Link href="/teach" className="footer__link">Teach on Feyn</Link>
+              <Link href="/apply/mentor" className="footer__link">Become a mentor</Link>
+              <Link href="/apply/platform" className="footer__link">Register a platform</Link>
             </div>
-            <div className="footer-full__col">
-              <p className="footer-full__col-label">Account</p>
-              <Link href="/profile" className="footer-full__link">Profile</Link>
-              <Link href="/settings" className="footer-full__link">Settings</Link>
-              <Link href="/studio" className="footer-full__link">My studio</Link>
+            <div className="footer__col">
+              <p className="footer__col-label">Account</p>
+              <Link href="/profile" className="footer__link">Profile</Link>
+              <Link href="/settings" className="footer__link">Settings</Link>
+              <Link href="/studio" className="footer__link">My studio</Link>
             </div>
-            <div className="footer-full__col">
-              <p className="footer-full__col-label">Company</p>
-              <Link href="/about" className="footer-full__link">About</Link>
-              <Link href="/contact" className="footer-full__link">Contact</Link>
-              <a href={donate} className="footer-full__link" target="_blank" rel="noopener noreferrer">Donate</a>
+            <div className="footer__col">
+              <p className="footer__col-label">Project</p>
+              <Link href="/about" className="footer__link">About Feyn</Link>
+              <Link href="/contact" className="footer__link">Contact</Link>
+              <a href={donate} className="footer__link" target="_blank" rel="noopener noreferrer">Donate</a>
             </div>
-            <div className="footer-full__col">
-              <p className="footer-full__col-label">Legal</p>
-              <Link href="/privacy" className="footer-full__link">Privacy policy</Link>
-              <Link href="/terms" className="footer-full__link">Terms of use</Link>
+            <div className="footer__col">
+              <p className="footer__col-label">Legal</p>
+              <Link href="/privacy" className="footer__link">Privacy policy</Link>
+              <Link href="/terms" className="footer__link">Terms of use</Link>
             </div>
-          </div>
+          </nav>
         </div>
 
-        {/* Bottom bar */}
-        <div className="footer-full__bottom">
-          <p className="footer-full__copy">
+        <div className="footer__bottom">
+          <p className="footer__copy">
             © {year} Feyn · Part of <strong>STΛRGZR</strong> · Inspired by Feynman Files
           </p>
-          <p className="footer-full__copy" style={{ opacity: 0.5 }}>
+          <p className="footer__copy footer__copy--quiet">
             Free forever. No ads. No tracking.
           </p>
         </div>
@@ -303,6 +370,7 @@ export function Footer() {
     </footer>
   )
 }
+
 
 // ── Auth gate ──────────────────────────────────────────────────────────
 export function AuthGate({ children, fallback }) {
@@ -350,8 +418,8 @@ export function DonateStrip() {
       <p className="donate-strip__text">
         This content is free. If it's helped you, consider supporting the project.
       </p>
-      <a href={donate} className="donate-strip__btn" target="_blank" rel="noopener noreferrer">
-        <i className="ri-heart-fill" /> Support
+      <a href={donate} className="btn btn--cert btn--sm" target="_blank" rel="noopener noreferrer">
+        <i className="ri-heart-line" aria-hidden="true" /> Support
       </a>
     </div>
   )
@@ -375,8 +443,8 @@ export function TeachCallout({ compact = false }) {
           yourself, or under your school. Free, no ads, no revenue cut.
         </p>
       </div>
-      <Link href="/teach" className="teach-callout__btn">
-        <i className="ri-arrow-right-line" /> Start teaching
+      <Link href="/teach" className="btn btn--cert btn--sm teach-callout__btn">
+        Start teaching <i className="ri-arrow-right-line" aria-hidden="true" />
       </Link>
     </aside>
   )

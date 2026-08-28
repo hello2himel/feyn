@@ -19,7 +19,7 @@ import {
   getTopicCount,
 } from '../../../data/courseHelpers'
 import { getPublicServerClient } from '../../../lib/supabaseServer'
-import { Nav, Footer, YTThumb } from '../../../components/Layout'
+import { Nav, Footer, YTThumb, Plate } from '../../../components/Layout'
 
 const ROLE_LABEL = { admin: 'Admin', editor: 'Editor', mentor: 'Mentor' }
 
@@ -37,7 +37,7 @@ export default function PublisherPage({ publisher, courses, members }) {
       </Head>
       <Nav />
       <main>
-        <div className="container">
+        <Plate>
           <header className="page-header" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             <div
               className="coach-hero__avatar"
@@ -61,10 +61,11 @@ export default function PublisherPage({ publisher, courses, members }) {
               </div>
             </div>
           </header>
+        </Plate>
 
+        <div className="container page-body">
           {members.length > 0 && (
             <>
-              <div className="divider" />
               <section>
                 <p className="section-label"><i className="ri-team-line" style={{ marginRight: 6 }} />Members</p>
                 <div className="coaches-grid">
@@ -91,7 +92,7 @@ export default function PublisherPage({ publisher, courses, members }) {
 
           <div className="divider" />
 
-          <section style={{ paddingBottom: 60 }}>
+          <section>
             <p className="section-label"><i className="ri-stack-line" style={{ marginRight: 6 }} />Courses</p>
             {courses.length === 0 && <p className="empty-state">No published courses yet.</p>}
             <div className="program-subject-grid">

@@ -17,7 +17,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback } from 'react'
-import { Nav, Footer, useAuth } from '../../../components/Layout'
+import { Nav, Footer, useAuth, Plate } from '../../../components/Layout'
 import HandleField from '../../../components/HandleField'
 import { usePermissions } from '../../../lib/usePermissions'
 import { canManagePublisher, canCreateSubject, hasPublisherRole, canEditSubject } from '../../../lib/permissions'
@@ -450,7 +450,7 @@ function Shell({ slug, publisher, children }) {
       <Head><title>{publisher?.name || slug || 'Publisher'} dashboard · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container" style={{ paddingBottom: 80 }}>
+        <Plate>
           <header className="page-header">
             <p className="page-header__eyebrow"><i className="ri-dashboard-line" /> Publisher dashboard</p>
             <h1 className="page-header__title">{publisher?.name || slug}</h1>
@@ -460,8 +460,8 @@ function Shell({ slug, publisher, children }) {
               </p>
             )}
           </header>
-          <div style={{ paddingTop: 32 }}>{children}</div>
-        </div>
+        </Plate>
+        <div className="container page-body">{children}</div>
       </main>
       <Footer />
     </>

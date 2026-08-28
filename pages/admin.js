@@ -22,7 +22,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import { Nav, Footer, useAuth } from '../components/Layout'
+import { Nav, Footer, useAuth, PageHeader } from '../components/Layout'
 import { usePermissions } from '../lib/usePermissions'
 import { callRpc, authedClient } from '../lib/api'
 
@@ -317,16 +317,13 @@ function Shell({ children }) {
       <Head><title>Admin console · Feyn</title></Head>
       <Nav />
       <main>
-        <div className="container" style={{ paddingBottom: 80 }}>
-          <header className="page-header">
-            <p className="page-header__eyebrow"><i className="ri-shield-user-line" /> App admin</p>
-            <h1 className="page-header__title">Admin console</h1>
-            <p className="page-header__desc">
-              Approval queues for mentors and platforms, plus global override into any publisher.
-            </p>
-          </header>
-          <div style={{ paddingTop: 32 }}>{children}</div>
-        </div>
+        <PageHeader
+          eyebrow="App admin"
+          icon="ri-shield-user-line"
+          title="Admin console"
+          desc="Approval queues for mentors and platforms, plus global override into any publisher."
+        />
+        <div className="container page-body">{children}</div>
       </main>
       <Footer />
     </>

@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { Nav, Footer } from '../components/Layout'
+import { Nav, Footer, Plate } from '../components/Layout'
 
 export default function PrivacyPage() {
   return (
@@ -7,13 +7,15 @@ export default function PrivacyPage() {
       <Head><title>Privacy Policy - Feyn</title></Head>
       <Nav />
       <main>
+        <Plate>
+          <header className="static-page__header">
+            <p className="static-page__eyebrow">Legal</p>
+            <h1 className="static-page__title">Privacy Policy</h1>
+            <p className="static-page__date">Last updated: January 2025</p>
+          </header>
+        </Plate>
         <div className="container">
-          <div className="static-page">
-            <header className="static-page__header">
-              <p className="static-page__eyebrow">Legal</p>
-              <h1 className="static-page__title">Privacy Policy</h1>
-              <p className="static-page__date">Last updated: January 2025</p>
-            </header>
+          <div className="static-page__body-wrap">
             <div className="static-page__body">
               <p>
                 The short version: we collect as little data as possible, we don't sell
