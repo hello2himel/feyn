@@ -76,29 +76,53 @@ export function FeynLogo({ className = '' }) {
 }
 
 // ── Nav ────────────────────────────────────────────────────────────────
+// Two actions, never more: find something, or manage yourself.
+//
+// Teach, Support, theme and admin used to sit in the bar as separate
+// buttons, which meant five competing targets on every page. They are
+// secondary journeys, so they now live one level down — in the account
+// menu for signed-in users and in the footer for everyone. The bar keeps
+// only what a learner reaches for mid-task.
 export function Nav() {
   const { theme, toggle } = useTheme()
   const { user, signedIn, setShowAuth, refresh, mounted } = useAuth()
   // Studio/admin links come from real DB permissions, cached per session.
   const { perms } = usePermissions()
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [searchOpen, setSearchOpen]     = useState(false)
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
-  // Cmd/Ctrl+K — open search palette
+  // Cmd/Ctrl+K anywhere, plus a `feyn:search` event so any page can offer
+  // its own "browse everything" button without duplicating the palette.
   useEffect(() => {
     function onKey(e) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setSearchOpen(o => !o)
       }
     }
+    function onOpen() { setSearchOpen(true) }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('feyn:search', onOpen)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('feyn:search', onOpen)
+    }
   }, [])
 
+  // Close the account menu on Escape — it is a popover, so it must be
+  // dismissible from the keyboard.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = e => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
   function handleSignOut() {
-    signOut(); refresh(); setUserMenuOpen(false)
+    signOut(); refresh(); setMenuOpen(false)
   }
+
+  const canPublish = mounted && hasStudioAccess(perms)
 
   return (
     <>
@@ -108,98 +132,75 @@ export function Nav() {
         </Link>
 
         <div className="nav__right">
-          {/* Search */}
+          {/* Find */}
           <button
             className="nav__search-btn"
             onClick={() => setSearchOpen(true)}
             aria-label="Search courses"
             title="Search  ⌘K"
           >
-            <i className="ri-search-line" />
+            <i className="ri-search-line" aria-hidden="true" />
             <span className="nav__search-btn__label">Search</span>
-            <span className="nav__search-btn__kbd">⌘K</span>
+            <span className="nav__search-btn__kbd" aria-hidden="true">⌘K</span>
           </button>
 
-          {/* Teach — the recruitment entry point. Mirrors YouTube's
-              "Create" affordance: always visible, but it becomes the
-              studio shortcut once you actually have somewhere to
-              publish, so it is never a dead end. */}
-          {mounted && hasStudioAccess(perms) ? (
-            <Link href="/studio" className="nav__teach nav__teach--studio" title="Open your studio">
-              <i className="ri-add-circle-line" /><span>Create</span>
-            </Link>
-          ) : (
-            <Link href="/teach" className="nav__teach" title="Teach on Feyn">
-              <i className="ri-quill-pen-line" /><span>Teach</span>
-            </Link>
-          )}
-
-          {/* Support */}
-          <a href={getDonateUrl(user, mounted)} className="nav__donate" target="_blank" rel="noopener noreferrer" title="Support Feyn">
-            <i className="ri-heart-fill" /><span>Support</span>
-          </a>
-
-          {/* Auth */}
+          {/* Account */}
           {mounted && (
             signedIn ? (
               <div className="nav__user-wrap">
                 <button
                   className="nav__avatar"
-                  onClick={() => setUserMenuOpen(o => !o)}
-                  aria-label="User menu"
+                  onClick={() => setMenuOpen(o => !o)}
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
                 >
                   {user?.name?.[0]?.toUpperCase() || <i className="ri-user-line" />}
                 </button>
 
-                {userMenuOpen && (
+                {menuOpen && (
                   <>
-                    <div className="nav__user-backdrop" onClick={() => setUserMenuOpen(false)} />
-                    <div className="nav__user-menu">
-                      {/* User info */}
+                    <div className="nav__user-backdrop" onClick={() => setMenuOpen(false)} />
+                    <div className="nav__user-menu" role="menu">
                       <div className="nav__user-menu__header">
                         <p className="nav__user-menu__name">{user?.name || 'User'}</p>
                         {user?.username && <p className="nav__user-menu__username">@{user.username}</p>}
                       </div>
 
-                      {/* Nav links */}
-                      <Link href="/profile" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                        <i className="ri-user-line" /> Profile
+                      <Link href="/profile" className="nav__user-menu__item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                        <i className="ri-user-line" aria-hidden="true" /> Profile
                       </Link>
-                      <Link href="/settings" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                        <i className="ri-settings-3-line" /> Settings
+                      <Link href="/settings" className="nav__user-menu__item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                        <i className="ri-settings-3-line" aria-hidden="true" /> Settings
                       </Link>
-                      {/* Studio link appears from real memberships, not an
-                          env-var email list — see lib/permissions.js. */}
-                      {hasStudioAccess(perms) && (
-                        <Link href="/studio" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                          <i className="ri-dashboard-line" /> My studio
+
+                      {/* Publishing entry point. Which link you get depends on
+                          real memberships, so it is never a dead end. */}
+                      {canPublish ? (
+                        <Link href="/studio" className="nav__user-menu__item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                          <i className="ri-dashboard-line" aria-hidden="true" /> My studio
                         </Link>
-                      )}
-                      {/* Signed in but nothing to publish with yet — this is
-                          the only place a learner is told mentoring exists. */}
-                      {!hasStudioAccess(perms) && (
-                        <Link href="/teach" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                          <i className="ri-quill-pen-line" /> Teach on Feyn
+                      ) : (
+                        <Link href="/teach" className="nav__user-menu__item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                          <i className="ri-quill-pen-line" aria-hidden="true" /> Teach on Feyn
                         </Link>
                       )}
                       {perms.isAppAdmin && (
-                        <Link href="/admin" className="nav__user-menu__item" onClick={() => setUserMenuOpen(false)}>
-                          <i className="ri-shield-user-line" /> Admin console
+                        <Link href="/admin" className="nav__user-menu__item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                          <i className="ri-shield-user-line" aria-hidden="true" /> Admin console
                         </Link>
                       )}
 
-                      {/* Theme toggle — lives here, not as a standalone nav button */}
-                      <button className="nav__user-menu__item nav__user-menu__item--theme" onClick={toggle}>
-                        <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
-                        Mode
+                      <button className="nav__user-menu__item nav__user-menu__item--theme" role="menuitem" onClick={toggle}>
+                        <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} aria-hidden="true" />
+                        Appearance
                         <span className="nav__user-menu__theme-badge">
                           {theme === 'dark' ? 'Dark' : 'Light'}
                         </span>
                       </button>
 
-                      {/* Sign out */}
-                      <button className="nav__user-menu__item nav__user-menu__item--danger" onClick={handleSignOut}>
-                        <i className="ri-logout-box-line" /> Sign out
+                      <button className="nav__user-menu__item nav__user-menu__item--danger" role="menuitem" onClick={handleSignOut}>
+                        <i className="ri-logout-box-line" aria-hidden="true" /> Sign out
                       </button>
                     </div>
                   </>
@@ -207,12 +208,12 @@ export function Nav() {
               </div>
             ) : (
               <>
-                {/* Logged-out: theme toggle stays as icon in nav */}
+                {/* Guests have no account menu, so theme stays reachable here. */}
                 <button className="nav__icon-btn" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
-                  <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
+                  <i className={theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} aria-hidden="true" />
                 </button>
                 <button className="nav__signin-btn" onClick={() => setShowAuth(true)}>
-                  <i className="ri-user-line" /> Sign in
+                  Sign in
                 </button>
               </>
             )
