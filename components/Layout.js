@@ -408,11 +408,18 @@ export function Breadcrumb({ crumbs }) {
 }
 
 // ── DonateStrip ────────────────────────────────────────────────────────
-export function DonateStrip() {
+// The donate link carries the signed-in user's id so a gift can be
+// attributed back. It is only available after mount (localStorage), so
+// the hook below keeps that timing in one place for every caller.
+export function useDonateUrl() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const profile = typeof window !== 'undefined' ? getProfile() : null
-  const donate  = getDonateUrl(profile, mounted)
+  return getDonateUrl(profile, mounted)
+}
+
+export function DonateStrip() {
+  const donate = useDonateUrl()
   return (
     <div className="donate-strip">
       <p className="donate-strip__text">

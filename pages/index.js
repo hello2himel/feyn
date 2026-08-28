@@ -1,7 +1,7 @@
 // ============================================================
 // pages/index.js — the front door, in two modes
 //
-// GUEST: one promise, one primary action, three steps, then the
+// GUEST: one promise, one primary action, what we believe, then the
 // catalogue. Everything else (teaching, donating, legal, coaches)
 // lives in the footer, because a first-time visitor needs to
 // understand the idea before being offered six side quests.
@@ -17,31 +17,13 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { getTotalLessons, getSubjectFirstVideo } from '../data/courseHelpers'
 import { useCatalog } from '../lib/catalog'
-import { Nav, Footer, YTThumb, useAuth } from '../components/Layout'
+import { Nav, Footer, YTThumb, useAuth, useDonateUrl } from '../components/Layout'
 import { getEnrolled, getSubjectProgress, getLastActivity } from '../lib/userStore'
 
 // How many unenrolled courses the signed-in home will show before it
 // hands off to search. Discovery is a real need, but not an infinite
 // scroll on the page you land on every day.
 const DISCOVER_LIMIT = 6
-
-const HOW_IT_WORKS = [
-  {
-    icon: 'ri-play-circle-line',
-    title: 'Watch one idea',
-    body: 'Each lesson builds a single idea from scratch. No prerequisites you were never told about.',
-  },
-  {
-    icon: 'ri-question-answer-line',
-    title: 'Answer questions',
-    body: 'Short questions after every video, written to catch the gap between watching and understanding.',
-  },
-  {
-    icon: 'ri-arrow-right-circle-line',
-    title: 'Move on when it clicks',
-    body: 'Progress is what you can explain, not what you have played. Nothing is unlocked by sitting through it.',
-  },
-]
 
 function openSearch() {
   window.dispatchEvent(new CustomEvent('feyn:search'))
@@ -158,6 +140,7 @@ function SectionHead({ title, count, action }) {
 export default function Home() {
   const { signedIn, setShowAuth, user, mounted } = useAuth()
   const { programs, loading } = useCatalog()
+  const donateUrl = useDonateUrl()
 
   const [enrolledKeys, setEnrolledKeys] = useState([])
   const [progressMap, setProgressMap]   = useState({})
@@ -281,6 +264,29 @@ export default function Home() {
             {!loading && allCourses.length === 0 && (
               <p className="empty-state">No courses have been published yet.</p>
             )}
+
+            {/* Same island shape as the guest sign-up, different ask. A
+                learner who is already here cannot be sold an account, so
+                this is the one place we mention money — once, at the
+                bottom, after they have got what they came for. */}
+            <div className="island island--donate">
+              <div className="island__text">
+                <h2 className="island__title">Feyn is free because people chip in.</h2>
+                <p className="island__body">
+                  No ads, no paywall, and nothing taken from the people who teach here.
+                  If a lesson has helped you and you are able to, a small donation keeps
+                  the next one coming. If not, that is completely fine — keep learning.
+                </p>
+              </div>
+              <a
+                href={donateUrl}
+                className="btn btn--cert btn--lg"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="ri-heart-line" aria-hidden="true" /> Support Feyn
+              </a>
+            </div>
           </div>
         ) : (
           /* ══════════════ GUEST ══════════════ */
@@ -310,15 +316,18 @@ export default function Home() {
               </div>
             </section>
 
-            <section className="lp-steps">
-              <div className="container lp-steps__grid">
-                {HOW_IT_WORKS.map((s, i) => (
-                  <div className="lp-step" key={s.title}>
-                    <span className="lp-step__num">{i + 1}</span>
-                    <h2 className="lp-step__title">{s.title}</h2>
-                    <p className="lp-step__body">{s.body}</p>
-                  </div>
-                ))}
+            <section className="lp-phil">
+              <div className="container lp-phil__inner">
+                <p className="lp-phil__eyebrow">The philosophy</p>
+                <h2 className="lp-phil__title">
+                  Intuition before formulas.<br />
+                  <span className="lp-phil__accent">We hand you the reasoning.</span>
+                </h2>
+                <p className="lp-phil__lede">
+                  Free and open source, accessible to everyone. Feyn grew out of Feynman
+                  Files, a peer teaching series where students explained things the way
+                  they wished someone had explained them to them.
+                </p>
               </div>
             </section>
 
@@ -362,11 +371,11 @@ export default function Home() {
               )}
             </section>
 
-            <section className="lp-close plate plate--close">
-              <div className="container lp-close__inner">
-                <div>
-                  <h2 className="lp-close__title">Free, and staying that way.</h2>
-                  <p className="lp-close__body">
+            <section className="container lp-island-wrap">
+              <div className="island">
+                <div className="island__text">
+                  <h2 className="island__title">Free, and staying that way.</h2>
+                  <p className="island__body">
                     No ads, no tracking, no paywall. Create an account to save your progress
                     and earn certificates.
                   </p>

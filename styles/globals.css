@@ -4120,9 +4120,9 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
 
 /* =============================================
    LANDING PAGE (guest)
-   One promise, one primary action, three steps,
-   then the catalogue. No metric panels, no
-   feature pills, no sidebar of claims.
+   One promise, one primary action, what we
+   believe, then the catalogue. No metric panels,
+   no feature pills, no sidebar of claims.
    ============================================= */
 .lp-hero__inner {
   padding: clamp(56px, 9vw, 92px) 24px clamp(48px, 7vw, 72px);
@@ -4161,37 +4161,67 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
   font-style: normal; letter-spacing: 0.08em; color: var(--text-3);
 }
 
-.lp-steps { background: var(--bg-2); border-bottom: 1px solid var(--border); }
-.lp-steps__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 32px;
-  padding: 48px 24px;
+/* ── Philosophy ──
+   Replaces the old numbered "how it works" strip. One statement of what
+   we believe and where it came from — a short band, not a feature grid,
+   because the catalogue below it is what the visitor came for. */
+.lp-phil { background: var(--bg-2); border-bottom: 1px solid var(--border); }
+.lp-phil__inner { padding: 40px 24px; max-width: 620px; }
+.lp-phil__eyebrow {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px;
 }
-.lp-step__num {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--accent-glow); border: 1px solid var(--accent-2);
-  font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent);
+.lp-phil__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 2.8vw, 1.6rem);
+  line-height: 1.3;
   margin-bottom: 14px;
 }
-.lp-step__title { font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 7px; }
-.lp-step__body { font-size: 0.9rem; color: var(--text-2); line-height: 1.65; }
+.lp-phil__accent { color: var(--accent); font-style: italic; }
+.lp-phil__lede { font-size: 0.92rem; color: var(--text-2); line-height: 1.7; }
 
 .lp-courses { padding: 56px 24px 72px; }
 
-.lp-close { }
-.lp-close__inner {
+/* Wrapper only exists to give the closing island its own breathing room
+   below the catalogue, since the island itself is inside a container. */
+.lp-island-wrap { padding-bottom: 80px; }
+
+/* ── Island ──
+   A contained call to action: rounded, bordered, inset from the page
+   gutter. Deliberately not a `.plate` band — a full-bleed strip reads
+   as page furniture, and both of these are optional asks the reader
+   should be able to skip. Used by the guest sign-up and the signed-in
+   donation note, so the two feel like the same kind of aside. */
+.island {
   display: flex; align-items: center; justify-content: space-between;
   gap: 28px; flex-wrap: wrap;
-  padding: 48px 24px;
+  padding: 30px 32px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
-.lp-close__title {
+.island__text { max-width: 520px; }
+.island__title {
   font-family: var(--font-serif);
-  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
   margin-bottom: 8px;
 }
-.lp-close__body { font-size: 0.92rem; color: var(--text-2); line-height: 1.65; max-width: 460px; }
+.island__body { font-size: 0.9rem; color: var(--text-2); line-height: 1.7; }
+
+/* The signed-in donation ask sits at the end of a long feed, so it gets
+   the accent tint the guest island does not need. */
+.island--donate {
+  margin-top: 56px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, var(--accent-glow) 0%, transparent 60%),
+    var(--bg-2);
+}
+
+@media (max-width: 600px) {
+  .island { padding: 24px 22px; }
+  .island > .btn { width: 100%; justify-content: center; }
+}
 
 /* =============================================
    AUTH + ONBOARDING MODAL (af-)
