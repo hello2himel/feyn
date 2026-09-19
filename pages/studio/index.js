@@ -198,9 +198,14 @@ export default function Studio() {
     <Shell
       identity={mentor}
       right={canCreateAnywhere && (
-        <Link href="/studio/new" className="btn btn--accent studio-head__cta">
-          <i className="ri-add-line" /> New course
-        </Link>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Link href="/studio/library" className="btn btn--ghost studio-head__cta">
+            <i className="ri-book-shelf-line" /> Library
+          </Link>
+          <Link href="/studio/new" className="btn btn--accent studio-head__cta">
+            <i className="ri-add-line" /> New course
+          </Link>
+        </div>
       )}
     >
       {error && <p className="auth-field__err" style={{ marginBottom: 20 }}><i className="ri-error-warning-line" /> {error}</p>}

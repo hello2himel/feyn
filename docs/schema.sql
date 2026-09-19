@@ -35,6 +35,8 @@ drop table if exists public.skills                  cascade;
 drop table if exists public.topics                  cascade;
 drop table if exists public.subject_mentors         cascade;
 drop table if exists public.subjects                cascade;
+drop table if exists public.library_resource_mentors cascade;
+drop table if exists public.library_resources         cascade;
 drop table if exists public.programs                cascade;
 drop table if exists public.publisher_slug_history  cascade;
 drop table if exists public.mentor_username_history cascade;
@@ -65,6 +67,10 @@ drop function if exists public.can_edit_in_publisher(uuid, uuid)                
 drop function if exists public.can_edit_subject(uuid)                             cascade;
 drop function if exists public.is_subject_visible(uuid)                           cascade;
 drop function if exists public.is_subject_visible_row(uuid, uuid, text)           cascade;
+drop function if exists public.can_edit_library_resource(uuid, uuid)              cascade;
+drop function if exists public.can_edit_library_resource_id(uuid)                 cascade;
+drop function if exists public.is_library_resource_visible(uuid)                  cascade;
+drop function if exists public.is_library_resource_visible_row(uuid, uuid, text)  cascade;
 drop function if exists public.is_reserved_handle(text)                           cascade;
 drop function if exists public.normalize_handle(text)                             cascade;
 drop function if exists public.validate_handle(text)                              cascade;
@@ -366,6 +372,67 @@ create table public.questions (
 
 create index questions_lesson_idx on public.questions (lesson_id, sort_order);
 
+-- ============================================================
+-- PART 3B — LIBRARY RESOURCES (publisher-owned files & links)
+--
+-- The "library": a resource shelf that sits next to courses rather
+-- than inside them. Same ownership shape as subjects/subject_mentors
+-- on purpose — a Publisher owns the resource, mentors are credited
+-- onto it, and credit is what lets a `mentor`-role member edit only
+-- the resources they are credited on. See can_edit_library_resource
+-- below, a straight copy of can_edit_in_publisher.
+--
+-- kind='html'|'pdf'|'image'|'doc'|'link'. Every kind but 'link'
+-- stores its file in the private `library-resources` Storage bucket
+-- at storage_path = "{publisher_id}/{id}/{filename}"; 'link' has no
+-- file and points at external_url instead. Files are never served
+-- straight from Storage — pages/api/library/file/[resourceId].js
+-- checks visibility, then hands back a short-lived signed URL, so a
+-- draft resource's file can't be guessed at from a stable public URL.
+-- ============================================================
+
+create table public.library_resources (
+  id                 uuid primary key default gen_random_uuid(),
+  publisher_id       uuid not null references public.publishers(id) on delete cascade,
+  title              text not null,
+  slug               text not null,
+  description        text,
+  kind               text not null check (kind in ('html','pdf','image','doc','link')),
+  storage_path       text,
+  external_url       text,
+  mime_type          text,
+  file_size_bytes    bigint,
+  icon               text,
+  status             text not null default 'draft'
+                       check (status in ('draft','published')),
+  created_by_mentor_id uuid references public.mentors(id) on delete set null,
+  sort_order         integer not null default 0,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
+  published_at       timestamptz,
+  constraint library_resource_has_content
+    check (
+      (kind = 'link' and external_url is not null and storage_path is null)
+      or (kind <> 'link' and storage_path is not null)
+    ),
+  -- Slug is unique per publisher, mirroring how a course's slug is
+  -- unique per program — the publisher is this table's namespace.
+  unique (publisher_id, slug)
+);
+
+create index library_resources_publisher_idx on public.library_resources (publisher_id, status);
+
+-- Many-to-many credits, identical shape to subject_mentors: co-mentors
+-- per resource, many resources per mentor. Aggregated at /library/{username}.
+create table public.library_resource_mentors (
+  resource_id uuid not null references public.library_resources(id) on delete cascade,
+  mentor_id   uuid not null references public.mentors(id) on delete cascade,
+  sort_order  integer not null default 0,
+  primary key (resource_id, mentor_id)
+);
+
+create index library_resource_mentors_mentor_idx on public.library_resource_mentors (mentor_id);
+
 -- ── updated_at triggers ─────────────────────────────────────
 create or replace function public.touch_updated_at()
 returns trigger language plpgsql as $$
@@ -386,6 +453,8 @@ create trigger topics_touch     before update on public.topics
 create trigger skills_touch     before update on public.skills
   for each row execute function public.touch_updated_at();
 create trigger lessons_touch    before update on public.lessons
+  for each row execute function public.touch_updated_at();
+create trigger library_resources_touch before update on public.library_resources
   for each row execute function public.touch_updated_at();
 
 -- ============================================================
@@ -675,6 +744,69 @@ language sql stable security definer set search_path = public as $$
   )
 $$;
 
+-- ── can_edit_library_resource ───────────────────────────────
+-- can_edit_in_publisher's twin for the library: same ladder, same
+-- reasoning about `insert ... returning` (see can_edit_in_publisher),
+-- checking library_resource_mentors instead of subject_mentors.
+create or replace function public.can_edit_library_resource(pub_id uuid, res_id uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.is_app_admin()
+      or exists (
+        select 1
+        from public.publisher_memberships pm
+        where pm.publisher_id = pub_id
+          and pm.user_id      = auth.uid()
+          and pm.status       = 'approved'
+          and (
+            public.role_rank(pm.role) >= public.role_rank('editor')
+            or exists (
+              select 1 from public.library_resource_mentors lrm
+              where lrm.resource_id = res_id
+                and lrm.mentor_id   = pm.mentor_id
+            )
+          )
+      )
+$$;
+
+-- id-only convenience wrapper, e.g. for pages/api/library/file/[resourceId].js.
+create or replace function public.can_edit_library_resource_id(res_id uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.is_app_admin()
+      or exists (
+        select 1 from public.library_resources r
+        where r.id = res_id
+          and public.can_edit_library_resource(r.publisher_id, r.id)
+      )
+$$;
+
+-- ── is_library_resource_visible ─────────────────────────────
+-- Published resources under an approved publisher are public. Drafts
+-- are visible to anyone who could edit them. Row form for the RLS
+-- policy (never re-queries library_resources — see can_edit_in_publisher).
+create or replace function public.is_library_resource_visible_row(
+  res_id uuid, pub_id uuid, res_status text
+) returns boolean
+language sql stable security definer set search_path = public as $$
+  select (
+        res_status = 'published'
+        and exists (select 1 from public.publishers p
+                    where p.id = pub_id and p.status = 'approved')
+      )
+      or public.can_edit_library_resource(pub_id, res_id)
+$$;
+
+create or replace function public.is_library_resource_visible(res_id uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.library_resources r
+    where r.id = res_id
+      and public.is_library_resource_visible_row(r.id, r.publisher_id, r.status)
+  )
+$$;
+
 -- Grants for these live in one authoritative block at the end of
 -- Part 7, after every function exists. Granting here would be
 -- undone anyway: that block first revokes Supabase's blanket
@@ -694,7 +826,8 @@ language sql immutable as $$
     'admin','api','settings','profile','about','contact','coaches','panels',
     'verify','terms','privacy','login','signin','signup','signout','logout',
     'm','p','www','support','help','feyn','studio','apply','register',
-    'dashboard','docs','static','_next','public','null','undefined','teach'
+    'dashboard','docs','static','_next','public','null','undefined','teach',
+    'library'
   ])
 $$;
 
@@ -788,6 +921,8 @@ alter table public.publisher_slug_history  enable row level security;
 alter table public.programs                enable row level security;
 alter table public.subjects                enable row level security;
 alter table public.subject_mentors         enable row level security;
+alter table public.library_resources       enable row level security;
+alter table public.library_resource_mentors enable row level security;
 alter table public.topics                  enable row level security;
 alter table public.skills                  enable row level security;
 alter table public.lessons                 enable row level security;
@@ -950,6 +1085,63 @@ create policy subject_mentors_write on public.subject_mentors
       join public.publisher_memberships pm on pm.publisher_id = s.publisher_id
       where s.id = subject_id
         and pm.mentor_id = subject_mentors.mentor_id
+        and pm.status = 'approved'
+    )
+  );
+
+-- ── library_resources ────────────────────────────────────────
+create policy library_resources_select_visible on public.library_resources
+  for select using (public.is_library_resource_visible_row(id, publisher_id, status));
+
+-- Uploading a resource requires editor rights in the owning publisher,
+-- same bar as creating a course.
+create policy library_resources_insert on public.library_resources
+  for insert with check (
+    public.has_publisher_role(publisher_id, 'editor')
+    and exists (
+      select 1 from public.publishers p
+      where p.id = publisher_id and p.status = 'approved'
+    )
+  );
+
+create policy library_resources_update on public.library_resources
+  for update using (public.can_edit_library_resource(publisher_id, id))
+  with check (public.can_edit_library_resource(publisher_id, id));
+
+-- Deleting a resource (and the row lookup pages/api/library/file/[id]
+-- uses to find its Storage object) is an admin-level act.
+create policy library_resources_delete on public.library_resources
+  for delete using (public.has_publisher_role(publisher_id, 'admin'));
+
+-- ── library_resource_mentors (credits) ──────────────────────
+create policy library_resource_mentors_select on public.library_resource_mentors
+  for select using (public.is_library_resource_visible(resource_id));
+
+-- Assigning credit is an admin act, exactly like subject_mentors_write:
+-- it grants edit rights to the credited mentor, so an editor must not
+-- be able to hand it out.
+create policy library_resource_mentors_write on public.library_resource_mentors
+  for all using (
+    exists (
+      select 1 from public.library_resources r
+      where r.id = resource_id
+        and public.has_publisher_role(r.publisher_id, 'admin')
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.library_resources r
+      where r.id = resource_id
+        and public.has_publisher_role(r.publisher_id, 'admin')
+    )
+    -- The mentor must actually belong to that publisher, otherwise
+    -- crediting a stranger would silently grant them write access.
+    and exists (
+      select 1
+      from public.library_resources r
+      join public.publisher_memberships pm on pm.publisher_id = r.publisher_id
+      where r.id = resource_id
+        and pm.mentor_id = library_resource_mentors.mentor_id
         and pm.status = 'approved'
     )
   );
@@ -1218,6 +1410,55 @@ create trigger publishers_guard before update on public.publishers
   for each row execute function public.guard_publisher_columns();
 
 -- Grants: see the authoritative block at the end of Part 7.
+
+-- ============================================================
+-- PART 6c — LIBRARY STORAGE BUCKET
+--
+-- One private bucket. Objects live at "{publisher_id}/{resource_id}/
+-- {filename}" — storage.foldername(name) splits that into an array,
+-- so (storage.foldername(name))[1] is the publisher_id segment and
+-- every write policy below is just has_publisher_role() on it.
+--
+-- There is deliberately no SELECT policy: nobody, including the
+-- uploader, reads this bucket directly. Every read — public or not —
+-- goes through pages/api/library/file/[resourceId].js, which checks
+-- is_library_resource_visible()/can_edit_library_resource_id() with
+-- the caller's own token and then hands back a short-lived signed URL
+-- from the service-role client. That is what keeps a draft resource's
+-- file unreachable by a guessed or shared object path.
+-- ============================================================
+
+insert into storage.buckets (id, name, public)
+values ('library-resources', 'library-resources', false)
+on conflict (id) do update set public = excluded.public;
+
+drop policy if exists library_storage_insert on storage.objects;
+create policy library_storage_insert on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'library-resources'
+    and public.has_publisher_role(nullif((storage.foldername(name))[1], '')::uuid, 'editor')
+  );
+
+drop policy if exists library_storage_update on storage.objects;
+create policy library_storage_update on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'library-resources'
+    and public.has_publisher_role(nullif((storage.foldername(name))[1], '')::uuid, 'editor')
+  )
+  with check (
+    bucket_id = 'library-resources'
+    and public.has_publisher_role(nullif((storage.foldername(name))[1], '')::uuid, 'editor')
+  );
+
+drop policy if exists library_storage_delete on storage.objects;
+create policy library_storage_delete on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'library-resources'
+    and public.has_publisher_role(nullif((storage.foldername(name))[1], '')::uuid, 'editor')
+  );
 
 -- ============================================================
 -- PART 7 — PRIVILEGED RPCs
@@ -1893,6 +2134,10 @@ grant execute on function public.can_edit_in_publisher(uuid, uuid)              
 grant execute on function public.can_edit_subject(uuid)                             to anon, authenticated;
 grant execute on function public.is_subject_visible(uuid)                           to anon, authenticated;
 grant execute on function public.is_subject_visible_row(uuid, uuid, text)           to anon, authenticated;
+grant execute on function public.can_edit_library_resource(uuid, uuid)              to anon, authenticated;
+grant execute on function public.can_edit_library_resource_id(uuid)                 to anon, authenticated;
+grant execute on function public.is_library_resource_visible(uuid)                  to anon, authenticated;
+grant execute on function public.is_library_resource_visible_row(uuid, uuid, text)  to anon, authenticated;
 grant execute on function public.is_privileged_context()                            to anon, authenticated;
 grant execute on function public.is_trusted_writer()                                to anon, authenticated;
 

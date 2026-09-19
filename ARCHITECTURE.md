@@ -145,6 +145,7 @@ Either side can end an approved membership at any time, with no approval step. C
 Two independently-unique namespaces, like Reddit's `/u/` and `/r/`:
 
 - `/m/{username}` — mentor profile, aggregating every course they are credited on across every Publisher, each badged with its owner
+- `/library/{username}` — same idea for files/links: every published library resource the mentor is credited on, across every Publisher
 - `/p/{slug}` — publisher page: branding, members, published courses
 - `/p/{slug}/dashboard` — members, queues, `join_policy`, courses (auth-gated)
 
@@ -153,6 +154,16 @@ Handles are 3–30 characters of `[a-z0-9_-]`, no leading or trailing separator,
 Availability is a boolean-only public RPC (`is_handle_available`), debounced ~400 ms by [`components/HandleField.js`](components/HandleField.js). Boolean-only so it never leaks who owns a handle.
 
 Changes are rate-limited server-side: one per 14 days, five per lifetime, then an app admin must do it manually. Old handles are recorded in `mentor_username_history` / `publisher_slug_history`, **count as taken**, and 301-redirect forward — so shared links do not rot and never repoint at a new owner.
+
+---
+
+## Library
+
+A shelf of files and links (`library_resources`) that sits next to courses rather than inside them — no topics/skills/lessons required, just a title and a file (or a URL). Ownership shape is a deliberate copy of `subjects`/`subject_mentors`: a Publisher owns the resource, mentors are credited onto it via `library_resource_mentors`, and credit is what lets a `mentor`-role member edit only the resources they are credited on (`can_edit_library_resource`, a copy of `can_edit_in_publisher`). Public at `/library/{username}` (aggregated across every publisher, like `/m/{username}` does for courses) and `/library/{username}/{resourceId}`.
+
+`kind` is `html` | `pdf` | `image` | `doc` | `link`. The first four store a file in the private `library-resources` Storage bucket at `{publisher_id}/{resource_id}/{filename}`; `link` has no file, just `external_url`. Uploading is a direct Storage write from the browser — governed by the `library_storage_*` policies, the same "direct write where RLS already governs it" pattern the course-content tables use — followed by a direct row insert, mirroring how [`pages/studio/new.js`](pages/studio/new.js) creates a subject.
+
+**Files are never read from Storage directly — there is no SELECT policy on the bucket at all.** Every read, public or not, goes through [`pages/api/library/file/[resourceId].js`](pages/api/library/file/[resourceId].js): it checks `status`/`can_edit_library_resource_id()` with the caller's own token, then hands back a 60-second signed URL from the service-role client. An `<iframe src="/api/library/file/{id}">` follows that redirect and just renders the file at its own origin — an HTML resource opens directly (no download step), a PDF or image previews inline, anything else falls back to open/download buttons. This is also why a resource's public detail page validates that the URL's username segment is actually one of its credited mentors before rendering — a guessed or stale link should not resolve.
 
 ---
 

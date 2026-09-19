@@ -4550,3 +4550,48 @@ textarea.bld-input { resize: vertical; line-height: 1.6; }
   white-space: nowrap;
   border: 0;
 }
+
+/* =============================================
+   LIBRARY — public grid, viewer, studio chip
+   ============================================= */
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.lib-card {
+  display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-2); padding: 18px 20px;
+  transition: all var(--transition); text-decoration: none; color: inherit;
+}
+.lib-card:hover { border-color: var(--border-2); background: var(--bg-3); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.lib-card__icon { font-size: 1.4rem; color: var(--accent); }
+.lib-card__kind {
+  font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-3);
+}
+.lib-card__title { font-family: var(--font-serif); font-size: 1.02rem; color: var(--text); margin: 2px 0; }
+.lib-card__desc { font-size: 0.82rem; color: var(--text-3); line-height: 1.5; flex: 1; }
+.lib-card__footer { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-3); letter-spacing: 0.06em; margin-top: 6px; }
+
+.lib-viewer-head__actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+.lib-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 24px; }
+.lib-filter {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em;
+  padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--bg-2); color: var(--text-2); cursor: pointer;
+  transition: all var(--transition);
+}
+.lib-filter:hover { border-color: var(--border-2); color: var(--text); }
+.lib-filter.is-active { border-color: var(--accent-2); background: var(--accent-glow); color: var(--accent); }
+
+.lib-frame {
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-2); overflow: hidden; margin: 8px 0 40px;
+  height: 82vh; min-height: 480px;
+}
+.lib-frame iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.lib-frame--image { height: auto; padding: 16px; text-align: center; }
+.lib-frame--image img { max-width: 100%; max-height: 80vh; border-radius: var(--radius); }
