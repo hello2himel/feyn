@@ -25,7 +25,7 @@ npm install
 1. In your project: **SQL Editor** → **New query**.
 2. Paste the entire contents of [`docs/schema.sql`](schema.sql) and run it.
 
-It should finish without errors and creates 20 tables, 53 RLS policies and 38 functions.
+It should finish without errors and creates 22 tables, 62 RLS policies, 42 functions, and a private `library-resources` Storage bucket.
 
 > **`docs/schema.sql` starts by dropping every Feyn table.** That makes it safe to re-run while setting up, and destructive if you run it on a project with real data. Back up first if you have any.
 

@@ -193,7 +193,7 @@ function mapTopic(row) {
   }
 }
 
-function mapPublisher(row) {
+export function mapPublisher(row) {
   if (!row) return null
   return {
     id: row.slug,

@@ -328,6 +328,7 @@ export function Footer() {
             <div className="footer__col">
               <p className="footer__col-label">Learn</p>
               <Link href="/#courses" className="footer__link">All courses</Link>
+              <Link href="/library" className="footer__link">Library</Link>
               <Link href="/coaches" className="footer__link">Mentors</Link>
               <Link href="/verify" className="footer__link">Verify a certificate</Link>
             </div>
