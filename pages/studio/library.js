@@ -24,7 +24,7 @@ import { usePermissions } from '../../lib/usePermissions'
 import { approvedMemberships, canCreateLibraryResource, canManagePublisher } from '../../lib/permissions'
 import { authedClient } from '../../lib/api'
 import { getCurrentToken } from '../../lib/supabase'
-import { kindFromFile, mimeForKind, storagePath, LIBRARY_BUCKET, MAX_UPLOAD_BYTES } from '../../lib/library'
+import { kindFromFile, mimeForKind, storagePath, sandboxedHtmlUrl, LIBRARY_BUCKET, MAX_UPLOAD_BYTES } from '../../lib/library'
 import { KIND_META, formatFileSize } from '../../data/libraryHelpers'
 
 function slugify(str) {
@@ -227,7 +227,16 @@ export default function LibraryStudio() {
         const json = await res.json().catch(() => ({}))
         throw new Error(json.error || `Could not open that (${res.status}).`)
       }
-      window.open(res.url, '_blank', 'noopener,noreferrer')
+      if (resource.kind === 'html') {
+        // HTML is served straight from the API route (no redirect), so
+        // res.url has no token and a draft would 401 in a fresh tab.
+        // Show the bytes we already fetched inside a sandboxed frame
+        // instead: same no-same-origin isolation the API route applies.
+        const html = await res.text()
+        window.open(sandboxedHtmlUrl(html, resource.title), '_blank', 'noopener,noreferrer')
+      } else {
+        window.open(res.url, '_blank', 'noopener,noreferrer')
+      }
     } catch (e) {
       setError(e.message)
     } finally {
