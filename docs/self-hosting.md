@@ -60,7 +60,7 @@ select u.email from public.app_admins a join auth.users u on u.id = a.user_id;
 
 The publishable key is meant to be public; it carries no privileges of its own and every table is protected by row-level security.
 
-The **secret** key (`sb_secret_…`) bypasses RLS entirely. Feyn does not require it — leave it unset unless you add server-side features that must act beyond the caller's own rights.
+The **secret** key (`sb_secret_…`) bypasses RLS entirely. Required for the Library feature — [`pages/api/library/file/[resourceId].js`](../pages/api/library/file/[resourceId].js) needs it to sign URLs into the private `library-resources` bucket, since nothing else (not even RLS) can read that bucket directly. Skip it only if you are not using Library; every other part of Feyn works without it.
 
 ## 6. Configure environment variables
 
