@@ -9,9 +9,8 @@
 //
 // pdf/image render inline via an <iframe>/<img> pointed at
 // pages/api/library/file/[resourceId].js — that route 302s to a
-// signed Storage URL, so the browser loads the file from its own
-// origin with the correct Content-Type, no separate fetch-into-
-// srcDoc step needed. doc/link kinds just offer to open it.
+// signed Storage URL, no separate fetch-into-srcDoc step needed.
+// (html is the exception: the route serves it directly, see there.) doc/link kinds just offer to open it.
 //
 // Not statically enumerated (fallback: 'blocking', paths: []) — the
 // long tail of individual resources isn't worth pre-building, and ISR
@@ -110,10 +109,10 @@ export async function getStaticProps({ params }) {
   const resource = await getLibraryResource(params.resourceId)
   if (!resource || resource.status !== 'published') return { notFound: true, revalidate: 60 }
 
-  // HTML resources never render this page — they run directly. Same
-  // destination the API route itself 302s to signed Storage URLs from,
-  // so the browser ends up loading the actual file as the top-level
-  // document, no iframe or wrapper chrome around it.
+  // HTML resources never render this page — they run directly. The API
+  // route serves the file itself as text/html (Supabase Storage would
+  // show it as plain-text source), sandboxed via CSP, so the browser
+  // loads it as the top-level document with no wrapper chrome.
   if (resource.kind === 'html') {
     return { redirect: { destination: resource.fileUrl, permanent: false }, revalidate: 60 }
   }
