@@ -1,7 +1,13 @@
 // ============================================================
 // pages/library/[username]/[resourceId].js — resource viewer
 //
-// html/pdf/image kinds render inline via an <iframe>/<img> pointed at
+// pdf/image/doc/link resources get a small landing page here: title,
+// description, credits, Open/Download buttons, and an inline preview
+// for pdf/image. html resources skip this page entirely — see the
+// redirect in getStaticProps below — because an HTML page is meant to
+// just run, not sit inside another page's chrome.
+//
+// pdf/image render inline via an <iframe>/<img> pointed at
 // pages/api/library/file/[resourceId].js — that route 302s to a
 // signed Storage URL, so the browser loads the file from its own
 // origin with the correct Content-Type, no separate fetch-into-
@@ -103,6 +109,14 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const resource = await getLibraryResource(params.resourceId)
   if (!resource || resource.status !== 'published') return { notFound: true, revalidate: 60 }
+
+  // HTML resources never render this page — they run directly. Same
+  // destination the API route itself 302s to signed Storage URLs from,
+  // so the browser ends up loading the actual file as the top-level
+  // document, no iframe or wrapper chrome around it.
+  if (resource.kind === 'html') {
+    return { redirect: { destination: resource.fileUrl, permanent: false }, revalidate: 60 }
+  }
 
   // The username segment is cosmetic only (see libraryUrlSegment in
   // data/libraryHelpers.js) — the resourceId is what actually gates

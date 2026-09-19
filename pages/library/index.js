@@ -67,8 +67,13 @@ export default function LibraryFeed({ resources }) {
               {filtered.map(r => {
                 const meta = KIND_META[r.kind] || KIND_META.doc
                 const seg = libraryUrlSegment(r)
+                // html runs directly — no detail page, no iframe. Everything
+                // else gets the small landing page with Open/Download and an
+                // inline preview where one makes sense.
+                const href = r.kind === 'html' ? r.fileUrl : `/library/${seg}/${r.id}`
+                const Card = r.kind === 'html' ? 'a' : Link
                 return (
-                  <Link key={r.id} href={`/library/${seg}/${r.id}`} className="lib-card">
+                  <Card key={r.id} href={href} className="lib-card">
                     <span className="lib-card__icon"><i className={r.icon || meta.icon} /></span>
                     <span className="lib-card__kind">{meta.label}</span>
                     <h3 className="lib-card__title">{r.title}</h3>
@@ -77,7 +82,7 @@ export default function LibraryFeed({ resources }) {
                       {formatFileSize(r.fileSizeBytes) ? `${formatFileSize(r.fileSizeBytes)} · ` : ''}
                       {r.mentors?.[0]?.name || r.publisher?.name || ''}
                     </p>
-                  </Link>
+                  </Card>
                 )
               })}
             </div>
