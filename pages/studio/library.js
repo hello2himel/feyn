@@ -24,7 +24,7 @@ import { usePermissions } from '../../lib/usePermissions'
 import { approvedMemberships, canCreateLibraryResource, canManagePublisher } from '../../lib/permissions'
 import { authedClient } from '../../lib/api'
 import { getCurrentToken } from '../../lib/supabase'
-import { kindFromFile, storagePath, LIBRARY_BUCKET, MAX_UPLOAD_BYTES } from '../../lib/library'
+import { kindFromFile, mimeForKind, storagePath, LIBRARY_BUCKET, MAX_UPLOAD_BYTES } from '../../lib/library'
 import { KIND_META, formatFileSize } from '../../data/libraryHelpers'
 
 function slugify(str) {
@@ -166,13 +166,14 @@ export default function LibraryStudio() {
         insertRow = { external_url: form.external_url.trim(), storage_path: null, mime_type: null, file_size_bytes: null }
       } else {
         kind = kindFromFile(file)
+        const mime = mimeForKind(kind, file)
         const path = storagePath(form.publisher_id, resourceId, file.name)
         const { error: upErr } = await sb.storage.from(LIBRARY_BUCKET).upload(path, file, {
-          contentType: file.type || undefined,
+          contentType: mime,
           upsert: false,
         })
         if (upErr) throw new Error(upErr.message)
-        insertRow = { external_url: null, storage_path: path, mime_type: file.type || null, file_size_bytes: file.size }
+        insertRow = { external_url: null, storage_path: path, mime_type: mime, file_size_bytes: file.size }
       }
 
       const { error: insErr } = await sb

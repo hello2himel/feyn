@@ -57,8 +57,11 @@ export default function MentorLibrary({ mentor, resources }) {
             <div className="lib-grid">
               {resources.map(r => {
                 const meta = KIND_META[r.kind] || KIND_META.doc
+                // html runs directly — no detail page, no iframe.
+                const href = r.kind === 'html' ? r.fileUrl : `/library/${mentor.id}/${r.id}`
+                const Card = r.kind === 'html' ? 'a' : Link
                 return (
-                  <Link key={r.id} href={`/library/${mentor.id}/${r.id}`} className="lib-card">
+                  <Card key={r.id} href={href} className="lib-card">
                     <span className="lib-card__icon"><i className={r.icon || meta.icon} /></span>
                     <span className="lib-card__kind">{meta.label}</span>
                     <h3 className="lib-card__title">{r.title}</h3>
@@ -67,7 +70,7 @@ export default function MentorLibrary({ mentor, resources }) {
                       {formatFileSize(r.fileSizeBytes) ? `${formatFileSize(r.fileSizeBytes)} · ` : ''}
                       {r.publisher?.name || ''}
                     </p>
-                  </Link>
+                  </Card>
                 )
               })}
             </div>
